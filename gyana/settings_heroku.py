@@ -1,6 +1,7 @@
+import django_heroku
+
 from .settings import *
 
-import django_heroku
 django_heroku.settings(locals())
 
 SECRET_KEY = os.environ.get('SECRET_KEY', SECRET_KEY)
@@ -12,5 +13,6 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 
 DEBUG = False
 ALLOWED_HOSTS = [
-    'gyana.com'
+    'gyana.com',
+    'gyana-mvp.herokuapp.com'
 ]

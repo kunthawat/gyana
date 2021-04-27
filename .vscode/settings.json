@@ -1,0 +1,11 @@
+{
+    "python.pythonPath": ".venv/bin/python",
+    "editor.formatOnSave": true,
+    "[python]": {
+      "editor.codeActionsOnSave": {
+          "source.organizeImports": true
+      }
+    },
+    "python.formatting.provider": "black",
+    "python.languageServer": "Pylance"
+}

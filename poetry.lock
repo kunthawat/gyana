@@ -388,7 +388,7 @@ python-versions = "*"
 [package.dependencies]
 dj-database-url = ">=0.5.0"
 django = "*"
-psycopg2-binary = "*"
+psycopg2 = "*"
 whitenoise = "*"
 
 [[package]]

@@ -1,0 +1,15 @@
+.idea
+*.pyc
+*~
+db.sqlite3
+.sass-cache/
+gyana/localsettings.py
+gyana/local.py
+static_root/
+node_modules/
+media/
+docs/_build
+_dist/
+.env.dev
+.env.production
+.DS_Store

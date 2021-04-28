@@ -225,8 +225,3 @@
   --danger: #ef4444;  /* tailwind red-500 */
   --success: #10b981;  /* tailwind green-500 */
 }
-
-/* todo: remove these if can't get them working */
-/*@import './tailwind/bulma-compat.css'*/
-/*@import './tailwind/components.css';*/
-/*@import './tailwind/layout.css';*/

@@ -1,5 +1,6 @@
 {% load static %}
 <!DOCTYPE html>
+<!--prettier-ignore-->
 <html>
 <head>
     <meta charset="utf-8">
@@ -12,6 +13,9 @@
   <link rel="stylesheet" href="{% static 'css/site-base.css' %}">
     <link rel="stylesheet" href="{% static 'css/site-tailwind.css' %}">
     <script src="https://use.fontawesome.com/72135c02f1.js"></script>
+    <script type="module">
+      import * as hotwiredTurbo from "https://cdn.skypack.dev/@hotwired/turbo";
+    </script>
     {% if GOOGLE_ANALYTICS_ID %}
         {% include 'web/components/google_analytics.html' %}
     {% endif %}

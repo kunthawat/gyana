@@ -392,6 +392,27 @@ psycopg2 = "*"
 whitenoise = "*"
 
 [[package]]
+name = "django-turbo-allauth"
+version = "0.0.9"
+description = "Hotwired/Turbo subclasses for allauth views"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[package.dependencies]
+django = ">=3.0"
+django-allauth = "*"
+django-turbo-response = ">=0.0.47"
+
+[[package]]
+name = "django-turbo-response"
+version = "0.0.48"
+description = "Hotwired/Turbo response helpers for Django"
+category = "main"
+optional = false
+python-versions = ">=3.8"
+
+[[package]]
 name = "djangorestframework"
 version = "3.12.4"
 description = "Web APIs for Django, made easy."
@@ -902,7 +923,7 @@ brotli = ["brotli"]
 [metadata]
 lock-version = "1.1"
 python-versions = "3.8.*"
-content-hash = "36f96ad77859b150fc09502e31bb1db5016159f38f2f442bf388ac9236a8e887"
+content-hash = "7970ae665d4a70a93adfb31a9a1a147b15095412c2562dda6df373dc84cc900c"
 
 [metadata.files]
 amqp = [
@@ -1064,6 +1085,14 @@ django-anymail = [
 django-heroku = [
     {file = "django-heroku-0.3.1.tar.gz", hash = "sha256:6af4bc3ae4a9b55eaad6dbe5164918982d2762661aebc9f83d9fa49f6009514e"},
     {file = "django_heroku-0.3.1-py2.py3-none-any.whl", hash = "sha256:2bc690aab89eedbe01311752320a9a12e7548e3b0ed102681acc5736a41a4762"},
+]
+django-turbo-allauth = [
+    {file = "django-turbo-allauth-0.0.9.tar.gz", hash = "sha256:4bb666e81b2f3e035e40e5a63cb5843778e9236dcdd078e354a7b7aa164851db"},
+    {file = "django_turbo_allauth-0.0.9-py3-none-any.whl", hash = "sha256:834d072978aa877ea6b876a023ef2d2ebcfcb5db4e16e76786fdea20ea707569"},
+]
+django-turbo-response = [
+    {file = "django-turbo-response-0.0.48.tar.gz", hash = "sha256:925662787df80a8a92471d3c0461d789af0890e03cc2ff7ed5a6353f8c326b02"},
+    {file = "django_turbo_response-0.0.48-py3-none-any.whl", hash = "sha256:9711e03d8df0a0a3e2fd106f7a713478cc60a9804f12fce37e05fa8ac12faee1"},
 ]
 djangorestframework = [
     {file = "djangorestframework-3.12.4-py3-none-any.whl", hash = "sha256:6d1d59f623a5ad0509fe0d6bfe93cbdfe17b8116ebc8eda86d45f6e16e819aaf"},

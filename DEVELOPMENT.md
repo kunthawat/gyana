@@ -29,3 +29,7 @@ Commands:
 - `yarn dev-watch`
 
 Create a new CRUDL Django app with `just startapp`.
+
+## Deploy
+
+Run `just export` and push to main. View errors on Heroku.

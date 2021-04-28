@@ -7,13 +7,13 @@ from django.views.generic import TemplateView
 from ..tasks import progress_bar_task
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required, name="dispatch")
 class TasksView(TemplateView):
-    template_name = 'pegasus/examples/tasks.html'
+    template_name = "pegasus/examples/tasks.html"
 
     def get_context_data(self, **kwargs):
         return {
-            'active_tab': 'tasks',
+            "active_tab": "tasks",
         }
 
 

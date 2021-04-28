@@ -28,6 +28,8 @@ def get_next_slug(base_value, suffix, max_length=100):
     """
     suffix_length = len(str(suffix)) + 1  # + 1 for the "-" character
     if suffix_length >= max_length:
-        raise ValueError("Suffix {} is too long to create a unique slug! ".format(suffix))
+        raise ValueError(
+            "Suffix {} is too long to create a unique slug! ".format(suffix)
+        )
 
-    return '{}-{}'.format(base_value[:max_length - suffix_length], suffix)
+    return "{}-{}".format(base_value[: max_length - suffix_length], suffix)

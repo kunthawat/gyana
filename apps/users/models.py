@@ -5,12 +5,12 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 
-
 class CustomUser(AbstractUser):
     """
     Add additional fields to the user model here.
     """
-    avatar = models.FileField(upload_to='profile-pictures/', null=True, blank=True)
+
+    avatar = models.FileField(upload_to="profile-pictures/", null=True, blank=True)
 
     def __str__(self):
         return self.email
@@ -25,9 +25,11 @@ class CustomUser(AbstractUser):
         if self.avatar:
             return self.avatar.url
         else:
-            return 'https://www.gravatar.com/avatar/{}?s=128&d=identicon'.format(self.gravatar_id)
+            return "https://www.gravatar.com/avatar/{}?s=128&d=identicon".format(
+                self.gravatar_id
+            )
 
     @property
     def gravatar_id(self):
         # https://en.gravatar.com/site/implement/hash/
-        return hashlib.md5(self.email.lower().strip().encode('utf-8')).hexdigest()
+        return hashlib.md5(self.email.lower().strip().encode("utf-8")).hexdigest()

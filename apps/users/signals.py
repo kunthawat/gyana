@@ -1,4 +1,4 @@
-from allauth.account.signals import user_signed_up, email_confirmed
+from allauth.account.signals import email_confirmed, user_signed_up
 from django.conf import settings
 from django.core.mail import mail_admins
 from django.dispatch import receiver
@@ -26,8 +26,7 @@ def update_user_email(sender, request, email_address, **kwargs):
 
 def _notify_admins_of_signup(user):
     mail_admins(
-        "Yowsers, someone signed up for the site!",
-        "Email: {}".format(user.email)
+        "Yowsers, someone signed up for the site!", "Email: {}".format(user.email)
     )
 
 
@@ -39,18 +38,24 @@ def _subscribe_to_mailing_list(user):
     except ImportError:
         return
 
-    if getattr(settings, 'MAILCHIMP_API_KEY', None) and getattr(settings, 'MAILCHIMP_LIST_ID', None):
+    if getattr(settings, "MAILCHIMP_API_KEY", None) and getattr(
+        settings, "MAILCHIMP_LIST_ID", None
+    ):
         client = MailChimp(mc_api=settings.MAILCHIMP_API_KEY)
         try:
-            client.lists.members.create(settings.MAILCHIMP_LIST_ID, {
-                'email_address': user.email,
-                'status': 'subscribed',
-            })
+            client.lists.members.create(
+                settings.MAILCHIMP_LIST_ID,
+                {
+                    "email_address": user.email,
+                    "status": "subscribed",
+                },
+            )
         except MailChimpError as e:
             # likely it's just that they were already subscribed so don't worry about it
             try:
                 # but do log to sentry if available
                 from sentry_sdk import capture_exception
+
                 capture_exception(e)
             except ImportError:
                 pass

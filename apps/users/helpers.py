@@ -4,7 +4,10 @@ from django.conf import settings
 
 
 def require_email_confirmation():
-    return settings.ACCOUNT_EMAIL_VERIFICATION == app_settings.EmailVerificationMethod.MANDATORY
+    return (
+        settings.ACCOUNT_EMAIL_VERIFICATION
+        == app_settings.EmailVerificationMethod.MANDATORY
+    )
 
 
 def user_has_confirmed_email_address(user, email):

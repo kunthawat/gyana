@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/2.1/ref/settings/
 
 import os
 
-
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -21,7 +20,7 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'BITuHkgTLhSfOHAewSSxNKRZfvYuzjPhdbIhaztE'
+SECRET_KEY = "BITuHkgTLhSfOHAewSSxNKRZfvYuzjPhdbIhaztE"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -32,131 +31,125 @@ ALLOWED_HOSTS = []
 # Application definition
 
 DJANGO_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'django.contrib.sites',
-    'django.forms',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "django.contrib.sites",
+    "django.forms",
 ]
 
 # Put your third-party apps here
 THIRD_PARTY_APPS = [
-    'allauth',  # allauth account/registration management
-    'allauth.account',
-
-    'allauth.socialaccount',
-    'allauth.socialaccount.providers.google',
-
-    'rest_framework',
-    'celery_progress',
+    "allauth",  # allauth account/registration management
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
+    "rest_framework",
+    "celery_progress",
     "crispy_forms",
     "crispy_tailwind",
-
     # stripe integration
-    'djstripe',
+    "djstripe",
 ]
 
 PEGASUS_APPS = [
-    'pegasus.apps.examples.apps.PegasusExamplesConfig',
+    "pegasus.apps.examples.apps.PegasusExamplesConfig",
 ]
 
 # Put your project-specific apps here
 PROJECT_APPS = [
-    'apps.subscriptions.apps.SubscriptionConfig',
-    'apps.users.apps.UserConfig',
-    'apps.web',
-
-    'apps.teams.apps.TeamConfig',
-
+    "apps.subscriptions.apps.SubscriptionConfig",
+    "apps.users.apps.UserConfig",
+    "apps.web",
+    "apps.teams.apps.TeamConfig",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PEGASUS_APPS + PROJECT_APPS
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'gyana.urls'
+ROOT_URLCONF = "gyana.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [
-            os.path.join(BASE_DIR, 'templates'),
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [
+            os.path.join(BASE_DIR, "templates"),
         ],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
-                'apps.web.context_processors.project_meta',
-                 # this line can be removed if not using google analytics
-                'apps.web.context_processors.google_analytics_id',
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
+                "apps.web.context_processors.project_meta",
+                # this line can be removed if not using google analytics
+                "apps.web.context_processors.google_analytics_id",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'gyana.wsgi.application'
+WSGI_APPLICATION = "gyana.wsgi.application"
 
-FORM_RENDERER = 'django.forms.renderers.TemplatesSetting'
+FORM_RENDERER = "django.forms.renderers.TemplatesSetting"
 
 # Database
 # https://docs.djangoproject.com/en/2.1/ref/settings/#databases
 
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'gyana',
-        'USER': 'postgres',
-        'PASSWORD': '***',
-        'HOST': 'localhost',
-        'PORT': '5432',
+    "default": {
+        "ENGINE": "django.db.backends.postgresql_psycopg2",
+        "NAME": "gyana",
+        "USER": "postgres",
+        "PASSWORD": "***",
+        "HOST": "localhost",
+        "PORT": "5432",
     }
 }
-
 
 
 # Auth / login stuff
 
 # Django recommends overriding the user model even if you don't think you need to because it makes
 # future changes much easier.
-AUTH_USER_MODEL = 'users.CustomUser'
-LOGIN_REDIRECT_URL = '/'
+AUTH_USER_MODEL = "users.CustomUser"
+LOGIN_REDIRECT_URL = "/"
 
 # Password validation
 # https://docs.djangoproject.com/en/2.1/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
 # Allauth setup
 
-ACCOUNT_ADAPTER = 'apps.teams.adapter.AcceptInvitationAdapter'
-ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_ADAPTER = "apps.teams.adapter.AcceptInvitationAdapter"
+ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_UNIQUE_EMAIL = True
@@ -167,13 +160,13 @@ ACCOUNT_LOGOUT_ON_GET = True
 ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True
 
 ACCOUNT_FORMS = {
-    'signup': 'apps.teams.forms.TeamSignupForm',
+    "signup": "apps.teams.forms.TeamSignupForm",
 }
 
 
 # User signup configuration: change to "mandatory" to require users to confirm email before signing in.
 # or "optional" to send confirmation emails but not require them
-ACCOUNT_EMAIL_VERIFICATION = 'none'
+ACCOUNT_EMAIL_VERIFICATION = "none"
 
 
 AUTHENTICATION_BACKENDS = (
@@ -186,14 +179,14 @@ AUTHENTICATION_BACKENDS = (
 
 # enable social login
 SOCIALACCOUNT_PROVIDERS = {
-    'google': {
-        'SCOPE': [
-            'profile',
-            'email',
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email",
         ],
-        'AUTH_PARAMS': {
-            'access_type': 'online',
-        }
+        "AUTH_PARAMS": {
+            "access_type": "online",
+        },
     }
 }
 
@@ -201,9 +194,9 @@ SOCIALACCOUNT_PROVIDERS = {
 # Internationalization
 # https://docs.djangoproject.com/en/2.1/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -215,23 +208,23 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/2.1/howto/static-files/
 
-STATIC_ROOT = os.path.join(BASE_DIR, 'static_root')
-STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, "static_root")
+STATIC_URL = "/static/"
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    os.path.join(BASE_DIR, "static"),
 ]
 # uncomment to use manifest storage to bust cache when file change
 # note: this may break some image references in sass files which is why it is not enabled by default
 # STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+MEDIA_URL = "/media/"
 
 # Email setup
 
 # use in development
-EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # use in production
 # see https://github.com/anymail/django-anymail for more details/examples
 # EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
@@ -242,50 +235,60 @@ SITE_ID = 1
 
 # DRF config
 REST_FRAMEWORK = {
-    'DEFAULT_PERMISSION_CLASSES': (
-        'rest_framework.permissions.IsAuthenticated',
-    ),
-    'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 100,
+    "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
+    "DEFAULT_SCHEMA_CLASS": "rest_framework.schemas.coreapi.AutoSchema",
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
+    "PAGE_SIZE": 100,
 }
 
 
 # Celery setup (using redis)
-CELERY_BROKER_URL = 'redis://localhost:6379/0'
-CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_BROKER_URL = "redis://localhost:6379/0"
+CELERY_RESULT_BACKEND = "redis://localhost:6379/0"
 
 
 # Pegasus config
 
 # replace any values below with specifics for your project
 PROJECT_METADATA = {
-    'NAME': "Gyana",
-    'URL': 'http://gyana.com',
-    'DESCRIPTION': "No-code data science",
-    'IMAGE': 'https://upload.wikimedia.org/wikipedia/commons/2/20/PEO-pegasus_black.svg',
-    'KEYWORDS': 'SaaS, django',
-    'CONTACT_EMAIL': 'developers@gyana.com',
+    "NAME": "Gyana",
+    "URL": "http://gyana.com",
+    "DESCRIPTION": "No-code data science",
+    "IMAGE": "https://upload.wikimedia.org/wikipedia/commons/2/20/PEO-pegasus_black.svg",
+    "KEYWORDS": "SaaS, django",
+    "CONTACT_EMAIL": "developers@gyana.com",
 }
 
 
-ADMINS = [('Gyana Developers', 'developers@gyana.com')]
+ADMINS = [("Gyana Developers", "developers@gyana.com")]
 
-GOOGLE_ANALYTICS_ID = ''  # replace with your google analytics ID to connect to Google Analytics
+GOOGLE_ANALYTICS_ID = (
+    ""  # replace with your google analytics ID to connect to Google Analytics
+)
 
 
 # Stripe config
 
 # modeled to be the same as https://github.com/dj-stripe/dj-stripe
-STRIPE_LIVE_PUBLIC_KEY = os.environ.get("STRIPE_LIVE_PUBLIC_KEY", "<your publishable key>")
+STRIPE_LIVE_PUBLIC_KEY = os.environ.get(
+    "STRIPE_LIVE_PUBLIC_KEY", "<your publishable key>"
+)
 STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
-STRIPE_TEST_PUBLIC_KEY = os.environ.get("STRIPE_TEST_PUBLIC_KEY", "pk_test_<your publishable key>")
-STRIPE_TEST_SECRET_KEY = os.environ.get("STRIPE_TEST_SECRET_KEY", "sk_test_<your secret key>")
+STRIPE_TEST_PUBLIC_KEY = os.environ.get(
+    "STRIPE_TEST_PUBLIC_KEY", "pk_test_<your publishable key>"
+)
+STRIPE_TEST_SECRET_KEY = os.environ.get(
+    "STRIPE_TEST_SECRET_KEY", "sk_test_<your secret key>"
+)
 STRIPE_LIVE_MODE = False  # Change to True in production
 
 # Get it from the section in the Stripe dashboard where you added the webhook endpoint
 # or from the stripe CLI when testing
-DJSTRIPE_WEBHOOK_SECRET = os.environ.get('DJSTRIPE_WEBHOOK_SECRET', "whsec_xxx")
+DJSTRIPE_WEBHOOK_SECRET = os.environ.get("DJSTRIPE_WEBHOOK_SECRET", "whsec_xxx")
 
-DJSTRIPE_FOREIGN_KEY_TO_FIELD = 'id'  # change to 'djstripe_id' if not a new installation
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = (
+    "id"  # change to 'djstripe_id' if not a new installation
+)
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # change to False if not a new installation
+
+DEFAULT_AUTO_FIELD = "django.db.models.AutoField"

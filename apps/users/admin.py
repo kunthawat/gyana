@@ -8,8 +8,4 @@ from .models import CustomUser
 class CustomUserAdmin(UserAdmin):
     list_display = UserAdmin.list_display
 
-    fieldsets = UserAdmin.fieldsets + (
-        ('Custom Fields', {
-            'fields': ('avatar',)
-        }),
-    )
+    fieldsets = UserAdmin.fieldsets + (("Custom Fields", {"fields": ("avatar",)}),)

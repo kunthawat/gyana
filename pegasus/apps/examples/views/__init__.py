@@ -3,13 +3,13 @@ from django.utils.decorators import method_decorator
 from django.views.generic import TemplateView
 
 
-@method_decorator(login_required, name='dispatch')
+@method_decorator(login_required, name="dispatch")
 class ExamplesHomeView(TemplateView):
-    template_name = 'pegasus/examples/examples_home.html'
+    template_name = "pegasus/examples/examples_home.html"
 
     def get_context_data(self, **kwargs):
         return {
-            'active_tab': 'home',
+            "active_tab": "home",
         }
 
 

@@ -16,30 +16,25 @@ Including another URLconf
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
-from django.urls import path, include
-from rest_framework.documentation import include_docs_urls, get_schemajs_view
-
+from django.urls import include, path
+from rest_framework.documentation import get_schemajs_view, include_docs_urls
 
 schemajs_view = get_schemajs_view(title="API")
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
-    path('users/', include('apps.users.urls')),
-    path('subscriptions/', include('apps.subscriptions.urls')),
-
-
-    path('teams/', include('apps.teams.urls')),
-
-    path('', include('apps.web.urls')),
-    path('pegasus/', include('pegasus.apps.examples.urls')),
-    path('celery-progress/', include('celery_progress.urls')),
+    path("admin/", admin.site.urls),
+    path("accounts/", include("allauth.urls")),
+    path("users/", include("apps.users.urls")),
+    path("subscriptions/", include("apps.subscriptions.urls")),
+    path("teams/", include("apps.teams.urls")),
+    path("", include("apps.web.urls")),
+    path("pegasus/", include("pegasus.apps.examples.urls")),
+    path("celery-progress/", include("celery_progress.urls")),
     # API docs
     # these are needed for schema.js
-    path('docs/', include_docs_urls(title='API Docs')),
-    path('schemajs/', schemajs_view, name='api_schemajs'),
-
+    path("docs/", include_docs_urls(title="API Docs")),
+    path("schemajs/", schemajs_view, name="api_schemajs"),
     # djstripe urls - for webhooks
     path("stripe/", include("djstripe.urls", namespace="djstripe")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

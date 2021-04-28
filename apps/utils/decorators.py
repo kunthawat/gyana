@@ -6,6 +6,7 @@ class catch_stripe_errors(object):
     """
     Meant to be used with django views only.
     """
+
     def __init__(self, f):
         self.f = f
 
@@ -13,10 +14,11 @@ class catch_stripe_errors(object):
         try:
             return self.f(*args, **kwargs)
         except CardError as e:
-            return JsonResponse({
-                'error': {
-                    'message': e._message,
-                }
-            }, status=400)
-
-
+            return JsonResponse(
+                {
+                    "error": {
+                        "message": e._message,
+                    }
+                },
+                status=400,
+            )

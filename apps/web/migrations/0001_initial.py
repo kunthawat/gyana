@@ -4,20 +4,19 @@ from django.db import migrations
 
 
 def create_site(apps, schema_editor):
-    Site = apps.get_model('sites', 'Site')
-    site = Site.objects.get_or_create(
-        id=settings.SITE_ID
-    )[0]
+    Site = apps.get_model("sites", "Site")
+    site = Site.objects.get_or_create(id=settings.SITE_ID)[0]
     # strip leading http:// from site url since django sites framework doesn't expect it
-    site.domain = settings.PROJECT_METADATA['URL'].replace('http://', '').replace('https://', '')
-    site.name = settings.PROJECT_METADATA['NAME']
+    site.domain = (
+        settings.PROJECT_METADATA["URL"].replace("http://", "").replace("https://", "")
+    )
+    site.name = settings.PROJECT_METADATA["NAME"]
     site.save()
 
 
 class Migration(migrations.Migration):
 
-    dependencies = [
-    ]
+    dependencies = []
 
     operations = [
         migrations.RunPython(create_site),

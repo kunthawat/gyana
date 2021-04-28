@@ -4,6 +4,9 @@ No-code data science
 
 ## Installation
 
+Install and set up [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/), note
+this requires your default python version to be version 3 or higher.
+
 Setup a virtualenv and install requirements:
 
 ```bash
@@ -43,7 +46,6 @@ celery -A gyana worker -l INFO
 
 To setup Google Authentication, follow the [instructions here](https://django-allauth.readthedocs.io/en/latest/providers.html#google).
 
-
 ## Running Tests
 
 To run tests simply run:
@@ -57,7 +59,6 @@ Or to test a specific app/module:
 ```bash
 ./manage.py test apps.utils.tests.test_slugs
 ```
-
 
 On Linux-based systems you can watch for changes using the following:
 

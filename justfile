@@ -1,5 +1,5 @@
 dev:
-    python ./manage.py runserver
+    DJANGO_SETTINGS_MODULE=gyana.settings_local python ./manage.py runserver
 
 celery:
     celery -A gyana worker -l info

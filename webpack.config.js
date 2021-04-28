@@ -1,6 +1,5 @@
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
-const VueLoaderPlugin = require("vue-loader/lib/plugin");
 
 module.exports = {
   resolve: {
@@ -14,8 +13,6 @@ module.exports = {
     pegasus: "./assets/javascript/pegasus/pegasus.js",
     "react-object-lifecycle":
       "./assets/javascript/pegasus/examples/react/react-object-lifecycle.js",
-    "vue-object-lifecycle":
-      "./assets/javascript/pegasus/examples/vue/vue-object-lifecycle.js",
     stimulus: "./assets/javascript/stimulus.js",
     dataflow: "./apps/dataflows/javascript/app.jsx",
   },
@@ -26,10 +23,6 @@ module.exports = {
   },
   module: {
     rules: [
-      {
-        test: /\.vue$/,
-        loader: "vue-loader",
-      },
       {
         test: /\.(js|jsx)$/,
         exclude: /node_modules/,
@@ -56,6 +49,5 @@ module.exports = {
     new MiniCssExtractPlugin({
       filename: "css/[name].css",
     }),
-    new VueLoaderPlugin(),
   ],
 };

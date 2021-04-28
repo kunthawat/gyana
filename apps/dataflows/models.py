@@ -7,7 +7,19 @@ class Dataflow(models.Model):
     updated = models.DateTimeField(auto_now=True, editable=False)
 
     class Meta:
-        ordering = ('-created', )
+        ordering = ("-created",)
 
     def __str__(self):
         return self.name
+
+
+class Node(models.Model):
+    class Kind(models.TextChoices):
+        PIVOT = "pivot", "Pivot"
+        UNPIVOT = "unpivot", "Unpivot"
+
+    dataflow = models.ForeignKey(Dataflow, on_delete=models.CASCADE)
+    kind = models.CharField(max_length=16, choices=Kind.choices)
+    x = models.FloatField()
+    y = models.FloatField()
+    config = models.JSONField(null=True)

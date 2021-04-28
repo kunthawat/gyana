@@ -3,6 +3,9 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const VueLoaderPlugin = require("vue-loader/lib/plugin");
 
 module.exports = {
+  resolve: {
+    extensions: [".js", ".jsx"],
+  },
   entry: {
     "site-base": "./assets/site-base.js", // base styles shared between frameworks
     "site-tailwind": "./assets/site-tailwind.js", // required for tailwindcss styles
@@ -14,6 +17,7 @@ module.exports = {
     "vue-object-lifecycle":
       "./assets/javascript/pegasus/examples/vue/vue-object-lifecycle.js",
     stimulus: "./assets/javascript/stimulus.js",
+    dataflow: "./apps/dataflows/javascript/app.jsx",
   },
   output: {
     path: path.resolve(__dirname, "./static"),

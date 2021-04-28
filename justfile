@@ -2,10 +2,10 @@ dev:
     python ./manage.py runserver
 
 celery:
-    celery -A superreports_io worker -l info
+    celery -A gyana worker -l info
 
 dev-celery:
-    watchexec -w apps -e py -r "celery -A superreports_io worker -l info"
+    watchexec -w apps -e py -r "celery -A gyana worker -l info"
 
 export:
     poetry export -f requirements.txt --output requirements.txt

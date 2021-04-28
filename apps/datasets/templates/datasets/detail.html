@@ -3,7 +3,27 @@
 {% block app %}
 <h1>Detail</h1>
 <p>{{ object.name }}</p>
-<a href="{% url 'datasets:list' %}"
-  >List</a
->
-{% endblock %} 
+<div class="w-1/2 h-96 overflow-scroll">
+  <turbo-frame
+    id="datasets-table"
+    src="{% url 'datasets:table' object.id %}"
+  ></turbo-frame>
+</div>
+<div class="w-full h-96 overflow-scroll">
+  <turbo-frame
+    id="datasets-grid"
+    src="{% url 'datasets:grid' object.id %}"
+  ></turbo-frame>
+</div>
+<a href="{% url 'datasets:list' %}">List</a>
+<!--ag-grid-->
+<script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js"></script>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css"
+/>
+<link
+  rel="stylesheet"
+  href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css"
+/>
+{% endblock %}

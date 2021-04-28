@@ -295,3 +295,9 @@ DJSTRIPE_FOREIGN_KEY_TO_FIELD = (
 DJSTRIPE_USE_NATIVE_JSONFIELD = True  # change to False if not a new installation
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
+
+GCP_PROJECT = "gyana-1511894275181"
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+
+CRISPY_TEMPLATE_PACK = "tailwind"

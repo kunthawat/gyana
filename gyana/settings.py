@@ -52,6 +52,8 @@ THIRD_PARTY_APPS = [
 
     'rest_framework',
     'celery_progress',
+    "crispy_forms",
+    "crispy_tailwind",
 
     # stripe integration
     'djstripe',

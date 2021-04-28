@@ -3,15 +3,23 @@
 ## Setup
 
 - Install python deps with `poetry install`
-  - You need to manually update the `psycopg2` dependency to `psycopg2-binary`
-    for the initial install.
 - Install node deps with `yarn`
 - Setup local variables in .env file
 - Run local Postgres with Postgres.app https://postgresapp.com/
 - Run local Redis with Redis.app https://jpadilla.github.io/redisapp/
 
+There is a bug with `psycopg2` building on MacOS, due to outdated package
+`django-heroku`. After the install fails the first time, run:
+
+```
+env LDFLAGS="-I/usr/local/opt/openssl/include -L/usr/local/opt/openssl/lib" pip install psycopg2
+```
+
+And then run the install again. See for details:
+https://stackoverflow.com/questions/26288042/error-installing-psycopg2-library-not-found-for-lssl
+
 ## Run
 
 - `just dev`
-- `just celery`
+- `just dev-celery`
 - `yarn dev-watch`

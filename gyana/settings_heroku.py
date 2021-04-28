@@ -1,3 +1,8 @@
+"""
+Used in Heroku config vars:
+https://dashboard.heroku.com/apps/gyana-mvp/settings
+"""
+
 import django_heroku
 
 from .settings import *

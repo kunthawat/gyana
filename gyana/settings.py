@@ -65,6 +65,9 @@ PROJECT_APPS = [
     "apps.users.apps.UserConfig",
     "apps.web",
     "apps.teams.apps.TeamConfig",
+    "apps.datasets",
+    "apps.dataflows",
+    "apps.dashboards",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PEGASUS_APPS + PROJECT_APPS

@@ -5,7 +5,7 @@ https://dashboard.heroku.com/apps/gyana-mvp/settings
 
 import django_heroku
 
-from .settings import *
+from .base import *
 
 django_heroku.settings(locals())
 

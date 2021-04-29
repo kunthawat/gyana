@@ -4,7 +4,7 @@
  * @see https://tailwindcss.com/docs/configuration
  */
 module.exports = {
-  purge: ["./assets/**/*.js", "./assets/**/*.vue", "./templates/**/*.html"],
+  purge: ["./assets/**/*.js", "./templates/**/*.html"],
   darkMode: false,
   theme: {
     extend: {},

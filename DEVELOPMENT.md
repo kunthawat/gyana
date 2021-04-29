@@ -48,6 +48,14 @@ createdb gyana
 python manage.py migrate
 ```
 
+You now need to run webpack to bundle all the client side code and styles:
+
+```bash
+yarn dev
+```
+
+You can also run `yarn dev-watch` to watch for file changes.
+
 At this point you should be able to run the app, make sure that postgresql is running (and redis-server if running celery).
 
 ```bash

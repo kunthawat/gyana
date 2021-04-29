@@ -6,8 +6,8 @@ module.exports = {
     extensions: [".js", ".jsx"],
   },
   entry: {
-    "site-base": "./assets/site-base.js", // base styles shared between frameworks
-    "site-tailwind": "./assets/site-tailwind.js", // required for tailwindcss styles
+    global: "./assets/styles/global.scss",
+    tailwind: "./assets/styles/tailwind.css",
     app: "./assets/javascript/app.js",
     teams: "./assets/javascript/teams/teams.js",
     pegasus: "./assets/javascript/pegasus/pegasus.js",
@@ -36,7 +36,7 @@ module.exports = {
         },
       },
       {
-        test: /\.scss$/,
+        test: /\.scss$/i,
         use: [MiniCssExtractPlugin.loader, "css-loader", "sass-loader"],
       },
       {

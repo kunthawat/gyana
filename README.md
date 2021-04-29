@@ -22,7 +22,7 @@ createdb gyana
 python manage.py migrate
 
 # Build the client
-yarn dev
+yarn build
 
 # Run the app
 just dev

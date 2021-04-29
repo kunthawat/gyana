@@ -5,9 +5,9 @@
   "main": "webpack.config.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "NODE_ENV=production webpack --mode production",
-    "dev": "webpack --mode development",
-    "dev-watch": "webpack --mode development --watch"
+    "build": "webpack --mode development",
+    "build:watch": "webpack --mode development --watch",
+    "build:prod": "NODE_ENV=production webpack --mode production"
   },
   "author": "",
   "homepage": "http://example.com/",

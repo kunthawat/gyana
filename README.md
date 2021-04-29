@@ -21,6 +21,9 @@ yarn install
 createdb gyana
 python manage.py migrate
 
+# Build the client
+yarn dev
+
 # Run the app
 just dev
 ```

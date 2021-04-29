@@ -19,6 +19,10 @@ var/
 *.egg
 *.pyc
 
+# Webpack output
+static/css/
+static/js/
+
 .idea
 *~
 db.sqlite3

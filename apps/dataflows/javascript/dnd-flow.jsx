@@ -10,22 +10,24 @@ import Sidebar from "./sidebar";
 
 import "./dnd.css";
 
-const initialElements = [
-  {
-    id: "0",
-    type: "input",
-    data: { label: "input node" },
-    position: { x: 250, y: 5 },
-  },
-];
-
 const DnDFlow = ({ client }) => {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [elements, setElements] = useState(initialElements);
-  const onConnect = (params) => setElements((els) => addEdge(params, els));
-  const onElementsRemove = (elementsToRemove) =>
+  const [elements, setElements] = useState([]);
+  const onConnect = (params) => {
+    setElements((els) => addEdge(params, els));
+  };
+
+  const dataflowId = window.location.pathname.split("/")[2];
+
+  const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
+    elementsToRemove.forEach((el) => {
+      client.action(window.schema, ["dataflows", "api", "nodes", "delete"], {
+        id: el.id,
+      });
+    });
+  };
 
   const onLoad = (_reactFlowInstance) =>
     setReactFlowInstance(_reactFlowInstance);
@@ -33,6 +35,28 @@ const DnDFlow = ({ client }) => {
   const onDragOver = (event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
+  };
+
+  const getPosition = (event) => {
+    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
+    return reactFlowInstance.project({
+      x: event.clientX - reactFlowBounds.left,
+      y: event.clientY - reactFlowBounds.top,
+    });
+  };
+
+  const onDragStop = (event, node) => {
+    const position = getPosition(event);
+
+    client.action(
+      window.schema,
+      ["dataflows", "api", "nodes", "partial_update"],
+      {
+        id: node.id,
+        x: position.x,
+        y: position.y,
+      }
+    );
   };
 
   useEffect(() => {
@@ -52,19 +76,15 @@ const DnDFlow = ({ client }) => {
   const onDrop = async (event) => {
     event.preventDefault();
 
-    const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
     const type = event.dataTransfer.getData("application/reactflow");
-    const position = reactFlowInstance.project({
-      x: event.clientX - reactFlowBounds.left,
-      y: event.clientY - reactFlowBounds.top,
-    });
+    const position = getPosition(event);
 
     const result = await client.action(
       window.schema,
       ["dataflows", "api", "nodes", "create"],
       {
         kind: type,
-        dataflow: 1,
+        dataflow: dataflowId,
         x: position.x,
         y: position.y,
       }
@@ -91,11 +111,12 @@ const DnDFlow = ({ client }) => {
             onLoad={onLoad}
             onDrop={onDrop}
             onDragOver={onDragOver}
+            onNodeDragStop={onDragStop}
             onElementClick={(event, element) => {
               document.getElementById("dataflow-node").setAttribute(
                 "src",
                 // TODO: populate URL from django reverse
-                `http://localhost:8000/dataflows/1/nodes/${element.id}`
+                `http://localhost:8000/dataflows/${dataflowId}/nodes/${element.id}`
               );
             }}
           >

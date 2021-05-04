@@ -1,8 +1,9 @@
-from apps.dashboards.mixins import DashboardMixin
-from apps.dashboards.widgets.mixins import WidgetMixin
+from urllib.parse import parse_qs, urlparse
+
+from apps.widgets.models import Widget
 from django import forms
+from django.db.models.query import QuerySet
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
@@ -13,13 +14,23 @@ from .forms import get_filter_form
 from .models import Filter
 
 
-class FilterList(DashboardMixin, WidgetMixin, ListView):
+class WidgetMixin:
+    @property
+    def widget(self):
+        params = parse_qs(urlparse(self.request.META["HTTP_REFERER"]).query)
+        return Widget.objects.get(pk=params["widget_id"][0])
+
+
+class FilterList(WidgetMixin, ListView):
     template_name = "filters/list.html"
     model = Filter
     paginate_by = 20
 
+    def get_queryset(self) -> QuerySet:
+        return Filter.objects.filter(widget=self.widget).all()
 
-class FilterCreate(DashboardMixin, WidgetMixin, TurboCreateView):
+
+class FilterCreate(WidgetMixin, TurboCreateView):
     template_name = "filters/create.html"
     model = Filter
 
@@ -54,17 +65,15 @@ class FilterCreate(DashboardMixin, WidgetMixin, TurboCreateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse(
-            "dashboards:widgets:filters:list", args=(self.dashboard.id, self.widget.id)
-        )
+        return reverse("filters:list")
 
 
-class FilterDetail(DashboardMixin, WidgetMixin, DetailView):
+class FilterDetail(DetailView):
     template_name = "filters/detail.html"
     model = Filter
 
 
-class FilterUpdate(DashboardMixin, WidgetMixin, TurboUpdateView):
+class FilterUpdate(WidgetMixin, TurboUpdateView):
     template_name = "filters/update.html"
     model = Filter
 
@@ -86,17 +95,12 @@ class FilterUpdate(DashboardMixin, WidgetMixin, TurboUpdateView):
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse(
-            "dashboards:widgets:filters:update",
-            args=(self.dashboard.id, self.widget.id, self.object.id),
-        )
+        return reverse("filters:update", args=(self.object.id,))
 
 
-class FilterDelete(DashboardMixin, WidgetMixin, DeleteView):
+class FilterDelete(DeleteView):
     template_name = "filters/delete.html"
     model = Filter
 
     def get_success_url(self) -> str:
-        return reverse(
-            "dashboards:widgets:filters:list", args=(self.dashboard.id, self.widget.id)
-        )
+        return reverse("filters:list")

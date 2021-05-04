@@ -1,9 +1,11 @@
 const path = require("path");
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
+const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 
 module.exports = {
   resolve: {
-    extensions: [".js", ".jsx"],
+    extensions: [".ts", ".tsx", ".js", ".jsx"],
+    plugins: [new TsconfigPathsPlugin()],
   },
   entry: {
     global: "./assets/styles/global.scss",
@@ -14,7 +16,7 @@ module.exports = {
     "react-object-lifecycle":
       "./assets/javascript/pegasus/examples/react/react-object-lifecycle.js",
     stimulus: "./assets/javascript/stimulus.js",
-    dataflow: "./apps/dataflows/javascript/app.jsx",
+    dataflow: "./apps/dataflows/javascript/app.tsx",
   },
   output: {
     path: path.resolve(__dirname, "./static"),
@@ -24,11 +26,15 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.(js|jsx)$/,
+        test: /\.(ts|tsx|js|jsx)$/,
         exclude: /node_modules/,
         loader: "babel-loader",
         options: {
-          presets: ["@babel/env", "@babel/preset-react"],
+          presets: [
+            "@babel/env",
+            "@babel/preset-react",
+            "@babel/preset-typescript",
+          ],
           plugins: [
             "@babel/plugin-proposal-class-properties",
             "@babel/plugin-transform-runtime",

@@ -10,12 +10,12 @@ module.exports = {
   entry: {
     global: "./assets/styles/global.scss",
     tailwind: "./assets/styles/tailwind.css",
-    app: "./assets/javascript/app.js",
-    teams: "./assets/javascript/teams/teams.js",
-    pegasus: "./assets/javascript/pegasus/pegasus.js",
+    app: "./assets/javascript/app.ts",
+    teams: "./assets/javascript/teams/teams.tsx",
+    pegasus: "./assets/javascript/pegasus/pegasus.ts",
     "react-object-lifecycle":
-      "./assets/javascript/pegasus/examples/react/react-object-lifecycle.js",
-    stimulus: "./assets/javascript/stimulus.js",
+      "./assets/javascript/pegasus/examples/react/react-object-lifecycle.tsx",
+    stimulus: "./assets/javascript/stimulus.ts",
     dataflow: "./apps/dataflows/javascript/app.tsx",
   },
   output: {

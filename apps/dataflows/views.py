@@ -1,14 +1,13 @@
 from functools import cached_property
-from urllib.parse import urlparse
 
 from apps.dataflows.serializers import NodeSerializer
-from django.urls import resolve, reverse, reverse_lazy
+from apps.projects.mixins import ProjectMixin
+from django.db.models.query import QuerySet
+from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
-from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
-from rest_framework.generics import get_object_or_404
-from turbo_response.views import TurboCreateView, TurboFormView, TurboUpdateView
+from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .forms import KIND_TO_FORM, DataflowForm
 from .models import Dataflow, Node
@@ -16,25 +15,25 @@ from .models import Dataflow, Node
 # CRUDL
 
 
-class DataflowList(ListView):
+class DataflowList(ProjectMixin, ListView):
     template_name = "dataflows/list.html"
     model = Dataflow
     paginate_by = 20
 
+    def get_queryset(self) -> QuerySet:
+        return Dataflow.objects.filter(project=self.project).all()
 
-class DataflowCreate(TurboCreateView):
+
+class DataflowCreate(ProjectMixin, TurboCreateView):
     template_name = "dataflows/create.html"
     model = Dataflow
     form_class = DataflowForm
     success_url = reverse_lazy("dataflows:list")
 
-    def form_valid(self, form):
-        return super().form_valid(form)
-
-    def get_success_url(self) -> str:
-        # new_node = Node(dataflow=self.object, kind="input", x=0, y=0)
-        # new_node.save()
-        return self.success_url
+    def get_initial(self):
+        initial = super().get_initial()
+        initial["project"] = self.project
+        return initial
 
 
 class DataflowDetail(DetailView):

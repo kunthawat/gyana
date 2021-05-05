@@ -151,6 +151,12 @@ const DnDFlow = ({ client }) => {
                 // TODO: populate URL from django reverse
                 `http://localhost:8000/dataflows/${dataflowId}/nodes/${element.id}`
               );
+
+              document.getElementById("dataflows-grid").setAttribute(
+                "src",
+                // TODO: populate URL from django reverse
+                `http://localhost:8000/dataflows/${dataflowId}/nodes/${element.id}/grid`
+              );
             }}
           >
             <Controls />

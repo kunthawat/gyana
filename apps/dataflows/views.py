@@ -1,3 +1,4 @@
+import json
 from functools import cached_property
 
 from apps.dataflows.serializers import NodeSerializer
@@ -6,6 +7,7 @@ from django.db.models.query import QuerySet
 from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
+from lib.bigquery import ibis_client
 from rest_framework import viewsets
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
@@ -87,3 +89,16 @@ class NodeUpdate(TurboUpdateView):
 
     def get_success_url(self) -> str:
         return reverse("dataflows:node", args=(self.dataflow.id, self.object.id))
+
+
+class NodeGrid(DetailView):
+    template_name = "dataflows/grid.html"
+    model = Node
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        conn = ibis_client()
+        df = conn.execute(self.object.get_query().limit(100))
+        context["columns"] = json.dumps([{"field": col} for col in df.columns])
+        context["rows"] = df.to_json(orient="records")
+        return context

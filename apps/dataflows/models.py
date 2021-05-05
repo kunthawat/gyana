@@ -1,3 +1,4 @@
+from apps.dataflows.nodes import NODE_FROM_CONFIG
 from apps.datasets.models import Dataset
 from apps.projects.models import Project
 from django.db import models
@@ -28,3 +29,7 @@ class Node(models.Model):
         "self", symmetrical=False, related_name="children", blank=True
     )
     _input_dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, null=True)
+
+    def get_query(self):
+        func = NODE_FROM_CONFIG[self.kind]
+        return func(self)

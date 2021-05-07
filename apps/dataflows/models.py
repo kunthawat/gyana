@@ -24,6 +24,7 @@ DEFAULT_COL_NAME_LENGTH = 300
 class Node(models.Model):
     class Kind(models.TextChoices):
         INPUT = "input", "Input"
+        OUTPUT = "output", "Output"
         SELECT = "select", "Select"
         JOIN = "join", "Join"
         GROUP = "group", "Group"
@@ -40,8 +41,11 @@ class Node(models.Model):
     # Input
     input_dataset = models.ForeignKey(Dataset, on_delete=models.CASCADE, null=True)
 
+    # Output
+    output_name = models.CharField(max_length=100, null=True)
+
     # Select
-    # select_columns exists on Column as FK
+    # columns exists on Column as FK
 
     # Join
     join_how = models.CharField(

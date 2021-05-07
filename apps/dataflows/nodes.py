@@ -1,10 +1,14 @@
-from lib.bigquery import ibis_client
+from lib.clients import ibis_client
 
 
 def get_input_query(node):
     conn = ibis_client()
     # The input can have no selected dataset
     return conn.table(node.input_dataset.table_id) if node.input_dataset else None
+
+
+def get_output_query(node):
+    return node.parents.first().get_query()
 
 
 def get_select_query(node):
@@ -74,6 +78,7 @@ def get_group_query(node):
 
 NODE_FROM_CONFIG = {
     "input": get_input_query,
+    "output": get_output_query,
     "join": get_join_query,
     "group": get_group_query,
     "select": get_select_query,

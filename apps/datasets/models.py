@@ -1,5 +1,6 @@
 from apps.projects.models import Project
 from django.db import models
+from lib.clients import ibis_client
 
 
 class Dataset(models.Model):
@@ -26,6 +27,13 @@ class Dataset(models.Model):
 
     def __str__(self):
         return self.name
+
+    def get_query(self):
+        conn = ibis_client()
+        return conn.table(self.table_id)
+
+    def get_schema(self):
+        return self.get_query().schema()
 
     @property
     def table_id(self):

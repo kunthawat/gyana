@@ -1,38 +1,14 @@
 from datetime import datetime
-from functools import lru_cache
 
-import google.auth
-import ibis_bigquery
 from apps.datasets.models import Dataset
 from apps.filters.models import Filter
+from apps.widgets.models import Widget, WidgetSource
 from django.conf import settings
-from django.forms.widgets import Widget
 from google.cloud import bigquery
 
-DATASET_ID = "datasets"
+from lib.clients import DATASET_ID, bigquery_client, ibis_client
+
 DEFAULT_LIMIT = 10
-
-
-@lru_cache
-def bigquery_client():
-
-    # https://cloud.google.com/bigquery/external-data-drive#python
-    credentials, project = google.auth.default(
-        scopes=[
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/bigquery",
-        ]
-    )
-
-    # return bigquery.Client(project=settings.GCP_PROJECT)
-    return bigquery.Client(credentials=credentials, project=project)
-
-
-@lru_cache
-def ibis_client():
-    return ibis_bigquery.connect(
-        project_id=settings.GCP_PROJECT, auth_external_data=True, dataset_id=DATASET_ID
-    )
 
 
 def sync_table(dataset: Dataset):
@@ -100,7 +76,9 @@ def query_dataset(dataset: Dataset):
 def query_widget(widget: Widget):
 
     conn = ibis_client()
-    table = conn.table(widget.dataset.table_id)
+
+    source = widget.dataset or widget.node
+    table = source.get_query()
 
     for filter in widget.filter_set.all():
         if filter.type == Filter.Type.INTEGER:
@@ -117,9 +95,5 @@ def query_widget(widget: Widget):
     return conn.execute(table.group_by(widget.label).count(widget.value))
 
 
-def get_columns(dataset: Dataset):
-    client = bigquery_client()
-
-    bq_table = client.get_table(f"{DATASET_ID}.{dataset.table_id}")
-
-    return bq_table.schema
+def get_columns(source: WidgetSource):
+    return source.get_schema()

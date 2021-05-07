@@ -27,6 +27,13 @@ class InputNodeForm(forms.ModelForm):
         labels = {"input_dataset": "Dataset"}
 
 
+class OutputNodeForm(forms.ModelForm):
+    class Meta:
+        model = Node
+        fields = ["output_name"]
+        labels = {"output_name": "Output name"}
+
+
 class SelectNodeForm(forms.ModelForm):
     class Meta:
         model = Node
@@ -90,6 +97,7 @@ class GroupNodeForm(forms.ModelForm):
 
 KIND_TO_FORM = {
     "input": InputNodeForm,
+    "output": OutputNodeForm,
     "select": SelectNodeForm,
     "join": JoinNodeForm,
     "group": GroupNodeForm,

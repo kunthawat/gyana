@@ -12,7 +12,7 @@ from django.shortcuts import get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
-from lib.bigquery import ibis_client
+from lib.clients import ibis_client
 from rest_framework import viewsets
 from turbo_response.views import TurboCreateView, TurboUpdateView
 

@@ -11,6 +11,13 @@ from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 from .models import Column, Dataflow, FunctionColumn, Node
 
 
+class DataflowForm(forms.ModelForm):
+    class Meta:
+        model = Dataflow
+        fields = ["name", "project"]
+        widgets = {"project": HiddenInput()}
+
+
 class NodeForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -24,23 +31,11 @@ class NodeForm(forms.ModelForm):
         return self.instance.parents.first().get_schema()
 
 
-class DataflowForm(forms.ModelForm):
-    class Meta:
-        model = Dataflow
-        fields = ["name", "project"]
-        widgets = {"project": HiddenInput()}
-
-
-# Using a callable to refresh selection when a new dataset is added
-def get_datasets():
-    return ((d.id, d.name) for d in Dataset.objects.all())
-
-
 class InputNodeForm(NodeForm):
     class Meta:
         model = Node
-        fields = ["input_dataset"]
-        labels = {"input_dataset": "Dataset"}
+        fields = ["input_table"]
+        labels = {"input_table": "Dataset"}
 
 
 class OutputNodeForm(NodeForm):

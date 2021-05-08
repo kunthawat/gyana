@@ -6,6 +6,7 @@ from django.conf import settings
 from google.cloud import bigquery
 
 DATASET_ID = "datasets"
+DATAFLOW_ID = "dataflows"
 
 
 @lru_cache
@@ -20,7 +21,9 @@ def bigquery_client():
     )
 
     # return bigquery.Client(project=settings.GCP_PROJECT)
-    return bigquery.Client(credentials=credentials, project=project)
+    return bigquery.Client(
+        credentials=credentials, project=project, location=settings.BIGQUERY_LOCATION
+    )
 
 
 @lru_cache

@@ -4,8 +4,7 @@ from django.core.exceptions import ValidationError
 from django.utils.translation import ugettext_lazy as _
 
 from apps.teams.util import get_next_unique_team_slug
-
-from .models import Invitation, Team
+from .models import Team, Invitation
 
 
 class TeamSignupForm(SignupForm):
@@ -22,7 +21,8 @@ class TeamSignupForm(SignupForm):
         invitation_id = self.cleaned_data.get("invitation_id")
         # if invitation is not set then team name is required
         if not invitation_id and not team_name:
-            raise forms.ValidationError(_("Team Name is required!"))
+            email = self.cleaned_data.get("email")
+            team_name = f"{email.split('@')[0]}"
         return team_name
 
     def clean_invitation_id(self):

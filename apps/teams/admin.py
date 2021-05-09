@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Invitation, Membership, Team
+from .models import Team, Membership, Invitation
 
 
 @admin.register(Membership)

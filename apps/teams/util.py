@@ -1,6 +1,5 @@
-from apps.utils.slug import get_next_unique_slug
-
 from .models import Team
+from apps.utils.slug import get_next_unique_slug
 
 
 def get_next_unique_team_slug(team_name):

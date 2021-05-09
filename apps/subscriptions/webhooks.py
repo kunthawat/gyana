@@ -1,6 +1,6 @@
 from django.core.mail import mail_admins
 from djstripe import webhooks as djstripe_hooks
-from djstripe.models import Customer, Plan, Subscription
+from djstripe.models import Customer, Subscription, Plan
 
 
 @djstripe_hooks.handler("customer.subscription.updated")

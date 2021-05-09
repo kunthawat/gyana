@@ -1,7 +1,6 @@
 from django.urls import reverse
 
 from apps.users.adapter import EmailAsUsernameAdapter
-
 from .invitations import clear_invite_from_session
 
 

@@ -6,28 +6,30 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.mail import mail_admins
 from django.db import transaction
-from django.http import HttpResponseRedirect, JsonResponse
+from django.http import JsonResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
-from djstripe import settings as djstripe_settings
 from djstripe.enums import PlanInterval
 from djstripe.models import Product
+from djstripe import settings as djstripe_settings
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.teams.decorators import login_and_team_required, team_admin_required
-from apps.teams.models import Team
 from apps.utils.decorators import catch_stripe_errors
 from apps.web.meta import absolute_url
-
 from .decorators import redirect_subscription_errors
 from .helpers import get_friendly_currency_amount
-from .metadata import (ACTIVE_PLAN_INTERVALS,
-                       get_active_plan_interval_metadata,
-                       get_active_products_with_metadata,
-                       get_product_and_metadata_for_subscription)
+from .metadata import (
+    get_active_products_with_metadata,
+    get_product_and_metadata_for_subscription,
+    ACTIVE_PLAN_INTERVALS,
+    get_active_plan_interval_metadata,
+)
+
+from apps.teams.decorators import team_admin_required, login_and_team_required
+from apps.teams.models import Team
 
 
 class ProductWithMetadataAPI(APIView):
@@ -175,7 +177,7 @@ def _subscription_success(request, subscription_holder):
 
     assert isinstance(subscription_holder, Team)
     redirect = reverse(
-        "subscriptions:team_subscription_details", args=[subscription_holder.slug]
+        "subscriptions_team:subscription_details", args=[subscription_holder.slug]
     )
 
     return HttpResponseRedirect(redirect)
@@ -288,7 +290,7 @@ def _get_subscription_urls(subscription_holder):
     ]
 
     def _construct_url(base):
-        return reverse(f"subscriptions:team_{base}", args=[subscription_holder.slug])
+        return reverse(f"subscriptions_team:{base}", args=[subscription_holder.slug])
 
     return {url_base: _construct_url(url_base) for url_base in url_bases}
 

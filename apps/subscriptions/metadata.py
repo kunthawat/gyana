@@ -2,7 +2,7 @@ import attr
 from django.utils.functional import cached_property
 from django.utils.translation import ugettext_lazy as _
 from djstripe.enums import PlanInterval
-from djstripe.models import Plan, Product
+from djstripe.models import Product, Plan
 
 from .exceptions import SubscriptionConfigError
 from .serializers import PlanSerializer, ProductSerializer

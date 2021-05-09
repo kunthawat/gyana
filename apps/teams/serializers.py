@@ -1,8 +1,9 @@
 from rest_framework import serializers
 from rest_framework.validators import UniqueValidator
 
-from .models import Invitation, Membership, Team
 from .util import get_next_unique_team_slug
+from .models import Team, Membership, Invitation
+from .roles import is_admin
 
 
 class MembershipSerializer(serializers.ModelSerializer):
@@ -36,10 +37,22 @@ class TeamSerializer(serializers.ModelSerializer):
         many=True, read_only=True, source="pending_invitations"
     )
     dashboard_url = serializers.ReadOnlyField()
+    is_admin = serializers.SerializerMethodField()
 
     class Meta:
         model = Team
-        fields = ("id", "name", "slug", "members", "invitations", "dashboard_url")
+        fields = (
+            "id",
+            "name",
+            "slug",
+            "members",
+            "invitations",
+            "dashboard_url",
+            "is_admin",
+        )
+
+    def get_is_admin(self, obj):
+        return is_admin(self.context["request"].user, obj)
 
     def create(self, validated_data):
         team_name = validated_data.get("name", None)

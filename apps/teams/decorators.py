@@ -1,11 +1,11 @@
 from functools import wraps
 
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 
-from .models import Team
 from .roles import user_can_access_team, user_can_administer_team
+from .models import Team
 
 
 def login_and_team_required(view_func):

@@ -1,7 +1,7 @@
 from django.test import TestCase
 
 from apps.teams.models import Team
-from apps.teams.roles import ROLE_ADMIN, ROLE_MEMBER, is_admin, is_member
+from apps.teams.roles import ROLE_ADMIN, is_admin, ROLE_MEMBER, is_member
 from apps.users.models import CustomUser
 
 

@@ -1,24 +1,28 @@
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from django.http import HttpResponse, HttpResponseRedirect
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseRedirect, HttpResponse
+from django.shortcuts import render, get_object_or_404
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
 from rest_framework import viewsets
+from rest_framework.exceptions import PermissionDenied, ValidationError
 
-from apps.teams.decorators import login_and_team_required, team_admin_required
-
+from .api_url_helpers import get_team_api_url_templates
+from .decorators import login_and_team_required, team_admin_required
+from .invitations import send_invitation, process_invitation, clear_invite_from_session
 from .forms import TeamChangeForm
-from .invitations import (clear_invite_from_session, process_invitation,
-                          send_invitation)
-from .models import Invitation, Team
-from .serializers import InvitationSerializer, TeamSerializer
+from .models import Team, Invitation
+from .permissions import TeamAccessPermissions, TeamModelAccessPermissions
+from .roles import is_admin, is_member
+from .serializers import TeamSerializer, InvitationSerializer
 
 
 @login_required
-def manage_teams(request):
-    return render(request, "teams/teams.html", {})
+def manage_teams(request, path=""):
+    return render(
+        request, "teams/teams.html", {"api_urls": get_team_api_url_templates()}
+    )
 
 
 @login_required
@@ -50,6 +54,21 @@ def create_team(request):
         {
             "form": form,
             "create": True,
+        },
+    )
+
+
+@login_and_team_required
+def manage_team_react(request, team_slug):
+    team = request.team
+    return render(
+        request,
+        "teams/manage_team_react.html",
+        {
+            "team": team,
+            "team_json": TeamSerializer(team, context={"request": request}).data,
+            "active_tab": "manage-team",
+            "api_urls": get_team_api_url_templates(),
         },
     )
 
@@ -106,17 +125,18 @@ def accept_invitation_confirm(request, invitation_id):
             request, _("You successfully joined {}").format(invitation.team.name)
         )
         return HttpResponseRedirect(
-            reverse("web:team_home", args=[invitation.team.slug])
+            reverse("web_team:home", args=[invitation.team.slug])
         )
 
 
 class TeamViewSet(viewsets.ModelViewSet):
     queryset = Team.objects.all()
     serializer_class = TeamSerializer
+    permission_classes = (TeamAccessPermissions,)
 
     def get_queryset(self):
         # filter queryset based on logged in user
-        return self.request.user.teams.all()
+        return self.request.user.teams.order_by("name")
 
     def perform_create(self, serializer):
         # ensure logged in user is set on the model during creation
@@ -127,13 +147,35 @@ class TeamViewSet(viewsets.ModelViewSet):
 class InvitationViewSet(viewsets.ModelViewSet):
     queryset = Invitation.objects.all()
     serializer_class = InvitationSerializer
+    permission_classes = (TeamModelAccessPermissions,)
+
+    @property
+    def team(self):
+        team = get_object_or_404(Team, slug=self.kwargs["team_slug"])
+        if is_member(self.request.user, team):
+            return team
+        else:
+            raise PermissionDenied()
+
+    def _ensure_team_match(self, team):
+        if team != self.team:
+            raise ValidationError("Team set in invitation must match URL")
 
     def get_queryset(self):
-        # filter queryset based on logged in user
-        return self.queryset.filter(team__in=self.request.user.teams.all())
+        # filter queryset based on logged in user and team
+        return self.queryset.filter(team=self.team)
 
     def perform_create(self, serializer):
         # ensure logged in user is set on the model during creation
+        # and can access the underlying team
+        team = serializer.validated_data["team"]
+        self._ensure_team_match(team)
+
+        # unfortunately, the permissions class doesn't handle creation well
+        # https://www.django-rest-framework.org/api-guide/permissions/#limitations-of-object-level-permissions
+        if not is_admin(self.request.user, team):
+            raise PermissionDenied()
+
         invitation = serializer.save(invited_by=self.request.user)
         send_invitation(invitation)
 

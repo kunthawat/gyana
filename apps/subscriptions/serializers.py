@@ -1,4 +1,4 @@
-from djstripe.models import Plan, Product
+from djstripe.models import Product, Plan
 from rest_framework import serializers
 
 

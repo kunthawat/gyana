@@ -41,6 +41,7 @@ DJANGO_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.sites",
+    "django.contrib.humanize",
     "django.forms",
 ]
 
@@ -57,6 +58,7 @@ THIRD_PARTY_APPS = [
     "crispy_forms",
     "crispy_tailwind",
     "django_filters",
+    "django_tables2",
     # stripe integration
     "djstripe",
 ]

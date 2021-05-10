@@ -31,7 +31,6 @@ team_urlpatterns = [
     path("team/", include(single_team_urls)),
 ]
 
-
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("a/<slug:team_slug>/", include(team_urlpatterns)),
@@ -40,12 +39,12 @@ urlpatterns = [
     path("subscriptions/", include("apps.subscriptions.urls")),
     path("teams/", include("apps.teams.urls")),
     path("projects/", include("apps.projects.urls")),
-    path("datasets/", include("apps.datasets.urls")),
-    path("dataflows/", include("apps.dataflows.urls")),
-    path("dashboards/", include("apps.dashboards.urls")),
+    path("datasets/", include("apps.datasets.urls.root")),
+    path("connectors/", include("apps.connectors.urls.root")),
+    path("dataflows/", include("apps.dataflows.urls.root")),
+    path("dashboards/", include("apps.dashboards.urls.root")),
     path("widgets/", include("apps.widgets.urls")),
     path("filters/", include("apps.filters.urls")),
-    path("connectors/", include("apps.connectors.urls")),
     path("tables/", include("apps.tables.urls")),
     path("", include("apps.web.urls")),
     path("celery-progress/", include("celery_progress.urls")),

@@ -27,7 +27,6 @@ class ConnectorCreate(ProjectMixin, TurboCreateView):
     template_name = "connectors/create.html"
     model = Connector
     form_class = ConnectorForm
-    success_url = reverse_lazy("connectors:list")
 
     def get_context_data(self, **kwargs):
 
@@ -47,23 +46,30 @@ class ConnectorCreate(ProjectMixin, TurboCreateView):
 
         return initial
 
+    def get_success_url(self) -> str:
+        return reverse("projects:connectors:list", args=(self.project.id,))
 
-class ConnectorDetail(DetailView):
+
+class ConnectorDetail(ProjectMixin, DetailView):
     template_name = "connectors/detail.html"
     model = Connector
 
 
-class ConnectorUpdate(TurboUpdateView):
+class ConnectorUpdate(ProjectMixin, TurboUpdateView):
     template_name = "connectors/update.html"
     model = Connector
     form_class = ConnectorForm
-    success_url = reverse_lazy("connectors:list")
+
+    def get_success_url(self) -> str:
+        return reverse("projects:connectors:list", args=(self.project.id,))
 
 
-class ConnectorDelete(DeleteView):
+class ConnectorDelete(ProjectMixin, DeleteView):
     template_name = "connectors/delete.html"
     model = Connector
-    success_url = reverse_lazy("connectors:list")
+
+    def get_success_url(self) -> str:
+        return reverse("projects:connectors:list", args=(self.project.id,))
 
 
 # Turbo frames

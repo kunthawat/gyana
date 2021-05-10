@@ -1,4 +1,4 @@
-{% extends "web/app/app_base.html" %}
+{% extends "web/app/project_base.html" %}
 <!---->
 {% block app %}
 <h1>Detail</h1>
@@ -17,5 +17,5 @@
   </turbo-frame>
   {% endif %}
 </div>
-<a href="{% url 'connectors:list' %}">List</a>
+<a href="{% url 'projects:connectors:list' project.id %}">List</a>
 {% endblock %}

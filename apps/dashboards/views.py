@@ -1,6 +1,7 @@
 from apps.projects.mixins import ProjectMixin
 from django.db.models.query import QuerySet
 from django.urls import reverse_lazy
+from django.urls.base import reverse
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
 from turbo_response.views import TurboCreateView, TurboUpdateView
@@ -22,27 +23,34 @@ class DashboardCreate(ProjectMixin, TurboCreateView):
     template_name = "dashboards/create.html"
     model = Dashboard
     form_class = DashboardForm
-    success_url = reverse_lazy("dashboards:list")
+    success_url = reverse_lazy("projects:dashboards:list")
 
     def get_initial(self):
         initial = super().get_initial()
         initial["project"] = self.project
         return initial
 
+    def get_success_url(self) -> str:
+        return reverse("projects:dashboards:list", args=(self.project.id,))
 
-class DashboardDetail(DetailView):
+
+class DashboardDetail(ProjectMixin, DetailView):
     template_name = "dashboards/detail.html"
     model = Dashboard
 
 
-class DashboardUpdate(TurboUpdateView):
+class DashboardUpdate(ProjectMixin, TurboUpdateView):
     template_name = "dashboards/update.html"
     model = Dashboard
     form_class = DashboardForm
-    success_url = reverse_lazy("dashboards:list")
+
+    def get_success_url(self) -> str:
+        return reverse("projects:dashboards:list", args=(self.project.id,))
 
 
-class DashboardDelete(DeleteView):
+class DashboardDelete(ProjectMixin, DeleteView):
     template_name = "dashboards/delete.html"
     model = Dashboard
-    success_url = reverse_lazy("dashboards:list")
+
+    def get_success_url(self) -> str:
+        return reverse("projects:dashboards:list", args=(self.project.id,))

@@ -15,6 +15,8 @@ const DnDFlow = ({ client }) => {
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [elements, setElements] = useState([]);
 
+  const dataflowId = window.location.pathname.split("/")[4];
+
   const onConnect = (params) => {
     const parents = elements
       .filter((el) => el.target === params.target)
@@ -32,8 +34,6 @@ const DnDFlow = ({ client }) => {
       addEdge({ ...params, arrowHeadType: "arrowclosed" }, els)
     );
   };
-
-  const dataflowId = window.location.pathname.split("/")[2];
 
   const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
@@ -59,6 +59,8 @@ const DnDFlow = ({ client }) => {
       y: event.clientY - reactFlowBounds.top,
     });
   };
+
+  console.error(window.schema);
 
   const onDragStop = (event, node) => {
     const position = getPosition(event);

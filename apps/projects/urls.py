@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import include, path
 
 from . import views
 
@@ -9,5 +9,8 @@ urlpatterns = [
     path("<int:pk>", views.ProjectDetail.as_view(), name="detail"),
     path("<int:pk>/update", views.ProjectUpdate.as_view(), name="update"),
     path("<int:pk>/delete", views.ProjectDelete.as_view(), name="delete"),
-    path("<int:pk>/<str:tab>", views.ProjectTab.as_view(), name="tab"),
+    path("<int:project_id>/datasets/", include("apps.datasets.urls.projects")),
+    path("<int:project_id>/connectors/", include("apps.connectors.urls.projects")),
+    path("<int:project_id>/dataflows/", include("apps.dataflows.urls.projects")),
+    path("<int:project_id>/dashboards/", include("apps.dashboards.urls.projects")),
 ]

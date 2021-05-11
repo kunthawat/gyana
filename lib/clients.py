@@ -6,8 +6,9 @@ from django.conf import settings
 from django.utils.text import slugify
 from google.cloud import bigquery
 
-DATASET_ID = slugify(settings.CLOUD_NAMESPACE)
-DATAFLOW_ID = "dataflows"
+SLUG = slugify(settings.CLOUD_NAMESPACE)
+DATASET_ID = f"{SLUG}_integrations"
+DATAFLOW_ID = f"{SLUG}_dataflows"
 
 
 @lru_cache

@@ -6,8 +6,8 @@ from lib.clients import bigquery_client, ibis_client
 
 class Table(models.Model):
     class Source(models.TextChoices):
-        DATASET = "dataset", "Dataset"
-        DATAFLOW_NODE = "dataflow_node", "Dataflow node"
+        DATASET = "integration", "Integration"
+        DATAFLOW_NODE = "workflow_node", "Workflow node"
 
     bq_table = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
     bq_dataset = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
@@ -16,9 +16,11 @@ class Table(models.Model):
 
     source = models.CharField(max_length=16, choices=Source.choices)
     # TODO: delete table in bigquery on deletion
-    dataset = models.ForeignKey("datasets.Dataset", on_delete=models.CASCADE, null=True)
-    dataflow_node = models.OneToOneField(
-        "dataflows.Node", on_delete=models.CASCADE, null=True
+    integration = models.ForeignKey(
+        "integrations.Integration", on_delete=models.CASCADE, null=True
+    )
+    workflow_node = models.OneToOneField(
+        "workflows.Node", on_delete=models.CASCADE, null=True
     )
 
     created = models.DateTimeField(auto_now_add=True, editable=False)

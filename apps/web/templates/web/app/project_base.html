@@ -16,14 +16,14 @@
         >Overview</a
       >
       <a
-        class="{% if request.resolver_match.app_name == 'projects:datasets' %} text-blue-700 {% endif %}"
-        href="{% url 'projects:datasets:list' project.id %}"
-        >Datasets</a
+        class="{% if request.resolver_match.app_name == 'projects:integrations' %} text-blue-700 {% endif %}"
+        href="{% url 'projects:integrations:list' project.id %}"
+        >Integrations</a
       >
       <a
-        class="{% if request.resolver_match.app_name == 'projects:dataflows' %} text-blue-700 {% endif %}"
-        href="{% url 'projects:dataflows:list' project.id %}"
-        >Dataflows</a
+        class="{% if request.resolver_match.app_name == 'projects:workflows' %} text-blue-700 {% endif %}"
+        href="{% url 'projects:workflows:list' project.id %}"
+        >Workflows</a
       >
       <a
         class="{% if request.resolver_match.app_name == 'projects:dashboards' %} text-blue-700 {% endif %}"

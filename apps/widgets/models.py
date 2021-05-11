@@ -10,12 +10,20 @@ class Widget(models.Model):
         LINE = "line", "Line"
         PIE = "pie2d", "Pie"
 
+    class Aggregator(models.TextChoices):
+        # These aggregators should reflect the names described in the ibis api, none is an exception
+        # https://ibis-project.org/docs/api.html#id2
+        NONE = "none", "None"
+        SUM = "sum", "Sum"
+        AVG = "mean", "Average"
+
     name = models.CharField(max_length=255)
     dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
 
     table = models.ForeignKey(Table, on_delete=models.SET_NULL, null=True)
 
     kind = models.CharField(max_length=32, choices=Kind.choices)
+    aggregator = models.CharField(max_length=32, choices=Aggregator.choices)
     # maximum length of bigquery column name
     label = models.CharField(max_length=300, null=True, blank=True)
     value = models.CharField(max_length=300, null=True, blank=True)

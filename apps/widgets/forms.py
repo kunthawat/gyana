@@ -21,7 +21,7 @@ class WidgetForm(forms.ModelForm):
 class WidgetConfigForm(forms.ModelForm):
     class Meta:
         model = Widget
-        fields = ["kind", "label", "value"]
+        fields = ["kind", "aggregator", "label", "value"]
 
     def __init__(self, *args, **kwargs):
         # https://stackoverflow.com/a/30766247/15425660

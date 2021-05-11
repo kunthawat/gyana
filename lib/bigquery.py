@@ -139,4 +139,11 @@ def query_widget(widget: Widget):
             elif filter.string_predicate == Filter.StringPredicate.ENDSWITH:
                 table = table[table[filter.column].str.endswith(filter.string_value)]
 
-    return conn.execute(table.group_by(widget.label).count(widget.value))
+    if widget.aggregator == Widget.Aggregator.NONE:
+        return conn.execute(table.projection([widget.label, widget.value]))
+    else:
+        return conn.execute(
+            table.group_by(widget.label).aggregate(
+                getattr(table[widget.value], widget.aggregator)().name(widget.value)
+            )
+        )

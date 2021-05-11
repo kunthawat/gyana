@@ -3,9 +3,10 @@ from functools import lru_cache
 import google.auth
 import ibis_bigquery
 from django.conf import settings
+from django.utils.text import slugify
 from google.cloud import bigquery
 
-DATASET_ID = "datasets"
+DATASET_ID = slugify(settings.CLOUD_NAMESPACE)
 DATAFLOW_ID = "dataflows"
 
 

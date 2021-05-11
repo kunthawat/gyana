@@ -1,5 +1,5 @@
 from django import forms
-from django.forms.widgets import HiddenInput
+from django.forms.widgets import FileInput, HiddenInput
 
 from .models import Integration
 
@@ -18,7 +18,11 @@ class CSVForm(forms.ModelForm):
     class Meta:
         model = Integration
         fields = ["name", "file", "kind", "project"]
-        widgets = {"kind": HiddenInput(), "project": HiddenInput()}
+        widgets = {
+            "kind": HiddenInput(),
+            "project": HiddenInput(),
+            "file": FileInput(attrs={"accept": ".csv"}),
+        }
 
 
 class FivetranForm(forms.ModelForm):

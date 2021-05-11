@@ -76,6 +76,7 @@ PROJECT_APPS = [
     "apps.widgets",
     "apps.filters",
     "apps.tables",
+    "apps.utils",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
@@ -328,3 +329,6 @@ MOCK_FIVETRAN_HISTORICAL_SYNC_SECONDS = 10
 BIGQUERY_COLUMN_NAME_LENGTH = 300
 BIGQUERY_TABLE_NAME_LENGTH = 1024
 BIGQUERY_LOCATION = "EU"
+
+# Namespace based on git email to avoid collisions in PKs on local dev
+CLOUD_NAMESPACE = os.environ.get("CLOUD_NAMESPACE", "local")

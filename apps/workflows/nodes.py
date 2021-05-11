@@ -65,6 +65,8 @@ def aggregate(query, colname, computation):
         return column.sum().name(colname)
     elif computation == "count":
         return column.count().name(colname)
+    elif computation == "average":
+        return column.mean().name(colname)
 
 
 def get_group_query(node):

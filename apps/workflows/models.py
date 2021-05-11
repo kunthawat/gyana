@@ -88,6 +88,7 @@ class FunctionColumn(models.Model):
     class Functions(models.TextChoices):
         SUM = "sum", "Sum"
         COUNT = "count", "Count"
+        AVG = "average", "Average"
 
     name = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
     function = models.CharField(max_length=20, choices=Functions.choices)

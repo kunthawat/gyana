@@ -1,5 +1,8 @@
 service_account := "gyana-1511894275181-50f107d4db00.json"
 
+mk_bq:
+    python ./manage.py make_bq_dataset
+
 dev:
     python ./manage.py runserver
 

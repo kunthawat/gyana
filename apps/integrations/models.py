@@ -2,6 +2,7 @@ from apps.projects.models import Project
 from django.db import models
 from django.urls import reverse
 from lib.clients import ibis_client
+from django.conf import settings
 
 
 class Integration(models.Model):
@@ -16,7 +17,9 @@ class Integration(models.Model):
 
     # either a URL or file upload
     url = models.URLField(null=True)
-    file = models.FileField(upload_to="integrations", null=True)
+    file = models.FileField(
+        upload_to=f"{settings.CLOUD_NAMESPACE}/integrations", null=True
+    )
 
     # bigquery external tables
     has_initial_sync = models.BooleanField(default=False)

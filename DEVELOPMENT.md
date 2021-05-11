@@ -48,6 +48,12 @@ createdb gyana
 python manage.py migrate
 ```
 
+Next create a bigquery dataset. We use the git config email as slug to effectively namespace dev environments from eachother in the cloud.
+
+```bash
+just mk_bq
+```
+
 You now need to run webpack to bundle all the client side code and styles:
 
 ```bash

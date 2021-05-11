@@ -3,21 +3,14 @@
 <!---->
 {% block app %}
 <h1 class="text-2xl text-bold">{{ object.name }}</h1>
-<a
-    href="{% url 'projects:workflows:update' project.id object.pk %}"
-    >Update</a
->
-<a
-    href="{% url 'projects:workflows:delete' project.id object.pk %}"
-    >Delete</a
->
+<a href="{% url 'projects:dashboards:update' project.id object.pk %}">Update</a>
+<a href="{% url 'projects:dashboards:delete' project.id object.pk %}">Delete</a>
 <div class="border border-gray-400">
-  <turbo-frame
-    id="widgets"
-    {% if request.GET.widget_id %}
-    src="{% url 'widgets:detail' request.GET.widget_id %}"
-    {% else %}
-    src="{% url 'widgets:list' %}"
+  <turbo-frame id="widgets" 
+    {% if request.GET.widget_id %} 
+      src="{% url 'widgets:detail' request.GET.widget_id %}" 
+    {% else %} 
+      src="{% url 'widgets:list' %}" 
     {% endif %}
   ></turbo-frame>
 </div>

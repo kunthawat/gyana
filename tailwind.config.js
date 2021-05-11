@@ -4,7 +4,11 @@
  * @see https://tailwindcss.com/docs/configuration
  */
 module.exports = {
-  purge: ["./assets/**/*.js", "./templates/**/*.html"],
+  purge: [
+    "./assets/**/*.js",
+    "./templates/**/*.html",
+    "./apps/*/templates/**/*.html",
+  ],
   darkMode: false,
   theme: {
     extend: {},

@@ -11,6 +11,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         client = bigquery_client()
 
+        # Try and create a dataset using the {SLUG}_integrations name
         try:
             client.get_dataset(DATASET_ID)
             self.stdout.write(
@@ -26,6 +27,7 @@ class Command(BaseCommand):
                 )
             )
 
+        # Try and create a dataset using the {SLUG}_dataflows name
         try:
             client.get_dataset(DATAFLOW_ID)
             self.stdout.write(

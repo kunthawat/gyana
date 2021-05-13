@@ -1,0 +1,19 @@
+.placeholder-scr {
+  @apply h-64 flex flex-col justify-center items-center;
+
+  &__icon {
+    @apply mb-1;
+  }
+
+  &__title {
+    @apply text-base text-black-50;
+  }
+
+  &__subtext {
+    @apply text-blue underline;
+  }
+
+  &--fillscreen {
+    @apply w-full;
+  }
+}

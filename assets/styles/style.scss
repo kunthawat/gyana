@@ -1,9 +1,8 @@
 @charset "utf-8";
 
-@import "utilities/colours";
-@import "utilities/variables";
+@use "utilities/colours";
+@use "utilities/variables";
 
-@import "vendors/tailwind";
-
-@import "components/navbar";
-@import "components/button";
+@use "components/button";
+@use "components/card";
+@use "components/navbar";

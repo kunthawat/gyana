@@ -31,6 +31,8 @@ class Node(models.Model):
         JOIN = "join", "Join"
         GROUP = "group", "Group"
         UNION = "union", "Union"
+        SORT = "sort", "Sort"
+        LIMIT = "limit", "Limit"
 
     workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
     kind = models.CharField(max_length=16, choices=Kind.choices)
@@ -73,6 +75,14 @@ class Node(models.Model):
 
     union_distinct = models.BooleanField(default=False)
 
+    # Sort
+    # handled via ForeignKey on SortModel
+
+    # Limit
+
+    limit_limit = models.IntegerField(default=100)
+    limit_offset = models.IntegerField(null=True)
+
     def get_query(self):
         func = NODE_FROM_CONFIG[self.kind]
         return func(self)
@@ -102,3 +112,11 @@ class FunctionColumn(models.Model):
     node = models.ForeignKey(
         Node, on_delete=models.CASCADE, related_name="aggregations"
     )
+
+
+class SortColumn(models.Model):
+    node = models.ForeignKey(
+        Node, on_delete=models.CASCADE, related_name="sort_columns"
+    )
+    ascending = models.BooleanField(default=True)
+    name = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)

@@ -9,6 +9,8 @@
 @use "components/card";
 @use "components/navbar";
 @use "components/table";
+@use "components/widget_card";
+@use "components/placeholder_screen";
 
 :root {
   background-color: var(--c-gray-10);

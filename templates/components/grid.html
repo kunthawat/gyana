@@ -6,10 +6,23 @@
   {{ rows|safe }}
 </script>
 <div data-controller="turbo-issue-186-workaround">
+  <!--ag-grid-->
+  <script src="https://unpkg.com/ag-grid-community/dist/ag-grid-community.min.noStyle.js" onload="window.dispatchEvent(new Event('agGrid:load'))"></script>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/ag-grid-community/dist/styles/ag-theme-balham.css"
+  />
   <script type="text/javascript" charset="utf-8">
-    new agGrid.Grid(document.querySelector("#myGrid"), {
-      columnDefs: JSON.parse(document.getElementById("columns").innerHTML),
-      rowData: JSON.parse(document.getElementById("rows").innerHTML),
-    });
+    window.addEventListener('agGrid:load', function (e) {
+      console.log("Event emitted")
+      new agGrid.Grid(document.querySelector("#myGrid"), {
+        columnDefs: JSON.parse(document.getElementById("columns").innerHTML),
+        rowData: JSON.parse(document.getElementById("rows").innerHTML),
+      });
+    }, { once: true });
   </script>
 </div>

@@ -1,10 +1,10 @@
-from apps.integrations.bigquery import sync_integration
+from apps.integrations.bigquery import get_tables_in_dataset, sync_integration
 from celery import shared_task
 from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
-from lib.fivetran import FivetranClient
 
+from .fivetran import FivetranClient
 from .models import Integration
 
 
@@ -14,6 +14,7 @@ def poll_fivetran_historical_sync(self, integration_id):
     integration = get_object_or_404(Integration, pk=integration_id)
 
     FivetranClient(integration).block_until_synced()
+    get_tables_in_dataset(integration)
 
     url = reverse(
         "projects:integrations:detail",

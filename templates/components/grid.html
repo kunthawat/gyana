@@ -18,7 +18,6 @@
   />
   <script type="text/javascript" charset="utf-8">
     window.addEventListener('agGrid:load', function (e) {
-      console.log("Event emitted")
       new agGrid.Grid(document.querySelector("#myGrid"), {
         columnDefs: JSON.parse(document.getElementById("columns").innerHTML),
         rowData: JSON.parse(document.getElementById("rows").innerHTML),

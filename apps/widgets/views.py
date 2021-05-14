@@ -1,6 +1,7 @@
 from urllib.parse import urlparse
 
 from apps.dashboards.models import Dashboard
+from apps.widgets.visuals import VISUAL_TO_OUTPUT
 from django.db.models.query import QuerySet
 from django.urls import resolve, reverse
 from django.views.generic import DetailView, ListView
@@ -100,8 +101,6 @@ class WidgetOutput(DetailView):
         context_data = super().get_context_data(**kwargs)
 
         if self.object.is_valid():
-            df = query_widget(self.object)
-            chart = to_chart(df, self.object)
-            context_data["chart"] = chart.render()
+            context_data.update(VISUAL_TO_OUTPUT[self.object.visual_kind](self.object))
 
         return context_data

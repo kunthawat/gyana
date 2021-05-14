@@ -8,7 +8,7 @@ from .models import Widget
 class WidgetForm(forms.ModelForm):
     class Meta:
         model = Widget
-        fields = ["name", "dashboard", "table"]
+        fields = ["name", "dashboard", "table", "visual_kind"]
         widgets = {"dashboard": HiddenInput()}
 
     def __init__(self, *args, **kwargs):

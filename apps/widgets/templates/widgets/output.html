@@ -1,9 +1,8 @@
 <turbo-frame id="widgets:output-{{ widget.id }}">
-  {% if chart %}
-  <div style="min-height:16rem;">
-    <div id="{{widget.name}}-container" />
-    <div data-controller="turbo-issue-186-workaround">{{ chart|safe }}</div>
-  </div>
+  {% if widget.visual_kind == "chart" %}
+    {% include 'widgets/visuals/chart.html' %}
+  {% elif widget.visual_kind == "table" %}
+    {% include 'widgets/visuals/grid.html' %}
   {% else %}
   <div class='flex flex-col items-center justify-center' style="min-height:16rem;">
     <i class="far fa-lightbulb-exclamation text-yellow-300 mb-1 fa-2x"></i>

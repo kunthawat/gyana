@@ -1,9 +1,18 @@
+import os
+import time
+
 import celery
 from apps.projects.models import Project
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
-from lib.clients import DATASET_ID, ibis_client
+from django.utils.text import slugify
+from lib.clients import ibis_client
+
+
+def get_file_path(instance, filename):
+    filename, file_extension = os.path.splitext(filename)
+    return f"{settings.CLOUD_NAMESPACE}/integrations/{filename}-{slugify(time.time())}{file_extension}"
 
 
 class Integration(models.Model):
@@ -18,9 +27,7 @@ class Integration(models.Model):
 
     # either a URL or file upload
     url = models.URLField(null=True)
-    file = models.FileField(
-        upload_to=f"{settings.CLOUD_NAMESPACE}/integrations", null=True
-    )
+    file = models.FileField(upload_to=get_file_path, null=True)
 
     # bigquery external tables
     external_table_sync_task_id = models.UUIDField(null=True)

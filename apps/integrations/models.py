@@ -3,7 +3,22 @@ from apps.projects.models import Project
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
+from django.utils.deconstruct import deconstructible
 from lib.clients import DATASET_ID, ibis_client
+
+
+@deconstructible
+class DynamicUploadPath(object):
+    """
+    Deconstructed class to avoid a migration for dynamic upload path changes
+    https://docs.djangoproject.com/en/3.2/topics/migrations/#adding-a-deconstruct-method
+    """
+
+    def __call__(self, instance, filename):
+        return f"{settings.CLOUD_NAMESPACE}/integrations"
+
+
+dynamic_upload_path = DynamicUploadPath()
 
 
 class Integration(models.Model):
@@ -18,9 +33,7 @@ class Integration(models.Model):
 
     # either a URL or file upload
     url = models.URLField(null=True)
-    file = models.FileField(
-        upload_to=f"{settings.CLOUD_NAMESPACE}/integrations", null=True
-    )
+    file = models.FileField(upload_to=dynamic_upload_path, null=True)
 
     # bigquery external tables
     external_table_sync_task_id = models.UUIDField(null=True)

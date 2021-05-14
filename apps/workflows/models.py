@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from apps.projects.models import Project
 from apps.tables.models import Table
 from apps.workflows.nodes import NODE_FROM_CONFIG
@@ -33,6 +35,7 @@ class Node(models.Model):
         UNION = "union", "Union"
         SORT = "sort", "Sort"
         LIMIT = "limit", "Limit"
+        FILTER = "filter", "Filter"
 
     workflow = models.ForeignKey(Workflow, on_delete=models.CASCADE)
     kind = models.CharField(max_length=16, choices=Kind.choices)
@@ -78,6 +81,9 @@ class Node(models.Model):
     # Sort
     # handled via ForeignKey on SortModel
 
+    # Filter
+    # handled by the Filter model in *apps/filters/models.py*
+
     # Limit
 
     limit_limit = models.IntegerField(default=100)
@@ -87,7 +93,8 @@ class Node(models.Model):
         func = NODE_FROM_CONFIG[self.kind]
         return func(self)
 
-    def get_schema(self):
+    @cached_property
+    def schema(self):
         return self.get_query().schema()
 
     def get_table_name(self):

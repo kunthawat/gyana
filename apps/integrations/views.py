@@ -1,7 +1,5 @@
 import json
 
-from apps.integrations.tables import IntegrationTable
-from apps.integrations.tasks import poll_fivetran_historical_sync
 from apps.projects.mixins import ProjectMixin
 from django.conf import settings
 from django.db.models.query import QuerySet
@@ -11,12 +9,14 @@ from django.urls import reverse
 from django.views.generic import DetailView
 from django.views.generic.edit import DeleteView
 from django_tables2 import SingleTableView
-from lib.bigquery import create_external_table, query_integration, sync_table
 from lib.fivetran import FivetranClient, get_services
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
+from .bigquery import query_integration
 from .forms import CSVForm, FivetranForm, GoogleSheetsForm
 from .models import Integration
+from .tables import IntegrationTable
+from .tasks import poll_fivetran_historical_sync
 
 # CRUDL
 
@@ -137,8 +137,7 @@ class IntegrationSync(TurboUpdateView):
     fields = []
 
     def form_valid(self, form):
-        external_table_id = create_external_table(self.object)
-        sync_table(self.object, external_table_id)
+        self.object.start_sync()
         return super().form_valid(form)
 
     def get_success_url(self) -> str:

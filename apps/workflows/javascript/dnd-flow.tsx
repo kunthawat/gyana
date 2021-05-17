@@ -150,21 +150,6 @@ const DnDFlow = ({ client }) => {
             onDrop={onDrop}
             onDragOver={onDragOver}
             onNodeDragStop={onDragStop}
-            onElementClick={(event, element) => {
-              document.getElementById("workflow-node").setAttribute(
-                "src",
-                // TODO: populate URL from django reverse
-                `http://localhost:8000/workflows/${workflowId}/nodes/${element.id}`
-              );
-
-              addParam("node_id", element.id);
-
-              document.getElementById("workflows-grid").setAttribute(
-                "src",
-                // TODO: populate URL from django reverse
-                `http://localhost:8000/workflows/${workflowId}/nodes/${element.id}/grid`
-              );
-            }}
           >
             <Controls />
           </ReactFlow>
@@ -175,8 +160,26 @@ const DnDFlow = ({ client }) => {
   );
 };
 
-const InputNode = ({ data, isConnectable }: NodeProps) => (
+const OpenButton = ({ id }) => {
+  const workflowId = window.location.pathname.split("/")[4];
+
+  return (
+    <button
+      className="absolute -bottom-8"
+      data-src={`/workflows/${workflowId}/nodes/${id}`}
+      data-controller="url-search-params"
+      data-url-search-params-key-value="node_id"
+      data-url-search-params-val-value={id}
+      data-action="click->tf-modal#open click->url-search-params#add"
+    >
+      Open
+    </button>
+  );
+};
+
+const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
   <>
+    {selected && <OpenButton id={id} />}
     {data.label}
     <Handle
       type="source"
@@ -186,8 +189,9 @@ const InputNode = ({ data, isConnectable }: NodeProps) => (
   </>
 );
 
-const OutputNode = ({ data, isConnectable }: NodeProps) => (
+const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
   <>
+    {selected && <OpenButton id={id} />}
     <Handle
       type="target"
       position={Position.Left}
@@ -198,12 +202,15 @@ const OutputNode = ({ data, isConnectable }: NodeProps) => (
 );
 
 const DefaultNode = ({
+  id,
   data,
   isConnectable,
   targetPosition = Position.Left,
   sourcePosition = Position.Right,
+  selected,
 }: NodeProps) => (
   <>
+    {selected && <OpenButton id={id} />}
     <Handle
       type="target"
       position={targetPosition}

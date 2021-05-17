@@ -159,12 +159,20 @@ const DnDFlow = ({ client }) => {
   );
 };
 
+// TODO: Implement this.
+const DeleteButton = ({ id }) => {
+  return (
+    <button>
+      <i className="fal fa-times fa-lg"></i>
+    </button>
+  );
+};
+
 const OpenButton = ({ id }) => {
   const workflowId = window.location.pathname.split("/")[4];
 
   return (
     <button
-      className="absolute -bottom-8"
       data-src={`/workflows/${workflowId}/nodes/${id}`}
       data-controller="url-search-params"
       data-url-search-params-key-value="node_id"
@@ -176,9 +184,18 @@ const OpenButton = ({ id }) => {
   );
 };
 
+const Buttons = ({ id }) => {
+  return (
+    <div className="absolute -bottom-6 flex gap-4">
+      <OpenButton id={id} />
+      <DeleteButton id={id} />
+    </div>
+  )
+}
+
 const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
   <>
-    {selected && <OpenButton id={id} />}
+    {selected && <Buttons id={id} />}
     {data.label}
     <Handle
       type="source"
@@ -190,7 +207,7 @@ const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
 
 const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
   <>
-    {selected && <OpenButton id={id} />}
+    {selected && <Buttons id={id} />}
     <Handle
       type="target"
       position={Position.Left}
@@ -209,7 +226,7 @@ const DefaultNode = ({
   selected,
 }: NodeProps) => (
   <>
-    {selected && <OpenButton id={id} />}
+    {selected && <Buttons id={id} />}
     <Handle
       type="target"
       position={targetPosition}

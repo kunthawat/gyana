@@ -25,6 +25,55 @@ class Workflow(models.Model):
         return reverse("projects:workflows:detail", args=(self.project.id, self.id))
 
 
+NodeConfig = {
+    "input": {
+        "displayName": "Input",
+        "icon": "fa-layer-group",
+        "description": "Connect to one of your integrations",
+    },
+    "output": {
+        "displayName": "Output",
+        "icon": "fa-table",
+        "description": "Save an output to use in a dashboard",
+    },
+    "select": {
+        "displayName": "Select",
+        "icon": "fa-lasso",
+        "description": "Select columns",
+    },
+    "join": {
+        "displayName": "Join",
+        "icon": "fa-link",
+        "description": "Join two nodes",
+    },
+    "group": {
+        "displayName": "Group",
+        "icon": "fa-object-group",
+        "description": "Aggregate by groups",
+    },
+    "union": {
+        "displayName": "Union",
+        "icon": "fa-union",
+        "description": "Concatenate two nodes",
+    },
+    "sort": {
+        "displayName": "Sort",
+        "icon": "fa-sort-numeric-up",
+        "description": "Sort your data",
+    },
+    "limit": {
+        "displayName": "Limit",
+        "icon": "fa-sliders-h-square",
+        "description": "Limit your data",
+    },
+    "filter": {
+        "displayName": "Filter",
+        "icon": "fa-filter",
+        "description": "Filter your data",
+    },
+}
+
+
 class Node(models.Model):
     class Kind(models.TextChoices):
         INPUT = "input", "Input"

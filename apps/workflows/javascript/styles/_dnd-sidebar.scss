@@ -5,9 +5,30 @@
   flex-flow: column;
   gap: 0.875em;
   padding: 1em;
-  width: 12em;
+  width: 20em;
 
   &__node {
+    display: flex;
+    flex-direction: row;
     cursor: grab;
+    align-items: center;
+    padding: 0.25em;
+  }
+  &__icon {
+    color: var(--c-blue);
+    padding: 0.6em;
+    border-radius: 6px;
+    border: 1px solid var(--c-gray);
+    margin-right: 1em;
+  }
+
+  &__name {
+    font-weight: 600;
+  }
+
+  &__description {
+    font-weight: 400;
+    font-size: 0.75em;
+    color: var(--c-black-50);
   }
 }

@@ -1,5 +1,7 @@
 .guide {
-  width: 30em;
+  max-width: 40vw;
+  width: 100%;
+  min-width: 30em;
   overflow-y: auto;
 
   display: flex;

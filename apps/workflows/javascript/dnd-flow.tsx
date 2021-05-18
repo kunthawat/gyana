@@ -1,4 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, {
+  useState,
+  useRef,
+  useEffect,
+  createContext,
+  useContext,
+} from "react";
 import ReactFlow, {
   ReactFlowProvider,
   addEdge,
@@ -7,6 +13,11 @@ import ReactFlow, {
   Handle,
   NodeProps,
   Position,
+  updateEdge,
+  isNode,
+  Edge,
+  Node,
+  isEdge,
 } from "react-flow-renderer";
 
 import Sidebar from "./sidebar";
@@ -17,33 +28,91 @@ import "./styles/_react-flow.scss";
 const DnDFlow = ({ client }) => {
   const reactFlowWrapper = useRef(null);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [elements, setElements] = useState([]);
+  const [elements, setElements] = useState<(Edge | Node)[]>([]);
 
+  // TODO: Make more robust to url changes
   const workflowId = window.location.pathname.split("/")[4];
 
-  const onConnect = (params) => {
-    const parents = elements
-      .filter((el) => el.target === params.target)
-      .map((el) => el.source);
-
+  const updateParents = (id: string, parents: string[]) =>
     client.action(
       window.schema,
       ["workflows", "api", "nodes", "partial_update"],
       {
-        id: params.target,
-        parents: [...parents, params.source],
+        id,
+        parents,
       }
     );
+
+  const onConnect = (params) => {
+    const parents = elements
+      .filter((el) => isEdge(el) && el.target === params.target)
+      .map((el) => el.source);
+
+    updateParents(params.target, parents);
     setElements((els) => addEdge({ ...params, arrowHeadType: "arrow" }, els));
   };
 
   const onElementsRemove = (elementsToRemove) => {
     setElements((els) => removeElements(elementsToRemove, els));
     elementsToRemove.forEach((el) => {
-      client.action(window.schema, ["workflows", "api", "nodes", "delete"], {
-        id: el.id,
-      });
+      if (isNode(el)) {
+        client.action(window.schema, ["workflows", "api", "nodes", "delete"], {
+          id: el.id,
+        });
+      } else {
+        const parents = elements
+          .filter(
+            (currEl) =>
+              isEdge(currEl) &&
+              currEl.target === el.target &&
+              currEl.source !== el.source
+          )
+          .map((currEl) => currEl.source);
+
+        updateParents(el.target, parents);
+      }
     });
+  };
+
+  const onEdgeUpdate = (oldEdge, newEdge) => {
+    // User changed the target
+    if (oldEdge.source === newEdge.source) {
+      // We need to remove the source from the previous target and
+      // add it to the new one
+      const oldParents = elements
+        .filter(
+          (el) =>
+            isEdge(el) &&
+            el.target === oldEdge.target &&
+            el.source !== oldEdge.source
+        )
+        .map((el) => el.source);
+      updateParents(oldEdge.target, oldParents);
+
+      const newParents = elements
+        .filter((el) => isEdge(el) && el.target === newEdge.target)
+        .map((el) => el.source);
+      updateParents(newEdge.target, [...newParents, newEdge.source]);
+    }
+    // User changed the source
+    else {
+      // We only need to replace to old source with the new
+      const parents = elements
+        .filter(
+          (el) =>
+            isEdge(el) &&
+            el.target === oldEdge.target &&
+            el.source !== oldEdge.source
+        )
+        .map((el) => el.source);
+      updateParents(newEdge.target, [...parents, newEdge.source]);
+    }
+    setElements((els) => updateEdge(oldEdge, newEdge, els));
+  };
+
+  const removeById = (id: string) => {
+    const elemenToRemove = elements.filter((el) => el.id === id);
+    onElementsRemove(elemenToRemove);
   };
 
   const onLoad = (_reactFlowInstance) =>
@@ -140,18 +209,21 @@ const DnDFlow = ({ client }) => {
     <div className="dndflow">
       <ReactFlowProvider>
         <div className="reactflow-wrapper" ref={reactFlowWrapper}>
-          <ReactFlow
-            nodeTypes={defaultNodeTypes}
-            elements={elements}
-            onConnect={onConnect}
-            onElementsRemove={onElementsRemove}
-            onLoad={onLoad}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
-            onNodeDragStop={onDragStop}
-          >
-            <Controls />
-          </ReactFlow>
+          <ActionContext.Provider value={{ removeById }}>
+            <ReactFlow
+              nodeTypes={defaultNodeTypes}
+              elements={elements}
+              onConnect={onConnect}
+              onElementsRemove={onElementsRemove}
+              onEdgeUpdate={onEdgeUpdate}
+              onLoad={onLoad}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+              onNodeDragStop={onDragStop}
+            >
+              <Controls />
+            </ReactFlow>
+          </ActionContext.Provider>
         </div>
         <Sidebar />
       </ReactFlowProvider>
@@ -159,10 +231,10 @@ const DnDFlow = ({ client }) => {
   );
 };
 
-// TODO: Implement this.
 const DeleteButton = ({ id }) => {
+  const { removeById } = useContext(ActionContext);
   return (
-    <button>
+    <button onClick={() => removeById(id)}>
       <i className="fal fa-times fa-lg"></i>
     </button>
   );
@@ -221,27 +293,31 @@ const DefaultNode = ({
   targetPosition = Position.Left,
   sourcePosition = Position.Right,
   selected,
-}: NodeProps) => (
-  <>
-    {selected && <Buttons id={id} />}
-    <Handle
-      type="target"
-      position={targetPosition}
-      isConnectable={isConnectable}
-    />
-    {data.label}
-    <Handle
-      type="source"
-      position={sourcePosition}
-      isConnectable={isConnectable}
-    />
-  </>
-);
+}: NodeProps) => {
+  return (
+    <>
+      {selected && <Buttons id={id} />}
+      <Handle
+        type="target"
+        position={targetPosition}
+        isConnectable={isConnectable}
+      />
+      {data.label}
+      <Handle
+        type="source"
+        position={sourcePosition}
+        isConnectable={isConnectable}
+      />
+    </>
+  );
+};
 
 const defaultNodeTypes = {
   input: InputNode,
   output: OutputNode,
   default: DefaultNode,
 };
+
+const ActionContext = createContext({ removeById: (id: string) => {} });
 
 export default DnDFlow;

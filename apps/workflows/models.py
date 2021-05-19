@@ -105,6 +105,10 @@ class Node(models.Model):
     # Select
     # columns exists on Column as FK
 
+    # Group
+    # columns exists on Column as FK
+    # aggregations exists on FunctionColumn as FK
+
     # Join
     join_how = models.CharField(
         max_length=12,

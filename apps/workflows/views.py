@@ -17,7 +17,7 @@ from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import run_workflow
 from .forms import KIND_TO_FORM, KIND_TO_FORMSETS, WorkflowForm
-from .models import Column, Node, NodeConfig, Workflow
+from .models import Node, NodeConfig, Workflow
 from .serializers import NodeSerializer
 from .tables import WorkflowTable
 

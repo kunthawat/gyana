@@ -315,7 +315,7 @@ CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
 CRISPY_TEMPLATE_PACK = "tailwind"
 
 DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-GS_BUCKET_NAME = "gyana-local"
+GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME", "gyana-local")
 
 FIVETRAN_KEY = os.environ.get("FIVETRAN_KEY", "<your fivetran key>")
 FIVETRAN_URL = "https://api.fivetran.com/v1"

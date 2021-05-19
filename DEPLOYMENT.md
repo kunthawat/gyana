@@ -25,7 +25,7 @@ Below describes the steps to create this deployment from scratch
 
 ---
 
-Created a separate project within the `gyana.co.uk` company called `Gyana Beta`
+Created a separate project within the `gyana.co.uk` company called `Gyana App`
 
 Important attributes within this project:
 
@@ -42,12 +42,16 @@ Important attributes within this project:
 
 #### **BigQuery**
 
-In the BQ explorer add the following two datasets under the `gyana-beta` project:
+In the BQ explorer add the following two datasets under the `gyana-app-314217` project, make sure they are created within the `EU` location:
 
 - `heroku_integrations`
 - `heroku_dataflows`
 
 These two values are derived from `DATASET_ID` and `DATAFLOW_ID` in `lib/clients.py`. This is similar to the `just mk_bq` command that needs to be run on local development setup.
+
+#### **Cloud Storage**
+
+Create a bucket in Cloud Storage named `gyana-app`
 
 ### Heroku
 
@@ -80,10 +84,11 @@ These config variables are set in the [Settings](https://dashboard.heroku.com/ap
 - `GOOGLE_APPLICATION_CREDENTIALS` = `google-credentials.json`
 - `GOOGLE_CREDENTIALS` = `<credential_json_from_svc_account>`
 - `SECRET_KEY` = `<secret_key_val>`
-- `GCP_PROJECT` = `gyana-beta`
-- `GCP_BQ_SVC_ACCOUNT` = `gyana-beta@gyana-beta.iam.gserviceaccount.com`
-- `EXTERNAL_URL` = `https://beta.gyana.com`
+- `GCP_PROJECT` = `gyana-app-314217`
+- `GCP_BQ_SVC_ACCOUNT` = `gyana-app@gyana-app-314217.iam.gserviceaccount.com`
+- `EXTERNAL_URL` = `https://app.gyana.com`
 - `CLOUD_NAMESPACE` = `heroku`
+- `GS_BUCKET_NAME` = `gyana-app`
 
 #### **Deploy**
 

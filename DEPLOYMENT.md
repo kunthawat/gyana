@@ -1,5 +1,22 @@
 # https://beta.gyana.com
 
+## How to deploy
+
+The [Deploy](https://dashboard.heroku.com/apps/gyana-beta/deploy/github) page on the Heroku gyana-beta app has a `Manual deploy` where we can select a branch and deploy it. For now only use the `main` branch for deploys!
+
+## How to rollback
+
+As described in [Heroku: Releases and Rollbacks](https://blog.heroku.com/releases-and-rollbacks) it's easy to rollback a broken release using the following commands
+
+```zsh
+# Rolls back to the previous successful release
+heroku rollback --app gyana-beta
+# Rolls back to the specified <version> e.g. v42
+heroku rollback <version> --app gyana-beta
+# To see all versions run
+heroku releases --app gyana-beta
+```
+
 ## Setup
 
 Below describes the steps to create this deployment from scratch
@@ -43,20 +60,13 @@ A [gyana-beta](https://dashboard.heroku.com/apps/gyana-beta) has been created us
 heroku create --region=eu --remote beta --addons=heroku-postgresql,heroku-redis
 ```
 
-After creation a first deployment was pushed
+#### **Buildpacks**
 
-```zsh
-git push beta main
-```
+In the [Settings](https://dashboard.heroku.com/apps/gyana-beta/settings) page add the following Buildpacks in the order listed:
 
-Some helpful commands
-
-```zsh
-# When a heroku app gets created from the cli it gets assigned a random name
-# After renaming the deployment running the following commands will fix the remote
-git remote rm beta
-heroku git:remote -a <Heroku_environment_name> -r beta
-```
+- `heroku/nodejs`
+- `heroku/python`
+- `https://github.com/buyersight/heroku-google-application-credentials-buildpack.git`
 
 #### **Custom domain**
 
@@ -74,6 +84,10 @@ These config variables are set in the [Settings](https://dashboard.heroku.com/ap
 - `GCP_BQ_SVC_ACCOUNT` = `gyana-beta@gyana-beta.iam.gserviceaccount.com`
 - `EXTERNAL_URL` = `https://beta.gyana.com`
 - `CLOUD_NAMESPACE` = `heroku`
+
+#### **Deploy**
+
+Setup the `gyana/gyana` git repository in the [Deploy settings](https://dashboard.heroku.com/apps/gyana-beta/deploy/github). At the bottom of the page manual deploys can be executed when needed.
 
 ### GoDaddy
 

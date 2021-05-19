@@ -2,6 +2,7 @@
 Used in Heroku config vars:
 https://dashboard.heroku.com/apps/gyana-mvp/settings
 """
+import os
 
 import django_heroku
 
@@ -17,6 +18,10 @@ CELERY_RESULT_BACKEND = os.environ.get("REDIS_URL")
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 
 DEBUG = False
-ALLOWED_HOSTS = ["gyana.com", "gyana-mvp.herokuapp.com"]
+ALLOWED_HOSTS = [
+    ".gyana.com",
+    "gyana-mvp.herokuapp.com",
+    "gyana-beta.herokuapp.com",
+]
 
-EXTERNAL_URL = "https://gyana-mvp.herokuapp.com"
+EXTERNAL_URL = os.environ.get("EXTERNAL_URL", "https://gyana-mvp.herokuapp.com")

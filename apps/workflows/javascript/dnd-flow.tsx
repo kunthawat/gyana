@@ -265,7 +265,7 @@ const DeleteButton = ({ id }) => {
   const { removeById } = useContext(NodeContext);
   return (
     <button onClick={() => removeById(id)}>
-      <i className="fal fa-times fa-lg"></i>
+      <i className="fas fa-trash fa-lg"></i>
     </button>
   );
 };
@@ -274,11 +274,11 @@ const OpenButton = ({ id }) => {
   const workflowId = window.location.pathname.split("/")[4];
 
   return (
-    <button
-      data-src={`/workflows/${workflowId}/nodes/${id}`}
-      data-action="click->tf-modal#open"
-    >
-      Settings
+    <button data-action="click->tf-modal#open">
+      <i
+        data-src={`/workflows/${workflowId}/nodes/${id}`}
+        className="fas fa-cog fa-lg"
+      ></i>
     </button>
   );
 };

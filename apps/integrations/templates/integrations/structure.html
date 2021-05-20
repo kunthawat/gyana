@@ -12,13 +12,13 @@
       </tr>
     </thead>
     <tbody>
-      {% for field in table.get_schema %}
+      {% for field_name, field_type in table.schema.items %}
       <tr>
         <td>
-          {{ field.field_type }}
+          {{ field_type }}
         </td>
         <td>
-          {{ field.name }}
+          {{ field_name }}
         </td>
       </tr>
       {% endfor %}

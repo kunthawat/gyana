@@ -1,6 +1,6 @@
 from functools import cached_property
 
-from apps.integrations.models import Integration
+from apps.tables.models import Table
 from apps.utils.formset_layout import Formset
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset, Layout, Submit
@@ -36,6 +36,13 @@ class InputNodeForm(NodeForm):
         model = Node
         fields = ["input_table"]
         labels = {"input_table": "Integration"}
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        instance = kwargs.get("instance")
+        self.fields["input_table"].queryset = Table.objects.filter(
+            project=instance.workflow.project
+        )
 
 
 class OutputNodeForm(NodeForm):

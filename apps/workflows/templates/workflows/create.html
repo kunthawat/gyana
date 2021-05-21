@@ -1,12 +1,14 @@
-{% extends "web/app/project_base.html" %}
+{% extends "web/app/project_settings_base.html" %}
 <!---->
-{% load tailwind_filters %}
 <!---->
 {% block app %}
 <div class="p-4">
   <h1>Create/Update</h1>
   <form method="post" action="{% url 'projects:workflows:create' project.id %}" class="form">
-    {% csrf_token %} {{ form|crispy }}
+    {% csrf_token %}
+
+    {% include "django/forms/default_form.html" %}
+
     <button type="submit" class="button">Create</button>
   </form>
 </div>

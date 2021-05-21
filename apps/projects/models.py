@@ -6,6 +6,8 @@ class Project(models.Model):
     name = models.CharField(max_length=255)
     team = models.ForeignKey(Team, on_delete=models.CASCADE)
 
+    description = models.TextField(blank=True)
+
     created = models.DateTimeField(auto_now_add=True, editable=False)
     updated = models.DateTimeField(auto_now=True, editable=False)
 
@@ -14,8 +16,3 @@ class Project(models.Model):
 
     def __str__(self):
         return self.name
-
-    def output_nodes(self):
-        from apps.workflows.models import Node
-
-        return Node.objects.filter(workflow__project=self, kind=Node.Kind.OUTPUT)

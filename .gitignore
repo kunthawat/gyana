@@ -40,3 +40,6 @@ _dist/
 .env.dev
 .env.production
 .DS_Store
+
+# redis output
+dump.rdb

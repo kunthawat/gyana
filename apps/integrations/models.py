@@ -56,6 +56,10 @@ class Integration(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def num_rows(self):
+        return self.table_set.all().aggregate(models.Sum("num_rows"))["num_rows__sum"]
+
     def start_sync(self):
         from apps.integrations.tasks import run_external_table_sync
 

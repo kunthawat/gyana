@@ -14,7 +14,7 @@ class GoogleSheetsForm(forms.ModelForm):
         fields = ["name", "url", "cell_range", "kind", "project"]
         widgets = {"kind": HiddenInput(), "project": HiddenInput()}
         help_texts = {
-            "url": "Needs to be public (TODO: share with service account)",
+            "url": "Needs to be public",
         }
 
     def clean_url(self):

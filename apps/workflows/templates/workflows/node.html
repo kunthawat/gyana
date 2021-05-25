@@ -1,5 +1,3 @@
-{% load crispy_forms_tags %}
-
 {% with parents=node.parents.all %}
 
 <turbo-frame id="workflow-node">
@@ -11,37 +9,57 @@
     <form class="h-full" method="post" action="{% url 'workflows:node' workflow.id node.id %}" data-controller="trigger"
           data-trigger-event-value="node-updated-{{ node.id }}" data-action="submit->trigger#dispatch">
       {% csrf_token %}
-
-      {{ form }}
-
-      <div class="flex flex-col gap-8">
-        <button type="submit" class="button button--green button--sm button--filled mt-auto">Save</button>
-        <button type="submit" class="button button--green button--sm button--filled mt-auto">Save and preview</button>
+      {% include "django/forms/default_form.html" %}
+      <div className='flex flex-row'>
+        <button 
+          type='submit' 
+          class="button button--filled button--sm" 
+          value='save' 
+          name='save-close' 
+          data-action="click->tf-modal#close"
+        >
+          Save 
+        </button>
+        <button 
+          type='submit' 
+          class="button button--filled button--green button--sm" 
+          name='save-preview'
+          value='save-preview'
+        >
+          Save & Preview  
+        </button>
       </div>
     </form>
     {% endif %}
   </div>
 
   <div class="workflow-detail__table">
-    <div class="border-b">
+    <nav class="tabbar">
       {% for parent in parents %}
-      <a class="{% if preview_node_id == parent.id %}text-blue{% endif %}"
-         href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ parent.id }}">
-        Input {% if parents|length > 1 %} {{ forloop.counter }} {% endif %}
-      </a>
+        <a class="tabbar__link {% if preview_node_id == parent.id %} tabbar__link--active {% endif %}"
+          href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ parent.id }}">
+          Input {% if parents|length > 1 %} {{ forloop.counter }} {% endif %}
+        </a> 
       {% endfor %}
-      <a class="{% if preview_node_id == node.id %}text-blue{% endif %}"
-         href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ node.id }}">
+      <a class="tabbar__link  {% if preview_node_id == node.id %} tabbar__link--active {% endif %}"
+        href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ node.id }}">
         Result
       </a>
-    </div>
-
+    </nav>
+    
     {% if request.GET.preview %}
     <turbo-frame id="workflows-grid" src="{% url 'workflows:grid' workflow.id preview_node_id %}">Loading...
     </turbo-frame>
     {% else %}
-    <a
-       href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ preview_node_id }}&preview=true">Preview</a>
+    <div class='workflow-detail__load-preview'>
+      <a 
+        class='flex flex-row items-center'
+        href="{% url 'workflows:node' workflow.id node.id %}?preview_node_id={{ preview_node_id }}&preview=true"
+      >
+        <i class='fad fa-redo fa-lg'></i>
+        <span class='font-semibold text-black-50'>Load preview</span>
+        </a>
+    </div>
     {% endif %}
   </div>
   {% else %}

@@ -5,7 +5,15 @@ from django import forms
 from django.forms.models import BaseInlineFormSet
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 
-from .models import Column, FunctionColumn, Node, SortColumn, Workflow
+from .models import (
+    AddColumn,
+    Column,
+    EditColumn,
+    FunctionColumn,
+    Node,
+    SortColumn,
+    Workflow,
+)
 
 
 class WorkflowForm(forms.ModelForm):
@@ -112,12 +120,6 @@ ColumnFormSet = forms.inlineformset_factory(
 )
 
 
-class GroupNodeForm(NodeForm):
-    class Meta:
-        model = Node
-        fields = []
-
-
 SortColumnFormSet = forms.inlineformset_factory(
     Node,
     SortColumn,
@@ -128,10 +130,23 @@ SortColumnFormSet = forms.inlineformset_factory(
 )
 
 
-class SortNodeForm(NodeForm):
-    class Meta:
-        model = Node
-        fields = []
+EditColumnFormSet = forms.inlineformset_factory(
+    Node,
+    EditColumn,
+    fields=("name", "function"),
+    can_delete=True,
+    extra=1,
+    formset=InlineColumnFormset,
+)
+
+AddColumnFormSet = forms.inlineformset_factory(
+    Node,
+    AddColumn,
+    fields=("name", "function", "label"),
+    can_delete=True,
+    extra=1,
+    formset=InlineColumnFormset,
+)
 
 
 class UnionNodeForm(NodeForm):
@@ -159,15 +174,19 @@ KIND_TO_FORM = {
     "output": OutputNodeForm,
     "select": SelectNodeForm,
     "join": JoinNodeForm,
-    "aggregation": GroupNodeForm,
+    "aggregation": DefaultNodeForm,
     "union": UnionNodeForm,
-    "sort": SortNodeForm,
+    "sort": DefaultNodeForm,
     "limit": LimitNodeForm,
     # Is defined in the filter app and will be rendered via a
     # different turbo frame
     "filter": DefaultNodeForm,
+    "edit": DefaultNodeForm,
+    "add": DefaultNodeForm,
 }
 KIND_TO_FORMSETS = {
     "aggregation": [FunctionColumnFormSet, ColumnFormSet],
     "sort": [SortColumnFormSet],
+    "edit": [EditColumnFormSet],
+    "add": [AddColumnFormSet],
 }

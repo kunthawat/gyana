@@ -5,16 +5,11 @@ from django import forms
 from django.forms.models import BaseInlineFormSet
 from django.forms.widgets import CheckboxSelectMultiple, HiddenInput
 
-from .models import (
-    AddColumn,
-    Column,
-    EditColumn,
-    FunctionColumn,
-    Node,
-    RenameColumn,
-    SortColumn,
-    Workflow,
-)
+# fmt: off
+from .models import (AddColumn, Column, EditColumn, FunctionColumn, Node,
+                     RenameColumn, SortColumn, Workflow)
+
+# fmt: on
 
 
 class WorkflowForm(forms.ModelForm):
@@ -140,10 +135,44 @@ EditColumnFormSet = forms.inlineformset_factory(
     formset=InlineColumnFormset,
 )
 
+IBIS_TO_PREFIX = {"String": "string_", "Int64": "integer_"}
+
+
+class AddColumnForm(forms.ModelForm):
+    class Meta:
+        fields = ("name", "string_function", "integer_function", "label")
+
+    def __init__(self, *args, **kwargs):
+
+        self.schema = kwargs.pop("schema")
+
+        super().__init__(*args, **kwargs)
+
+        column_type = None
+
+        # data populated by GET request in live form
+        if (data := kwargs.get("data")) is not None:
+            name = data[f"{kwargs['prefix']}-name"]
+            if name in self.schema:
+                column_type = self.schema[name].name
+
+        # data populated from database in initial render
+        elif self.instance.name in self.schema:
+            column_type = self.schema[self.instance.name].name
+
+        # remove all fields that are not for this type
+        deletions = [v for k, v in IBIS_TO_PREFIX.items() if k != column_type]
+
+        for deletion in deletions:
+            self.fields = {
+                k: v for k, v in self.fields.items() if not k.startswith(deletion)
+            }
+
+
 AddColumnFormSet = forms.inlineformset_factory(
     Node,
     AddColumn,
-    fields=("name", "function", "label"),
+    form=AddColumnForm,
     can_delete=True,
     extra=1,
     formset=InlineColumnFormset,

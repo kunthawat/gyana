@@ -1,12 +1,11 @@
-import json
 from functools import cached_property
 
-import inflection
 from apps.projects.mixins import ProjectMixin
 from apps.utils.table_data import get_table
 from django import forms
 from django.db import transaction
 from django.db.models.query import QuerySet
+from django.http import request
 from django.http.response import HttpResponse
 from django.urls import reverse
 from django.views.generic import DetailView
@@ -16,7 +15,7 @@ from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
 from rest_framework import viewsets
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, schema
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 from turbo_response.views import TurboCreateView, TurboUpdateView
@@ -115,17 +114,41 @@ class NodeUpdate(TurboUpdateView):
     def formsets(self):
         return KIND_TO_FORMSETS.get(self.object.kind, [])
 
+    def get_formset_instance(self, formset):
+
+        form_kwargs = {}
+        if formset.get_default_prefix() == "add_columns":
+            form_kwargs = {"schema": self.object.parents.first().schema}
+
+        # POST request for form creation
+        if self.request.POST:
+            return formset(
+                self.request.POST,
+                instance=self.object,
+                form_kwargs=form_kwargs,
+            )
+        # GET request in live form
+        if f"{formset.get_default_prefix()}-TOTAL_FORMS" in self.request.GET:
+            return formset(
+                self.request.GET,
+                instance=self.object,
+                form_kwargs=form_kwargs,
+            )
+        # initial render
+        return formset(
+            instance=self.object,
+            form_kwargs=form_kwargs,
+        )
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["workflow"] = self.workflow
         context["node"] = self.object
 
         for formset in self.formsets:
-            context[inflection.underscore(formset.__name__)] = (
-                formset(self.request.POST, instance=self.object)
-                if self.request.POST
-                else formset(instance=self.object)
-            )
+            context[
+                f"{formset.get_default_prefix()}_formset"
+            ] = self.get_formset_instance(formset)
 
         context["preview_node_id"] = int(
             self.request.GET.get("preview_node_id", self.object.id)
@@ -140,7 +163,7 @@ class NodeUpdate(TurboUpdateView):
             with transaction.atomic():
                 self.object = form.save()
                 for formset_cls in self.formsets:
-                    formset = context[inflection.underscore(formset_cls.__name__)]
+                    formset = context[f"{formset_cls.get_default_prefix()}_formset"]
                     if formset.is_valid():
                         formset.instance = self.object
                         formset.save()

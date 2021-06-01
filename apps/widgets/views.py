@@ -56,25 +56,21 @@ class WidgetDetail(DashboardMixin, DetailView):
     model = Widget
 
 
-class WidgetUpdate(DashboardMixin, LiveUpdateView):
+class WidgetUpdate(DashboardMixin, TurboUpdateView):
     template_name = "widgets/update.html"
     model = Widget
     form_class = WidgetConfigForm
 
+    def get_latest_attr(self, attr):
+        return self.request.POST.get(attr) or getattr(self.object, attr)
+
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
         kwargs["project"] = self.get_object().dashboard.project
-
-        table = self.get_latest_attr("table")
-        if table:
-            kwargs["schema"] = Table.objects.get(
-                pk=table.pk if isinstance(table, Table) else table
-            ).schema
-
         return kwargs
 
     def get_success_url(self) -> str:
-        if "save-preview" in self.request.POST:
+        if self.request.POST.get("submit") == "Save & Preview":
             return reverse(
                 "projects:dashboards:widgets:update",
                 args=(

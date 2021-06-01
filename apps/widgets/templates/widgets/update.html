@@ -1,16 +1,60 @@
 {% extends "widgets/base.html" %}
-
+{% load static %}
 {% block widget %}
 <div class="flex items-center gap-4 mb-4">
-  <h1>Update</h1>
-  <a href="{% url 'projects:dashboards:widgets:list' project.id dashboard.id %}" class="button button--sm button--green">Back</a>
+  <h1>{{ object.name }}</h1>
+  <a href="{% url 'projects:dashboards:detail' project.id dashboard.id %}" class="button button--sm button--green">Back</a>
 </div>
 
-<form method="post" action="{% url 'projects:dashboards:widgets:update' project.id dashboard.id object.id %}" class="form">
-  {% csrf_token %}
+<div class="flex flex-wrap">
+  <div class="w-1/2">
+    <h3 class="">Config</h3>
+    <turbo-frame id="widgets:update">
+      <form data-controller="live-update"
+        method="get"
+        action="{% url 'projects:dashboards:widgets:update' project.id dashboard.id object.id %}"
+        class="form">
+          {% csrf_token %}
 
-  {% include "django/forms/default_form.html" %}
+          {% include "django/forms/default_form.html" %}
 
-  <button type="submit" class="button button--filled button--green">Save changes</button>
-</form>
+          <button type="button"
+            data-action="click->live-update#update"
+            data-name="save-close"
+            class="button button--filled button--green"
+            >
+            Save
+          </button>
+          <button type="button"
+            data-action="click->live-update#update"
+            data-name="save-preview"
+            class="button button--filled button--green"
+            >
+            Save & Preview
+          </button>
+      </form>
+    </turbo-frame>
+    <h3 class="">Filters</h3>
+    <turbo-frame id="widget-{{ object.id }}-filters" src="{% url 'filters:list' %}"> </turbo-frame>
+  </div>
+  <div class="w-1/2">
+    {% if widget.is_valid %}
+      <turbo-frame id="widgets:output-{{ widget.id }}"
+        src="{% url 'widgets:output' object.id %}">
+        Loading...
+      </turbo-frame>
+    {% else %}
+      <div class='flex flex-col items-center justify-center' style="min-height:16rem;">
+        <i class="far fa-lightbulb-exclamation text-yellow-300 mb-1 fa-2x"></i>
+        <p class="text-base text-gray-500">This widget needs to be configured</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block page_js %}
+<script src="{% static "fusioncharts/fusioncharts.js" %}"></script>
+<script src="{% static "fusioncharts/fusioncharts.charts.js" %}"></script>
+<script src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
 {% endblock %}

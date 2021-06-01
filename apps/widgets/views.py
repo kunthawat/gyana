@@ -1,4 +1,6 @@
 from apps.dashboards.mixins import DashboardMixin
+from apps.tables.models import Table
+from apps.utils.live_update_view import LiveUpdateView
 from apps.widgets.visuals import chart_to_output, table_to_output
 from django.db import transaction
 from django.db.models.query import QuerySet
@@ -8,7 +10,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
-from .forms import WidgetConfigForm, WidgetForm
+from .forms import WidgetConfigForm
 from .models import Widget
 
 
@@ -26,19 +28,11 @@ class WidgetList(DashboardMixin, ListView):
 class WidgetCreate(DashboardMixin, TurboCreateView):
     template_name = "widgets/create.html"
     model = Widget
-    form_class = WidgetForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["project"] = self.dashboard.project
-        return kwargs
-
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["dashboard"] = self.dashboard
-        return initial
+    fields = []
 
     def form_valid(self, form):
+        form.instance.dashboard = self.dashboard
+
         with transaction.atomic():
             response = super().form_valid(form)
             self.dashboard.sort_order.append(self.object.id)
@@ -48,7 +42,7 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
 
     def get_success_url(self) -> str:
         return reverse(
-            "projects:dashboards:widgets:detail",
+            "projects:dashboards:widgets:update",
             args=(
                 self.project.id,
                 self.dashboard.id,
@@ -62,19 +56,35 @@ class WidgetDetail(DashboardMixin, DetailView):
     model = Widget
 
 
-class WidgetUpdate(DashboardMixin, TurboUpdateView):
+class WidgetUpdate(DashboardMixin, LiveUpdateView):
     template_name = "widgets/update.html"
     model = Widget
-    form_class = WidgetForm
+    form_class = WidgetConfigForm
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        kwargs["project"] = self.dashboard.project
+        kwargs["project"] = self.get_object().dashboard.project
+
+        table = self.get_latest_attr("table")
+        if table:
+            kwargs["schema"] = Table.objects.get(
+                pk=table.pk if isinstance(table, Table) else table
+            ).schema
+
         return kwargs
 
     def get_success_url(self) -> str:
+        if "save-preview" in self.request.POST:
+            return reverse(
+                "projects:dashboards:widgets:update",
+                args=(
+                    self.project.id,
+                    self.dashboard.id,
+                    self.object.id,
+                ),
+            )
         return reverse(
-            "projects:dashboards:widgets:list",
+            "projects:dashboards:detail",
             args=(self.project.id, self.dashboard.id),
         )
 
@@ -93,26 +103,12 @@ class WidgetDelete(DashboardMixin, DeleteView):
 
     def get_success_url(self) -> str:
         return reverse(
-            "projects:dashboards:widgets:list",
+            "projects:dashboards:detail",
             args=(self.project.id, self.dashboard.id),
         )
 
 
 # Turbo frames
-
-
-class WidgetConfig(TurboUpdateView):
-    template_name = "widgets/config.html"
-    model = Widget
-    form_class = WidgetConfigForm
-
-    def get_form_kwargs(self):
-        kwargs = super().get_form_kwargs()
-        kwargs["columns"] = [(name, name) for name in self.object.table.schema]
-        return kwargs
-
-    def get_success_url(self) -> str:
-        return reverse("widgets:config", args=(self.object.id,))
 
 
 def last_modified_widget_output(request, pk):
@@ -137,7 +133,7 @@ class WidgetOutput(DetailView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        if self.object.is_valid():
+        if self.object.is_valid:
             if self.object.kind == Widget.Kind.TABLE:
                 context_data.update(table_to_output(self.object))
             else:

@@ -1,6 +1,9 @@
 from functools import cached_property
 
+from apps.filters.forms import FilterForm
+from apps.filters.models import Filter
 from apps.tables.models import Table
+from apps.utils.live_update_form import LiveUpdateForm
 from apps.workflows.widgets import SourceSelect
 from django import forms
 from django.forms.models import BaseInlineFormSet
@@ -20,7 +23,7 @@ class WorkflowForm(forms.ModelForm):
         widgets = {"project": HiddenInput()}
 
 
-class NodeForm(forms.ModelForm):
+class NodeForm(LiveUpdateForm):
     @cached_property
     def columns(self):
         """Returns the schema for the first parent."""
@@ -115,34 +118,40 @@ AGGREGATION_TYPE_MAP = {
 }
 
 
-class FunctionColumnForm(forms.ModelForm):
-    class Meta:
-        fields = ("name", "function")
+class SchemaMixin:
+    @property
+    def column_type(self):
+        column = self.get_live_field("name")
+        if column in self.schema:
+            return self.schema[column].name
+        return None
 
     def __init__(self, *args, **kwargs):
-        schema = kwargs.pop("schema")
+        self.schema = kwargs.pop("schema")
 
         super().__init__(*args, **kwargs)
 
-        column_type = None
 
-        # data populated by GET request in live form
-        if (data := kwargs.get("data")) is not None:
-            name = data[f"{kwargs['prefix']}-name"]
-            if name in schema:
-                column_type = schema[name].name
+class FunctionColumnForm(SchemaMixin, LiveUpdateForm):
+    class Meta:
+        fields = ("name", "function")
 
-        # data populated from database in initial render
-        elif self.instance.name in schema:
-            column_type = schema[self.instance.name].name
+    def get_live_fields(self):
+        fields = ["name"]
 
-        if column_type is None:
-            self.fields.pop("function")
+        if self.column_type is not None:
+            fields += ["function"]
 
-        else:
+        return fields
+
+    def __init__(self, *args, **kwargs):
+
+        super().__init__(*args, **kwargs)
+
+        if self.column_type is not None:
             self.fields["function"].choices = [
                 (choice.value, choice.name)
-                for choice in AGGREGATION_TYPE_MAP[column_type]
+                for choice in AGGREGATION_TYPE_MAP[self.column_type]
             ]
 
 
@@ -178,7 +187,7 @@ SortColumnFormSet = forms.inlineformset_factory(
 IBIS_TO_PREFIX = {"String": "string_", "Int64": "integer_"}
 
 
-class OperationColumnForm(forms.ModelForm):
+class OperationColumnForm(SchemaMixin, LiveUpdateForm):
     class Meta:
         fields = (
             "name",
@@ -186,31 +195,16 @@ class OperationColumnForm(forms.ModelForm):
             "integer_function",
         )
 
-    def __init__(self, *args, **kwargs):
+    def get_live_fields(self):
+        fields = ["name"]
 
-        self.schema = kwargs.pop("schema")
+        if self.column_type == "Int64":
+            fields += ["integer_function"]
 
-        super().__init__(*args, **kwargs)
+        elif self.column_type == "String":
+            fields += ["string_function"]
 
-        column_type = None
-
-        # data populated by GET request in live form
-        if (data := kwargs.get("data")) is not None:
-            name = data[f"{kwargs['prefix']}-name"]
-            if name in self.schema:
-                column_type = self.schema[name].name
-
-        # data populated from database in initial render
-        elif self.instance.name in self.schema:
-            column_type = self.schema[self.instance.name].name
-
-        # remove all fields that are not for this type
-        deletions = [v for k, v in IBIS_TO_PREFIX.items() if k != column_type]
-
-        for deletion in deletions:
-            self.fields = {
-                k: v for k, v in self.fields.items() if not k.startswith(deletion)
-            }
+        return fields
 
 
 EditColumnFormSet = forms.inlineformset_factory(
@@ -223,9 +217,26 @@ EditColumnFormSet = forms.inlineformset_factory(
 )
 
 
-class AddColumnForm(OperationColumnForm):
+class AddColumnForm(SchemaMixin, LiveUpdateForm):
     class Meta:
         fields = ("name", "string_function", "integer_function", "label")
+
+    def get_live_fields(self):
+        fields = ["name"]
+
+        if self.column_type == "Int64":
+            fields += ["integer_function"]
+
+            if self.get_live_field("integer_function") is not None:
+                fields += ["label"]
+
+        elif self.column_type == "String":
+            fields += ["string_function"]
+
+            if self.get_live_field("string_function") is not None:
+                fields += ["label"]
+
+        return fields
 
 
 AddColumnFormSet = forms.inlineformset_factory(
@@ -245,6 +256,10 @@ RenameColumnFormSet = forms.inlineformset_factory(
     can_delete=True,
     extra=1,
     formset=InlineColumnFormset,
+)
+
+FilterFormSet = forms.inlineformset_factory(
+    Node, Filter, form=FilterForm, can_delete=True, extra=1
 )
 
 
@@ -290,4 +305,5 @@ KIND_TO_FORMSETS = {
     "edit": [EditColumnFormSet],
     "add": [AddColumnFormSet],
     "rename": [RenameColumnFormSet],
+    "filter": [FilterFormSet],
 }

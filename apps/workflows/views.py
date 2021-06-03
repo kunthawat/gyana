@@ -1,6 +1,7 @@
 from functools import cached_property
 
 from apps.projects.mixins import ProjectMixin
+from apps.utils.formset_update_view import FormsetUpdateView
 from apps.utils.table_data import get_table
 from django import forms
 from django.db import transaction
@@ -101,7 +102,7 @@ class NodeViewSet(viewsets.ModelViewSet):
     filterset_fields = ["workflow"]
 
 
-class NodeUpdate(TurboUpdateView):
+class NodeUpdate(FormsetUpdateView):
     template_name = "workflows/node.html"
     model = Node
 
@@ -113,74 +114,35 @@ class NodeUpdate(TurboUpdateView):
     def formsets(self):
         return KIND_TO_FORMSETS.get(self.object.kind, [])
 
-    def get_formset_instance(self, formset):
+    def get_formset_kwargs(self, formset):
 
-        form_kwargs = {}
         if formset.get_default_prefix() in [
             "add_columns",
             "edit_columns",
             "aggregations",
+            "filters",
         ]:
-            form_kwargs = {"schema": self.object.parents.first().schema}
+            return {"schema": self.object.parents.first().schema}
 
-        # POST request for form creation
-        if self.request.POST:
-            return formset(
-                self.request.POST,
-                instance=self.object,
-                form_kwargs=form_kwargs,
-            )
-        # GET request in live form
-        if f"{formset.get_default_prefix()}-TOTAL_FORMS" in self.request.GET:
-            return formset(
-                self.request.GET,
-                instance=self.object,
-                form_kwargs=form_kwargs,
-            )
-        # initial render
-        return formset(
-            instance=self.object,
-            form_kwargs=form_kwargs,
-        )
+        return {}
+
+    @property
+    def preview_node_id(self):
+        return int(self.request.GET.get("preview_node_id", self.object.id))
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["workflow"] = self.workflow
-        context["node"] = self.object
-
-        for formset in self.formsets:
-            context[
-                f"{formset.get_default_prefix()}_formset"
-            ] = self.get_formset_instance(formset)
-
-        context["preview_node_id"] = int(
-            self.request.GET.get("preview_node_id", self.object.id)
-        )
-
+        context["preview_node_id"] = self.preview_node_id
         return context
-
-    def form_valid(self, form: forms.Form) -> HttpResponse:
-        context = self.get_context_data()
-
-        if self.formsets:
-            with transaction.atomic():
-                self.object = form.save()
-                for formset_cls in self.formsets:
-                    formset = context[f"{formset_cls.get_default_prefix()}_formset"]
-                    if formset.is_valid():
-                        formset.instance = self.object
-                        formset.save()
-
-        return super().form_valid(form)
 
     def get_form_class(self):
         return KIND_TO_FORM[self.object.kind]
 
     def get_success_url(self) -> str:
         base_url = reverse("workflows:node", args=(self.workflow.id, self.object.id))
-        if "save-preview" in self.request.POST:
-            preview_node_id = self.get_context_data()["preview_node_id"]
-            return f"{base_url}?preview_node_id={preview_node_id}&preview=true"
+        if self.request.POST.get("submit") == "Save & Preview":
+            return f"{base_url}?preview_node_id={self.preview_node_id}&preview=true"
         return base_url
 
 

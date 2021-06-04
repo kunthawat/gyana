@@ -1,5 +1,3 @@
-import json
-
 from django.forms.widgets import ChoiceWidget
 
 

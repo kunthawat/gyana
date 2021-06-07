@@ -107,20 +107,20 @@ class WidgetUpdate(DashboardMixin, FormsetUpdateView):
             args=(self.project.id, self.dashboard.id),
         )
 
-    # def form_valid(self, form):
-    #     r = super().form_valid(form)
+    def form_valid(self, form):
+        r = super().form_valid(form)
 
-    #     analytics.track(
-    #         self.request.user.id,
-    #         WIDGET_CONFIGURED_EVENT,
-    #         {
-    #             "id": form.instance.id,
-    #             "dashboard_id": self.dashboard.id,
-    #             "type": form.instance.kind,
-    #         },
-    #     )
+        analytics.track(
+            self.request.user.id,
+            WIDGET_CONFIGURED_EVENT,
+            {
+                "id": form.instance.id,
+                "dashboard_id": self.dashboard.id,
+                "type": form.instance.kind,
+            },
+        )
 
-    #     return r
+        return r
 
 
 class WidgetDelete(DashboardMixin, DeleteView):

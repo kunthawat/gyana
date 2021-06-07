@@ -11,7 +11,7 @@ PROJECT_CREATED_EVENT: Final = "Project created"
 # Integrations
 NEW_INTEGRATION_START_EVENT: Final = "New integration started"
 INTEGRATION_CREATED_EVENT: Final = "Integration created"
-INTEGRATION_SYNC_SUCCESS_EVENT: Final = "Integration sync success"
+INTEGRATION_SYNC_SUCCESS_EVENT: Final = "Integration sync succeeded"
 
 # Workflows
 WORKFLOW_CREATED_EVENT: Final = "Workflow created"

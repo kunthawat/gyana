@@ -360,6 +360,7 @@ CLOUD_NAMESPACE = os.environ.get("CLOUD_NAMESPACE", "local")
 # Feature flag for Alpha features
 FF_ALPHA = True
 
-SEGMENT_ANALYTICS_WRITE_KEY = os.environ.get(
-    "SEGMENT_ANALYTICS_WRITE_KEY", "Cyqh3DATuY01aAfkW8QbQHwlXWQALq2w"
-)
+# django write key
+SEGMENT_ANALYTICS_WRITE_KEY = os.environ.get("SEGMENT_ANALYTICS_WRITE_KEY", "")
+# web write key
+SEGMENT_ANALYTICS_JS_WRITE_KEY = os.environ.get("SEGMENT_ANALYTICS_JS_WRITE_KEY", "")

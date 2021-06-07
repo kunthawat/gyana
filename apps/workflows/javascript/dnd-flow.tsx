@@ -18,6 +18,7 @@ import ReactFlow, {
   ConnectionLineType,
 } from 'react-flow-renderer'
 import { INode } from './interfaces'
+import RunButton from './RunButton'
 
 import Sidebar from './sidebar'
 
@@ -247,18 +248,19 @@ const DnDFlow = ({ client }) => {
           >
             <Controls />
             <Background gap={GRID_GAP} />
+            <RunButton
+              hasOutput={hasOutput}
+              client={client}
+              workflowId={workflowId}
+              elements={elements}
+              setElements={setElements}
+              isOutOfDate={isOutOfDate}
+              setIsOutOfDate={setIsOutOfDate}
+            />
           </ReactFlow>
         </NodeContext.Provider>
       </div>
-      <Sidebar
-        hasOutput={hasOutput}
-        client={client}
-        workflowId={workflowId}
-        elements={elements}
-        setElements={setElements}
-        isOutOfDate={isOutOfDate}
-        setIsOutOfDate={setIsOutOfDate}
-      />
+      <Sidebar />
     </div>
   )
 }
@@ -277,7 +279,7 @@ const OpenButton = ({ id }) => {
 
   return (
     <button data-action='click->tf-modal#open'>
-      <i data-src={`/workflows/${workflowId}/nodes/${id}`} className='fas fa-cog fa-lg'></i>
+      <i data-src={`/workflows/${workflowId}/nodes/${id}`} className='fas fa-edit fa-lg'></i>
     </button>
   )
 }
@@ -335,7 +337,7 @@ const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
   <>
     {selected && <Buttons id={id} />}
     {data.error && <ErrorIcon text={data.error} />}
-    <h4>{data.label}</h4>
+    <h4 className='capitalize'>{data.label}</h4>
     <Description id={id} data={data} />
 
     <Handle type='source' position={Position.Right} isConnectable={isConnectable} />
@@ -348,7 +350,7 @@ const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
     {data.error && <ErrorIcon text={data.error} />}
     <Handle type='target' position={Position.Left} isConnectable={isConnectable} />
 
-    <h4>{data.label}</h4>
+    <h4 className='capitalize'>{data.label}</h4>
     <Description id={id} data={data} />
   </>
 )
@@ -367,7 +369,7 @@ const DefaultNode = ({
       {data.error && <ErrorIcon text={data.error} />}
       <Handle type='target' position={targetPosition} isConnectable={isConnectable} />
 
-      <h4>{data.label}</h4>
+      <h4 className='capitalize'>{data.label}</h4>
       <Description id={id} data={data} />
 
       <Handle type='source' position={sourcePosition} isConnectable={isConnectable} />

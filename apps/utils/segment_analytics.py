@@ -9,7 +9,7 @@ SIGNED_UP_EVENT: Final = "Signed up"
 PROJECT_CREATED_EVENT: Final = "Project created"
 
 # Integrations
-NEW_INTEGRATION_START_EVENT: Final = "New integration start"
+NEW_INTEGRATION_START_EVENT: Final = "New integration started"
 INTEGRATION_CREATED_EVENT: Final = "Integration created"
 INTEGRATION_SYNC_SUCCESS_EVENT: Final = "Integration sync success"
 

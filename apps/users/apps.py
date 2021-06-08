@@ -10,5 +10,6 @@ class UserConfig(AppConfig):
     def ready(self):
         from . import signals
 
-        analytics.debug = settings.DEBUG
-        analytics.write_key = settings.SEGMENT_ANALYTICS_WRITE_KEY
+        if settings.SEGMENT_ANALYTICS_WRITE_KEY:
+            analytics.debug = settings.DEBUG
+            analytics.write_key = settings.SEGMENT_ANALYTICS_WRITE_KEY

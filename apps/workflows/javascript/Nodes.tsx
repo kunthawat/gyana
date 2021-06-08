@@ -118,10 +118,24 @@ const DefaultNode = ({
   )
 }
 
+const TextNode = ({ id, data, selected }: NodeProps) => {
+  const [text, setText] = useState(data.text || '')
+  const { client } = useContext(NodeContext)
+
+  const update = () =>
+    client.action(window.schema, ['workflows', 'api', 'nodes', 'partial_update'], {
+      id,
+      text_text: text,
+    })
+
+  return <textarea value={text} onChange={(e) => setText(e.target.value)} onBlur={update} />
+}
+
 const defaultNodeTypes = {
   input: InputNode,
   output: OutputNode,
   default: DefaultNode,
+  text: TextNode,
 }
 
 export default defaultNodeTypes

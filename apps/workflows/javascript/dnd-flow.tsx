@@ -163,8 +163,13 @@ const DnDFlow = ({ client }) => {
         const newElements = result.results.map((r) => {
           return {
             id: `${r.id}`,
-            type: ['input', 'output'].includes(r.kind) ? r.kind : 'default',
-            data: { label: r.kind, description: r.description, error: r.error },
+            type: ['input', 'output', 'text'].includes(r.kind) ? r.kind : 'default',
+            data: {
+              label: r.kind,
+              description: r.description,
+              error: r.error,
+              ...(r.kind === 'text' ? { text: r.text_text } : {}),
+            },
             position: { x: r.x, y: r.y },
           }
         })

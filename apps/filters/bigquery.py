@@ -25,6 +25,17 @@ def numeric_filter(query, filter_):
     if filter_.numeric_predicate == Filter.NumericPredicate.NOTNULL:
         return query[query[column].notnull()]
 
+    values = (
+        filter_.integer_values
+        if filter_.type == Filter.Type.INTEGER
+        else filter_.float_values
+    )
+    if filter_.numeric_predicate == Filter.NumericPredicate.ISIN:
+        return query[query[column].isin(values)]
+
+    if filter_.numeric_predicate == Filter.NumericPredicate.NOTIN:
+        return query[query[column].notin(values)]
+
 
 def create_filter_query(query, filters):
     for filter_ in filters:
@@ -52,6 +63,10 @@ def create_filter_query(query, filters):
                 query = query[query[column] == query[column].upper()]
             elif filter_.string_predicate == Filter.StringPredicate.ISLOWERCASE:
                 query = query[query[column] == query[column].lower()]
+            elif filter_.string_predicate == Filter.StringPredicate.ISIN:
+                query = query[query[column].isin(filter_.string_values)]
+            elif filter_.string_predicate == Filter.StringPredicate.NOTIN:
+                query = query[query[column].notin(filter_.string_values)]
         elif filter_.type == Filter.Type.BOOL:
             query = query[query[column] == filter_.bool_value]
     return query

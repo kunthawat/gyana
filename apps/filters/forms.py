@@ -3,11 +3,19 @@ from apps.utils.schema_form_mixin import SchemaFormMixin
 from django import forms
 from django.forms.widgets import TextInput
 
+from .widgets import SelectAutocomplete
+
 IBIS_TO_TYPE = {"Int64": "INTEGER", "String": "STRING"}
 
 
 class FilterForm(SchemaFormMixin, LiveUpdateForm):
     column = forms.ChoiceField(choices=[])
+
+    # We have to add the media here because otherwise the form fields
+    # Are added dynamically, and a script wouldn't be added if a widget
+    # isn't included in the fields
+    class Media:
+        js = ("js/templates-bundle.js",)
 
     class Meta:
         fields = (
@@ -16,6 +24,8 @@ class FilterForm(SchemaFormMixin, LiveUpdateForm):
             "numeric_predicate",
             "string_value",
             "integer_value",
+            "string_values",
+            "integer_values",
         )
         widgets = {"string_value": TextInput()}
 
@@ -23,7 +33,6 @@ class FilterForm(SchemaFormMixin, LiveUpdateForm):
 
         fields = ["column"]
         predicate = None
-        value = None
         if self.column_type == "String":
             predicate = "string_predicate"
             value = "string_value"
@@ -35,16 +44,28 @@ class FilterForm(SchemaFormMixin, LiveUpdateForm):
 
         if (
             self.column_type
+            and predicate
             and (pred := self.get_live_field(predicate)) is not None
             and pred not in ["isnull", "notnull", "isupper", "islower"]
         ):
-            fields += [value]
+            if pred in ["isin", "notin"]:
+                fields += [value + "s"]
+            else:
+                fields += [value]
 
         return fields
 
     def __init__(self, *args, **kwargs):
 
         super().__init__(*args, **kwargs)
+
+        # We add the widgets for the array values here because
+        # We need to initialize them with some run-time configurations
+        field = list(filter(lambda x: x.endswith("_values"), self.fields.keys()))
+        if field:
+            self.fields[field[0]].widget = SelectAutocomplete(
+                None, instance=self.instance, column=self.get_live_field("column")
+            )
 
         if self.schema:
             self.fields["column"].choices = [

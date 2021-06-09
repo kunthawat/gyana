@@ -1,4 +1,6 @@
+from apps.widgets.serializers import WidgetSerializer
 import analytics
+from rest_framework import mixins, viewsets
 from apps.dashboards.mixins import DashboardMixin
 from apps.tables.models import Table
 from apps.utils.formset_update_view import FormsetUpdateView
@@ -140,6 +142,11 @@ class WidgetDelete(DashboardMixin, DeleteView):
             "projects:dashboards:detail",
             args=(self.project.id, self.dashboard.id),
         )
+
+
+class WidgetPartialUpdate(viewsets.GenericViewSet, mixins.UpdateModelMixin):
+    serializer_class = WidgetSerializer
+    queryset = Widget.objects.all()
 
 
 # Turbo frames

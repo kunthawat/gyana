@@ -21,7 +21,7 @@
      href="{% url 'projects:dashboards:delete' project.id object.pk %}">Delete</a>
 </div>
 
-<div class="p-4 overflow-auto w-full h-full">
+<div class="p-4 pb-0 overflow-auto w-full h-full">
   <turbo-frame id="widgets" src="{% url 'projects:dashboards:widgets:list' project.id object.id %}" target="_top"></turbo-frame>
 </div>
 {% endblock %}

@@ -9,11 +9,15 @@ let auth = new coreapi.auth.SessionAuthentication({
 
 let client = new coreapi.Client({ auth: auth })
 
+// The grid layout (on any screen) has 20 columns
+const GRID_COLS = 20
+
 const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> = ({
   children,
   root,
 }) => {
   const id = children.props['data-id']
+  const stepSize = root.offsetWidth / GRID_COLS
   const [x, setX] = useState(
     () => (parseInt(children.props['data-x']) * root.clientWidth) / 100 || 0
   )
@@ -39,8 +43,8 @@ const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> 
         width,
         height,
       }}
-      resizeGrid={[10, 10]}
-      dragGrid={[10, 10]}
+      resizeGrid={[stepSize, 10]}
+      dragGrid={[stepSize, 10]}
       minHeight='200'
       minWidth='200'
       dragHandleClassName='rnd-handle'

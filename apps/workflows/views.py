@@ -14,7 +14,6 @@ from apps.utils.segment_analytics import (
 )
 from apps.utils.table_data import get_table
 from django import forms
-from django.db import transaction
 from django.db.models.query import QuerySet
 from django.http.response import HttpResponse
 from django.urls import reverse

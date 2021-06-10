@@ -37,7 +37,6 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
 
         with transaction.atomic():
             response = super().form_valid(form)
-            self.dashboard.sort_order.append(self.object.id)
             self.dashboard.save()
 
         analytics.track(
@@ -129,7 +128,6 @@ class WidgetDelete(DashboardMixin, DeleteView):
 
     def delete(self, request, *args, **kwargs):
         with transaction.atomic():
-            self.dashboard.sort_order.remove(self.get_object().id)
             self.dashboard.save()
             response = super().delete(request, *args, **kwargs)
 

@@ -45,6 +45,22 @@ input[type='file'] {
   @extend %input;
 }
 
+input[type='number'] {
+  @extend %input;
+}
+
+input[type='time'] {
+  @extend %input;
+}
+
+input[type='date'] {
+  @extend %input;
+}
+
+input[type='datetime-local'] {
+  @extend %input;
+}
+
 textarea {
   @extend %input;
 }

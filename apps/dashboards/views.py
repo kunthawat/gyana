@@ -70,7 +70,6 @@ class DashboardDetail(ProjectMixin, TurboUpdateView):
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
-        context_data["WIDGET_KIND_TO_WEB"] = WIDGET_KIND_TO_WEB
         context_data["choices"] = [
             (choices + WIDGET_KIND_TO_WEB[choices[0]])
             for choices in Widget.Kind.choices

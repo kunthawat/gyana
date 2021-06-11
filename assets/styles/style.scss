@@ -3,6 +3,7 @@
 @use "base/typography";
 @use "base/forms";
 
+@use "utilities/layers";
 @use "utilities/colours";
 @use "utilities/variables";
 @use "utilities/padding";
@@ -14,6 +15,7 @@
 @use "components/tooltip";
 @use "components/card";
 @use "components/navbar";
+@use "components/sidebar";
 @use "components/modal";
 @use "components/table";
 @use "components/widget_card";

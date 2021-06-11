@@ -12,7 +12,7 @@ let client = new coreapi.Client({ auth: auth })
 // The grid layout (on any screen) has 20 columns
 const GRID_COLS = 20
 
-const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> = ({
+const GyWidget_: React.FC<{ children: React.ReactElement; root: HTMLElement }> = ({
   children,
   root,
 }) => {
@@ -51,7 +51,7 @@ const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> 
       dragHandleClassName='rnd-handle'
       onResizeStop={(...args) => {
         const node = args[2]
-        const parent = node.parentElement as HTMLElement
+        const parent = root
         // Clamp the dimensions to the allowed stepSize/grid
         const width = Math.round(node.offsetWidth / stepSize) * stepSize,
           height = Math.round(node.offsetHeight / stepSize) * stepSize
@@ -76,7 +76,7 @@ const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> 
         })
       }}
       onDragStop={(e, { node, x, y, ...rest }) => {
-        const parent = node.parentElement
+        const parent = root
         // Snaps the x value within bounds of the parent
         const newX = Math.floor(
           x < 0
@@ -102,32 +102,17 @@ const RndElement: React.FC<{ children: React.ReactElement; root: HTMLElement }> 
   )
 }
 
-const Rnd_: React.FC<{ children: React.ReactElement[]; root: HTMLElement }> = ({
-  children,
-  root,
-}) => {
-  return (
-    <>
-      {children?.map((child, idx) => (
-        <RndElement key={idx} root={root}>
-          {child}
-        </RndElement>
-      ))}
-    </>
-  )
-}
-
-class Rnd extends HTMLElement {
+class GyWidget extends HTMLElement {
   connectedCallback() {
-    this.style.position = 'relative'
-    this.style.display = 'block'
-    this.style.width = '100%'
-    this.style.height = '100%'
-    this.style.overflowX = 'hidden'
-    this.style.overflowY = 'auto'
+    console.assert(!!this.parentElement, 'gy-widget requires a container element')
+    const children = ReactHtmlParser(this.innerHTML)
+    console.assert(children.length === 1, 'gy-widget requires only one child element')
 
-    ReactDOM.render(<Rnd_ root={this}>{ReactHtmlParser(this.innerHTML)}</Rnd_>, this)
+    ReactDOM.render(
+      <GyWidget_ root={this.parentElement as HTMLElement}>{children[0]}</GyWidget_>,
+      this
+    )
   }
 }
 
-export default Rnd
+export default GyWidget

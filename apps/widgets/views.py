@@ -12,10 +12,11 @@ from django.views.decorators.http import condition
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
 from rest_framework import mixins, viewsets
+from turbo_response import TurboStream
 from turbo_response.views import TurboCreateView
 
 from .forms import FilterFormset, WidgetConfigForm
-from .models import Widget
+from .models import WIDGET_KIND_TO_WEB, Widget
 
 
 class WidgetList(DashboardMixin, ListView):
@@ -30,13 +31,13 @@ class WidgetList(DashboardMixin, ListView):
 class WidgetCreate(DashboardMixin, TurboCreateView):
     template_name = "widgets/create.html"
     model = Widget
-    fields = []
+    fields = ["kind"]
 
     def form_valid(self, form):
         form.instance.dashboard = self.dashboard
 
         with transaction.atomic():
-            response = super().form_valid(form)
+            super().form_valid(form)
             self.dashboard.save()
 
         analytics.track(
@@ -48,7 +49,18 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
             },
         )
 
-        return response
+        return (
+            TurboStream("dashboard-widget-container")
+            .append.template(
+                "widgets/widget_component.html",
+                {
+                    "object": form.instance,
+                    "project": self.dashboard.project,
+                    "dashboard": self.dashboard,
+                },
+            )
+            .response(self.request)
+        )
 
     def get_success_url(self) -> str:
         return reverse(
@@ -150,7 +162,11 @@ class WidgetPartialUpdate(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 
 def last_modified_widget_output(request, pk):
     widget = Widget.objects.get(pk=pk)
-    return max(widget.updated, widget.table.data_updated)
+    return (
+        max(widget.updated, widget.table.data_updated)
+        if widget.table
+        else widget.updated
+    )
 
 
 def etag_widget_output(request, pk):
@@ -173,6 +189,8 @@ class WidgetOutput(DetailView):
         if self.object.is_valid:
             if self.object.kind == Widget.Kind.TABLE:
                 context_data.update(table_to_output(self.object))
+            elif self.object.kind == Widget.Kind.TEXT:
+                pass
             else:
                 context_data.update(chart_to_output(self.object))
 

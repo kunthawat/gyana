@@ -30,7 +30,7 @@ class WidgetList(DashboardMixin, ListView):
 class WidgetCreate(DashboardMixin, TurboCreateView):
     template_name = "widgets/create.html"
     model = Widget
-    fields = []
+    fields = ["kind"]
 
     def form_valid(self, form):
         form.instance.dashboard = self.dashboard

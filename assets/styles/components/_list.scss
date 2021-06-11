@@ -1,0 +1,25 @@
+.list {
+  padding: 6px;
+
+  &--bordered {
+    border-radius: 10px;
+    border: 1px solid var(--c-gray);
+    background-color: var(--c-white);
+  }
+
+  &__item {
+    min-height: 32px;
+    border-radius: 4px;
+    padding: 0 8px;
+
+    display: flex;
+    align-items: center;
+
+    &--interactive {
+      &:hover {
+        cursor: pointer;
+        background-color: var(--c-blue-20);
+      }
+    }
+  }
+}

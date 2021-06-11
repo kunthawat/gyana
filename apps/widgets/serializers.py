@@ -12,4 +12,5 @@ class WidgetSerializer(serializers.ModelSerializer):
             "y",
             "width",
             "height",
+            "text_content",
         )

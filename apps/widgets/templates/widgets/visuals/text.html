@@ -9,5 +9,5 @@
     style='height:100%;resize:none;border:none;' 
     placeholder='Start typing your notes here' 
     wrap='soft'
-  >{{object.text_content}}</textarea>
+  >{% if object.text_content %}{{object.text_content}}{% endif %}</textarea>
 </div>

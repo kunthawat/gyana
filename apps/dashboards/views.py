@@ -3,6 +3,7 @@ from apps.dashboards.serializers import DashboardSerializer
 from apps.dashboards.tables import DashboardTable
 from apps.projects.mixins import ProjectMixin
 from apps.utils.segment_analytics import DASHBOARD_CREATED_EVENT
+from apps.widgets.models import WIDGET_KIND_TO_WEB, Widget
 from django.db.models.query import QuerySet
 from django.urls import reverse_lazy
 from django.urls.base import reverse
@@ -66,6 +67,16 @@ class DashboardDetail(ProjectMixin, TurboUpdateView):
     template_name = "dashboards/detail.html"
     model = Dashboard
     form_class = DashboardForm
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["WIDGET_KIND_TO_WEB"] = WIDGET_KIND_TO_WEB
+        context_data["choices"] = [
+            (choices + WIDGET_KIND_TO_WEB[choices[0]])
+            for choices in Widget.Kind.choices
+        ]
+
+        return context_data
 
     def get_success_url(self) -> str:
         return reverse(

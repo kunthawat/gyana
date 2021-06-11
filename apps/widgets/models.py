@@ -9,6 +9,7 @@ DEFAULT_HEIGHT = 400
 
 class Widget(models.Model):
     class Kind(models.TextChoices):
+        TEXT = "text", "Text"
         TABLE = "table", "Table"
         # using fusioncharts name for database
         COLUMN = "column2d", "Column"
@@ -25,6 +26,9 @@ class Widget(models.Model):
     dashboard = models.ForeignKey(Dashboard, on_delete=models.CASCADE)
 
     table = models.ForeignKey(Table, on_delete=models.SET_NULL, null=True)
+
+    # Text attributes
+    text_content = models.TextField(null=True, blank=True)
 
     # Chart attributes
     kind = models.CharField(max_length=32, choices=Kind.choices, default=Kind.COLUMN)
@@ -65,9 +69,18 @@ class Widget(models.Model):
     @property
     def is_valid(self) -> bool:
         """Returns bool stating whether this Widget is ready to be displayed"""
-        if self.kind == self.Kind.TABLE:
+        if self.kind == self.Kind.TABLE or self.kind == self.Kind.TEXT:
             return True
         elif self.kind is not None:
             return self.kind and self.label and self.value and self.aggregator
 
         return False
+
+
+WIDGET_KIND_TO_WEB = {
+    Widget.Kind.TEXT.value: ("fa-text",),
+    Widget.Kind.TABLE.value: ("fa-table",),
+    Widget.Kind.COLUMN.value: ("fa-chart-bar",),
+    Widget.Kind.LINE.value: ("fa-chart-line",),
+    Widget.Kind.PIE.value: ("fa-chart-pie",),
+}

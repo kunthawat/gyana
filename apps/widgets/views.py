@@ -15,7 +15,7 @@ from rest_framework import mixins, viewsets
 from turbo_response.views import TurboCreateView
 
 from .forms import FilterFormset, WidgetConfigForm
-from .models import Widget
+from .models import WIDGET_KIND_TO_WEB, Widget
 
 
 class WidgetList(DashboardMixin, ListView):
@@ -150,7 +150,11 @@ class WidgetPartialUpdate(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 
 def last_modified_widget_output(request, pk):
     widget = Widget.objects.get(pk=pk)
-    return max(widget.updated, widget.table.data_updated)
+    return (
+        max(widget.updated, widget.table.data_updated)
+        if widget.table
+        else widget.updated
+    )
 
 
 def etag_widget_output(request, pk):
@@ -173,6 +177,8 @@ class WidgetOutput(DetailView):
         if self.object.is_valid:
             if self.object.kind == Widget.Kind.TABLE:
                 context_data.update(table_to_output(self.object))
+            elif self.object.kind == Widget.Kind.TEXT:
+                pass
             else:
                 context_data.update(chart_to_output(self.object))
 

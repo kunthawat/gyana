@@ -12,6 +12,7 @@ from django.views.decorators.http import condition
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import DeleteView
 from rest_framework import mixins, viewsets
+from turbo_response import TurboStream
 from turbo_response.views import TurboCreateView
 
 from .forms import FilterFormset, WidgetConfigForm
@@ -36,7 +37,7 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
         form.instance.dashboard = self.dashboard
 
         with transaction.atomic():
-            response = super().form_valid(form)
+            super().form_valid(form)
             self.dashboard.save()
 
         analytics.track(
@@ -48,7 +49,18 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
             },
         )
 
-        return response
+        return (
+            TurboStream("dashboard-widget-container")
+            .append.template(
+                "widgets/widget_component.html",
+                {
+                    "object": form.instance,
+                    "project": self.dashboard.project,
+                    "dashboard": self.dashboard,
+                },
+            )
+            .response(self.request)
+        )
 
     def get_success_url(self) -> str:
         return reverse(

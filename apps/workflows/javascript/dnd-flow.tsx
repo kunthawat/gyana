@@ -166,18 +166,7 @@ const DnDFlow = ({ client }) => {
       })
       .then((result) => {
         const newElements = result.results.map((r) => {
-          return {
-            id: `${r.id}`,
-            type: ['input', 'output', 'text'].includes(r.kind) ? r.kind : 'default',
-            data: {
-              label: r.kind,
-              description: r.description,
-              icon: NODES[r.kind].icon,
-              error: r.error,
-              ...(r.kind === 'text' ? { text: r.text_text } : {}),
-            },
-            position: { x: r.x, y: r.y },
-          }
+          return createNewNode(r, { x: r.x, y: r.y })
         })
 
         const edges = result.results
@@ -227,12 +216,7 @@ const DnDFlow = ({ client }) => {
       y: position.y,
     })
 
-    const newNode = {
-      id: `${result.id}`,
-      type: ['input', 'output', 'text'].includes(type) ? type : 'default',
-      data: { label: result.kind, icon: NODES[result.kind].icon },
-      position,
-    }
+    const newNode = createNewNode(result, position)
 
     setElements((es) => es.concat(newNode))
     setIsOutOfDate(true)
@@ -281,5 +265,17 @@ const DnDFlow = ({ client }) => {
     </div>
   )
 }
+
+const capitalize = (string: string) => string.charAt(0).toUpperCase() + string.slice(1)
+
+const createNewNode = (res, position) => ({
+  id: `${res.id}`,
+  type: ['input', 'output', 'text'].includes(res.kind) ? res.kind : 'default',
+  description: res.description,
+  data: { label: res.name || capitalize(res.kind), icon: NODES[res.kind].icon, kind: res.kind },
+  position,
+  error: res.error,
+  ...(res.kind === 'text' ? { text: res.text_text } : {}),
+})
 
 export default DnDFlow

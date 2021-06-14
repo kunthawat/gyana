@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react'
 import { Handle, NodeProps, Position, Node } from 'react-flow-renderer'
+import { useDebouncedCallback } from 'use-debounce'
 
 export const NodeContext = createContext({
   removeById: (id: string) => {},
@@ -23,6 +24,30 @@ const OpenButton = ({ id }) => {
     <button data-action='click->tf-modal#open'>
       <i data-src={`/workflows/${workflowId}/nodes/${id}`} className='fas fa-edit fa-lg'></i>
     </button>
+  )
+}
+
+const NodeName = ({ name, id }: { name: string; id: string }) => {
+  const { client } = useContext(NodeContext)
+  const [text, setText] = useState(name)
+  const updateName = useDebouncedCallback((name: string) => {
+    client.action(window.schema, ['workflows', 'api', 'nodes', 'partial_update'], {
+      id,
+      name,
+    }),
+      300
+  })
+
+  useEffect(() => {
+    text !== name && updateName(text)
+  }, [text])
+
+  return (
+    <input
+      className='input__contenteditable absolute -top-10'
+      value={text}
+      onChange={(e) => setText(e.target.value)}
+    />
   )
 }
 
@@ -90,7 +115,7 @@ const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => (
     {data.error && <ErrorIcon text={data.error} />}
 
     <i className={`fas fa-fw ${data.icon}`}></i>
-    <h4 className='capitalize'>{data.label}</h4>
+    <NodeName id={id} name={data.label} />
 
     {/* <Description id={id} data={data} /> */}
 
@@ -111,7 +136,7 @@ const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
       <Handle type='target' position={Position.Left} isConnectable={isConnectable} />
 
       <i className={`fas fa-fw ${data.icon}`}></i>
-      <h4 className='capitalize'>{data.label}</h4>
+      <NodeName id={id} name={data.label} />
       {/* <Description id={id} data={data} /> */}
     </>
   )
@@ -128,7 +153,7 @@ const DefaultNode = ({
   const incoming = getIncomingNodes(id)
 
   const showWarning =
-    incoming && (data.label === 'join' ? incoming[1].length != 2 : incoming[1].length == 0)
+    incoming && (data.kind === 'join' ? incoming[1].length != 2 : incoming[1].length == 0)
 
   return (
     <>
@@ -138,7 +163,7 @@ const DefaultNode = ({
       <Handle type='target' position={targetPosition} isConnectable={isConnectable} />
 
       <i className={`fas fa-fw ${data.icon}`}></i>
-      <h4 className='capitalize'>{data.label}</h4>
+      <NodeName id={id} name={data.label} />
 
       <Handle type='source' position={sourcePosition} isConnectable={isConnectable} />
     </>

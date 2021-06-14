@@ -221,8 +221,8 @@ const DnDFlow = ({ client }) => {
 
     const newNode = {
       id: `${result.id}`,
-      type: ['input', 'output'].includes(type) ? type : 'default',
-      data: { label: result.kind },
+      type: ['input', 'output', 'text'].includes(type) ? type : 'default',
+      data: { label: result.kind, icon: NODES[result.kind].icon },
       position,
     }
 

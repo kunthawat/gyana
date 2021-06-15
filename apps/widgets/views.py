@@ -49,17 +49,20 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
             },
         )
 
-        return (
-            TurboStream("dashboard-widget-container")
-            .append.template(
-                "widgets/widget_component.html",
-                {
-                    "object": form.instance,
-                    "project": self.dashboard.project,
-                    "dashboard": self.dashboard,
-                },
-            )
-            .response(self.request)
+        return TurboStreamResponse(
+            [
+                TurboStream("dashboard-widget-placeholder").remove.render(),
+                TurboStream("dashboard-widget-container")
+                .append.template(
+                    "widgets/widget_component.html",
+                    {
+                        "object": form.instance,
+                        "project": self.dashboard.project,
+                        "dashboard": self.dashboard,
+                    },
+                )
+                .render(),
+            ]
         )
 
     def get_success_url(self) -> str:

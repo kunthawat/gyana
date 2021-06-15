@@ -88,10 +88,18 @@ class WidgetDetail(DashboardMixin, UpdateView):
     model = Widget
     form_class = WidgetDuplicateForm
 
+    def form_valid(self, form):
+        clone = self.object.make_clone(
+            attrs={"description": "Copy of " + self.object.description}
+        )
+        clone.save()
+        self.clone = clone
+        return super().form_valid(form)
+
     def get_success_url(self) -> str:
         return reverse(
             "dashboard_widgets:update",
-            args=(self.project.id, self.dashboard.id, self.object.id),
+            args=(self.project.id, self.dashboard.id, self.clone.id),
         )
 
 

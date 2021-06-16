@@ -28,6 +28,9 @@ class Integration(models.Model):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     kind = models.CharField(max_length=32, choices=Kind.choices)
 
+    # Sync toggle
+    enable_sync_emails = models.BooleanField(default=True)
+
     # either a URL or file upload
     url = models.URLField(null=True)
     file = models.FileField(upload_to=get_file_path, null=True)

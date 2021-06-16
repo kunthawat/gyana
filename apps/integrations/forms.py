@@ -11,7 +11,7 @@ from .models import Integration
 class GoogleSheetsForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["url", "name", "cell_range", "kind", "project"]
+        fields = ["url", "name", "cell_range", "kind", "project", "enable_sync_emails"]
         widgets = {"kind": HiddenInput(), "project": HiddenInput()}
         help_texts = {}
 
@@ -57,7 +57,7 @@ class GoogleSheetsForm(forms.ModelForm):
 class CSVForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["name", "file", "kind", "project"]
+        fields = ["name", "file", "kind", "project", "enable_sync_emails"]
         widgets = {
             "kind": HiddenInput(),
             "project": HiddenInput(),
@@ -68,7 +68,7 @@ class CSVForm(forms.ModelForm):
 class FivetranForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["name", "service", "kind", "project"]
+        fields = ["name", "service", "kind", "project", "enable_sync_emails"]
         widgets = {
             "kind": HiddenInput(),
             "service": HiddenInput(),

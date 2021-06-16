@@ -6,7 +6,8 @@ from apps.integrations.bigquery import get_tables_in_dataset, sync_integration
 from apps.utils.segment_analytics import INTEGRATION_SYNC_SUCCESS_EVENT
 from celery import shared_task
 from celery_progress.backend import ProgressRecorder
-from django.core.mail import send_mail
+from django.conf import settings
+from django.core.mail import EmailMessage, send_mail
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
 
@@ -82,15 +83,31 @@ def run_external_table_sync(self, integration_id):
         ),
     )
 
-    send_mail(
-        "Ready",
-        f"Your integration has completed the initial sync - click here {url}",
-        "Anymail Sender <from@example.com>",
-        ["to@example.com"],
+    creator = integration.created_by
+    message = EmailMessage(
+        subject=None,
+        from_email="Gyana Notifications <notifications@gyana.com>",
+        to=[creator.email],
     )
+    # This id points to the sync success template in SendGrid
+    message.template_id = "d-5f87a7f6603b44e09b21cfdcf6514ffa"
+    message.merge_data = {
+        creator.email: {
+            "userName": creator.first_name or creator.email.split("@")[0],
+            "integrationName": integration.name,
+            "integrationHref": settings.EXTERNAL_URL + url,
+        }
+    }
+    message.esp_extra = {
+        "asm": {
+            # The "App Notifications" Unsubscribe group
+            "group_id": 17220,
+        },
+    }
+    message.send()
 
     analytics.track(
-        integration.created_by.id,
+        creator.id,
         INTEGRATION_SYNC_SUCCESS_EVENT,
         {
             "id": integration.id,

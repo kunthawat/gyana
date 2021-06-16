@@ -254,10 +254,20 @@ MEDIA_URL = "/media/"
 # Email setup
 
 # use in development
-EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+# TODO: Uncomment this
+# EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 # use in production
 # see https://github.com/anymail/django-anymail for more details/examples
-# EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
+EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+DEFAULT_FROM_EMAIL = "hi@gyana.com"
+
+ANYMAIL = {
+    # TODO: Remove this default
+    "SENDGRID_API_KEY": os.environ.get(
+        "SENDGRID_API_KEY",
+        "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",
+    ),
+}
 
 # Django sites
 

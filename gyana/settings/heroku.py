@@ -30,3 +30,7 @@ ALLOWED_HOSTS = [
 EXTERNAL_URL = os.environ.get("EXTERNAL_URL", "https://gyana-mvp.herokuapp.com")
 
 FF_ALPHA = False
+
+EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
+DEFAULT_FROM_EMAIL = "notifcations@gyana.com"
+ANYMAIL = {"SENDGRID_API_KEY": os.environ.get("SENDGRID_API_KEY")}

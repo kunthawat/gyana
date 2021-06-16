@@ -255,9 +255,6 @@ MEDIA_URL = "/media/"
 
 # use in development
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
-# use in production
-# see https://github.com/anymail/django-anymail for more details/examples
-# EMAIL_BACKEND = 'anymail.backends.mailgun.EmailBackend'
 
 # Django sites
 

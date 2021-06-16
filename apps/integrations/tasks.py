@@ -96,6 +96,7 @@ def run_external_table_sync(self, integration_id):
             "userName": creator.first_name or creator.email.split("@")[0],
             "integrationName": integration.name,
             "integrationHref": settings.EXTERNAL_URL + url,
+            "projectName": integration.project.name,
         }
     }
     message.esp_extra = {

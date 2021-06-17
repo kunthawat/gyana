@@ -7,13 +7,13 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('integrations', '0004_auto_20210514_0028'),
+        ("integrations", "0004_auto_20210514_0028"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='integration',
-            name='file',
-            field=models.FileField(null=True, upload_to=apps.integrations.models.get_file_path),
+            model_name="integration",
+            name="file",
+            field=models.FileField(null=True, upload_to=""),
         ),
     ]

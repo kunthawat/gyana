@@ -13,11 +13,6 @@ from django.utils.text import slugify
 from lib.clients import ibis_client
 
 
-def get_file_path(instance, filename):
-    filename, file_extension = os.path.splitext(filename)
-    return f"{settings.CLOUD_NAMESPACE}/integrations/{filename}-{slugify(time.time())}{file_extension}"
-
-
 class Integration(models.Model):
     class Kind(models.TextChoices):
         GOOGLE_SHEETS = "google_sheets", "Google Sheets"

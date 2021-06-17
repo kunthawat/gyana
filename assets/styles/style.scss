@@ -1,7 +1,8 @@
 @charset "utf-8";
 
 @use "base/typography";
-@use "base/forms";
+@use "base/form";
+@use "base/input";
 
 @use "utilities/layers";
 @use "utilities/colours";
@@ -10,12 +11,11 @@
 @use "utilities/shadows";
 
 @use "components/button";
-@use "components/heads";
 @use "components/link";
 @use "components/tooltip";
 @use "components/card";
-@use "components/navbar";
 @use "components/sidebar";
+@use "components/collapsable";
 @use "components/modal";
 @use "components/table";
 @use "components/widget_card";
@@ -25,6 +25,7 @@
 @use "components/tabbar";
 @use "components/aggrid";
 @use "components/list";
+@use "components/codemirror";
 
 @use "pages/landing";
 @use "pages/project";

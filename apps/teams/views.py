@@ -8,6 +8,7 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.generic import DetailView
 from django.views.decorators.http import require_POST
+from django_tables2 import Table, Column
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from turbo_response.views import TurboCreateView
@@ -36,14 +37,37 @@ class TeamCreate(LoginRequiredMixin, TurboCreateView):
         return reverse("team_projects:list", args=(self.object.slug,))
 
 
+class TeamProjectsTable(Table):
+    class Meta:
+        model = Team
+        attrs = {"class": "table"}
+        fields = (
+            "name",
+            "integrations",
+            "workflows",
+            "dashboards",
+            "created",
+            "updated",
+        )
+
+    name = Column(linkify=True)
+
 class TeamDetail(DetailView):
     template_name = "teams/detail.html"
     model = Team
 
+    def get_context_data(self, **kwargs):
+        from apps.projects.models import Project
+
+        context = super().get_context_data(**kwargs)
+        context["team_projects"] = TeamProjectsTable(Project.objects.filter(team=self.object))
+
+        return context
 
 @login_and_team_required
 def manage_team_react(request, team_slug):
     team = request.team
+
     return render(
         request,
         "teams/manage_team_react.html",
@@ -59,6 +83,7 @@ def manage_team_react(request, team_slug):
 @login_and_team_required
 def manage_team(request, team_slug):
     team = request.team
+
     if request.method == "POST":
         form = TeamChangeForm(request.POST, instance=team)
         if form.is_valid():
@@ -66,9 +91,10 @@ def manage_team(request, team_slug):
             return HttpResponseRedirect(reverse("teams:list_teams"))
     else:
         form = TeamChangeForm(instance=team)
+
     return render(
         request,
-        "teams/manage_team.html",
+        "teams/settings.html",
         {
             "team": team,
             "form": form,

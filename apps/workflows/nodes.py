@@ -1,8 +1,8 @@
 from dataclasses import dataclass
 
 from apps.filters.bigquery import create_filter_query
-from django.db.models.fields import IntegerField
 from lib.clients import ibis_client
+from lib.formulas import to_ibis
 
 
 def get_input_query(node):
@@ -111,10 +111,6 @@ def bigquery(node):
     return create_filter_query(node.parents.first().get_query(), node.filters.all())
 
 
-def add(query, edit):
-    return query[edit.column].add(edit.integer_value)
-
-
 @dataclass
 class Operation:
     label: str
@@ -211,7 +207,7 @@ def get_edit_query(node):
 def get_add_query(node):
     query = node.parents.first().get_query()
     return query.mutate(
-        [compile_function(query, add).edit(add.label) for add in node.add_columns.all()]
+        [compile_function(query, add).name(add.label) for add in node.add_columns.all()]
     )
 
 
@@ -224,6 +220,27 @@ def get_rename_query(node):
         idx = columns.index(rename.column)
         columns[idx] = query[rename.column].name(rename.new_name)
     return query[columns]
+
+
+def get_formula_query(node):
+    query = node.parents.first().get_query()
+    new_columns = {
+        formula.label: to_ibis(query, formula.formula)
+        for formula in node.formula_columns.iterator()
+    }
+
+    return query.mutate(**new_columns)
+
+
+def get_distinct_query(node):
+    query = node.parents.first().get_query()
+    distinct_columns = [column.column for column in node.columns.all()]
+    columns = [
+        query[column].any_value().name(column)
+        for column in query.schema()
+        if column not in distinct_columns
+    ]
+    return query.group_by(distinct_columns).aggregate(columns)
 
 
 NODE_FROM_CONFIG = {
@@ -239,4 +256,6 @@ NODE_FROM_CONFIG = {
     "edit": get_edit_query,
     "add": get_add_query,
     "rename": get_rename_query,
+    "formula": get_formula_query,
+    "distinct": get_distinct_query,
 }

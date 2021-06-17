@@ -26,6 +26,11 @@
       color: var(--c-black);
       font-weight: 500;
     }
+
+    &--disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
   }
 
   &--full &__link {

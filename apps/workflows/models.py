@@ -124,6 +124,18 @@ NodeConfig = {
         "section": "Annotation",
         "maxParents": 0,
     },
+    "formula": {
+        "displayName": "Formula",
+        "icon": "fa-function",
+        "description": "Add a new column using a formula",
+        "section": "Column manipulations",
+    },
+    "distinct": {
+        "displayName": "Distinct",
+        "icon": "fa-fingerprint",
+        "description": "Select unqiue values from selected columns",
+        "section": "Table manipulations",
+    },
 }
 
 
@@ -142,6 +154,8 @@ class Node(models.Model):
         ADD = "add", "Add"
         RENAME = "rename", "Rename"
         TEXT = "text", "Text"
+        FORMULA = "formula", "Formula"
+        DISTINCT = "distinct", "Distinct"
 
     workflow = models.ForeignKey(
         Workflow, on_delete=models.CASCADE, related_name="nodes"
@@ -163,7 +177,7 @@ class Node(models.Model):
     # Output
     output_name = models.CharField(max_length=100, null=True)
 
-    # Select
+    # Select, Distinct
     # columns exists on Column as FK
 
     # Aggregation
@@ -353,6 +367,17 @@ class RenameColumn(models.Model):
     )
     column = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
     new_name = models.CharField(
+        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH,
+        validators=[bigquery_column_regex],
+    )
+
+
+class FormulaColumn(models.Model):
+    node = models.ForeignKey(
+        Node, on_delete=models.CASCADE, related_name="formula_columns"
+    )
+    formula = models.TextField(null=True, blank=True)
+    label = models.CharField(
         max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH,
         validators=[bigquery_column_regex],
     )

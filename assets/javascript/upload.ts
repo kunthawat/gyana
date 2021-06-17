@@ -5,6 +5,7 @@ interface GoogleUploaderOptions {
   target: string
   chunkSize?: number
   maxBackoff?: number
+  maxSize?: number
 }
 
 interface EventMap {
@@ -33,7 +34,13 @@ class GoogleUploader {
   events: [keyof EventMap, EventMap[keyof EventMap]][]
 
   constructor(options: GoogleUploaderOptions) {
-    const { file, target, chunkSize = 10 * 1024 * 1024, maxBackoff = 4 } = options
+    const {
+      file,
+      target,
+      chunkSize = 10 * 1024 * 1024,
+      maxBackoff = 4,
+      maxSize = Math.pow(1024, 3),
+    } = options
     this.file = file
     this.target = target
     this.chunkSize = chunkSize
@@ -43,6 +50,8 @@ class GoogleUploader {
     this.retryCount = 0
 
     this.events = []
+
+    if (file.size > maxSize) throw 'This file is too large'
   }
 
   on<K extends keyof EventMap>(event: K, cb: EventMap[K]) {

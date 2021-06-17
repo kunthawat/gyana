@@ -74,6 +74,11 @@ export default class extends Controller {
     }
 
     const self = this
+    // https://developer.mozilla.org/en-US/docs/Web/API/WindowEventHandlers/onbeforeunload
+    this.onUnloadCall = (e) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
     this.progressCall = (progress) => {
       self.element.querySelector('#progress').innerHTML = progress
     }
@@ -81,7 +86,10 @@ export default class extends Controller {
       getApiClient().action(window.schema, ['integrations', 'start-sync', 'create'], {
         id: this.fileIdValue,
       })
+      window.removeEventListener('beforeunload', self.onUnloadCall)
     }
+    // This unload call spawns a warning when the user tries to unload the page (visiting another url, refreshing the page, etc..)
+    window.addEventListener('beforeunload', this.onUnloadCall)
     window.gyanaFileState[this.fileIdValue].on('progress', this.progressCall)
     window.gyanaFileState[this.fileIdValue].on('success', this.successCall)
   }
@@ -89,5 +97,6 @@ export default class extends Controller {
   disconnect() {
     window.gyanaFileState[this.fileIdValue].off(this.progressCall)
     window.gyanaFileState[this.fileIdValue].off(this.successCall)
+    window.removeEventListener('beforeunload', this.onUnloadCall)
   }
 }

@@ -13,6 +13,12 @@ interface EventMap {
   error: () => void
 }
 
+/**
+ * Uploader class that specfically works for google resumable uploads.
+ *
+ * It requires a signed url (`target`) to send a File into GCS from the client. It
+ * does so by chunking the files into chunks of max 10MB by default.
+ */
 class GoogleUploader {
   file: File
   target: string
@@ -49,6 +55,12 @@ class GoogleUploader {
     }
   }
 
+  /**
+   * Starts the upload process to GCS.
+   *
+   * First it initiates the upload by a POST call and then starts sending
+   * chunks of the file.
+   */
   async start() {
     const sessionResponse = await fetch(this.target, {
       method: 'POST',
@@ -59,7 +71,7 @@ class GoogleUploader {
 
     if (!this.sessionURI) throw "Couldn't retrieve the session URI"
 
-    this.call(0)
+    this.sendChunk(0)
   }
 
   /**
@@ -67,7 +79,7 @@ class GoogleUploader {
    *
    * @param start start byte
    */
-  call(start: number) {
+  sendChunk(start: number) {
     const request = new XMLHttpRequest()
 
     const end = start + this.chunkSize > this.file.size ? this.file.size : start + this.chunkSize
@@ -95,7 +107,7 @@ class GoogleUploader {
           (request.getResponseHeader('Range') as string).split('-').pop() as string
         )
         // If the start is not NaN we know that there's more to be sent
-        if (!Number.isNaN(newStart)) self.call(newStart)
+        if (!Number.isNaN(newStart)) self.sendChunk(newStart)
       }
 
       if ([500, 503].includes(request.status)) {
@@ -103,7 +115,7 @@ class GoogleUploader {
           // Our current request has fail so let's retry with an exp backoff
           setTimeout(() => {
             self.retryCount += 1
-            self.call(start)
+            self.sendChunk(start)
           }, Math.pow(2, self.retryCount) + Math.ceil(Math.random() * 1000))
         } else {
           // If after the backoff it still fails we throw an error

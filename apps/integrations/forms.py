@@ -73,7 +73,9 @@ class CSVCreateForm(CSVForm):
             "project": HiddenInput(),
         }
 
-    file = forms.CharField(widget=forms.FileInput(attrs={"accept": ".csv"}))
+    file = forms.CharField(
+        widget=forms.FileInput(attrs={"accept": ".csv"}), required=False
+    )
 
 
 class FivetranForm(forms.ModelForm):

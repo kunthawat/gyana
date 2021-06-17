@@ -1,0 +1,10 @@
+<div 
+  id="uploader-{{ integration.id }}"
+  data-controller='file-upload' 
+  data-file-upload-file-id-value="{{ integration.id }}"
+  data-file-upload-file-input-id-value="{{ file_input_id }}"
+  data-file-upload-signed-url-value="{{ signed_url }}"
+  data-file-upload-redirect-to-value="{{ redirect }}">
+  <p>{{integration.name}}</p>
+  <div id="progress">0</div>
+</div>

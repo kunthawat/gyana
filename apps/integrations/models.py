@@ -33,7 +33,7 @@ class Integration(models.Model):
 
     # either a URL or file upload
     url = models.URLField(null=True)
-    file = models.FileField(upload_to=get_file_path, null=True)
+    file = models.TextField(null=True)
 
     # Sheets config
     cell_range = models.CharField(max_length=64, null=True, blank=True)

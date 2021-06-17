@@ -22,7 +22,7 @@ def create_external_config(integration: Integration):
     elif integration.kind == Integration.Kind.CSV:
         external_config = bigquery.ExternalConfig("CSV")
         external_config.source_uris = [
-            f"gs://{settings.GS_BUCKET_NAME}/{integration.file.name}"
+            f"gs://{settings.GS_BUCKET_NAME}/{integration.file}"
         ]
 
     external_config.autodetect = True

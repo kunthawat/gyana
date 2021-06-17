@@ -53,6 +53,22 @@ These two values are derived from `DATASET_ID` and `DATAFLOW_ID` in `lib/clients
 
 Create a bucket in Cloud Storage named `gyana-app`
 
+Set the right CORS rules on the buckets for uploads (UPLOADS WILL NOT WORK WITHOUT THIS):
+
+- To set the cors json `gsutil cors set {CORS_JSON_LOCATION} gs://vayu-datasets-{ENV}`
+- The `gyana-app` bucket requires the following CORS rules
+
+```json
+[
+  {
+    "origin": ["https://beta.gyana.com"], // Or whichever origin the app is run on
+    "responseHeader": ["Content-Type", "x-goog-resumable"],
+    "method": ["PUT", "POST"],
+    "maxAgeSeconds": 3600
+  }
+]
+```
+
 ### Heroku
 
 ---

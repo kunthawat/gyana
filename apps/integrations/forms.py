@@ -57,12 +57,25 @@ class GoogleSheetsForm(forms.ModelForm):
 class CSVForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["name", "file", "kind", "project", "enable_sync_emails"]
+        fields = ["name", "kind", "project", "enable_sync_emails"]
         widgets = {
             "kind": HiddenInput(),
             "project": HiddenInput(),
-            "file": FileInput(attrs={"accept": ".csv"}),
         }
+
+
+class CSVCreateForm(CSVForm):
+    class Meta:
+        model = Integration
+        fields = ["name", "kind", "project", "file", "enable_sync_emails"]
+        widgets = {
+            "kind": HiddenInput(),
+            "project": HiddenInput(),
+        }
+
+    file = forms.CharField(
+        widget=forms.FileInput(attrs={"accept": ".csv"}), required=False
+    )
 
 
 class FivetranForm(forms.ModelForm):

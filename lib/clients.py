@@ -4,7 +4,7 @@ import google.auth
 import ibis_bigquery
 from django.conf import settings
 from django.utils.text import slugify
-from google.cloud import bigquery
+from google.cloud import bigquery, storage
 from googleapiclient import discovery
 
 from .compiler import *
@@ -46,3 +46,9 @@ def ibis_client():
     return ibis_bigquery.connect(
         project_id=settings.GCP_PROJECT, auth_external_data=True, dataset_id=DATASET_ID
     )
+
+
+@lru_cache()
+def get_bucket():
+    client = storage.Client()
+    return client.get_bucket(settings.GS_BUCKET_NAME)

@@ -276,9 +276,6 @@ AddColumnFormSet = forms.inlineformset_factory(
 
 
 class FormulaColumnForm(LiveUpdateForm):
-    class Media:
-        css = {"all": ("codemirror/lib/codemirror.css",)}
-
     class Meta:
         fields = ("formula", "label")
         widgets = {"formula": CodeMirror()}

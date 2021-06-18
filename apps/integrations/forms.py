@@ -74,3 +74,10 @@ class FivetranForm(forms.ModelForm):
             "service": HiddenInput(),
             "project": HiddenInput(),
         }
+
+
+FORM_CLASS_MAP = {
+    Integration.Kind.FIVETRAN: FivetranForm,
+    Integration.Kind.CSV: CSVForm,
+    Integration.Kind.GOOGLE_SHEETS: GoogleSheetsForm,
+}

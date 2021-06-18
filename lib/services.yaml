@@ -1,6 +1,11 @@
 google_sheets:
   name: Google Sheets
-  color: "#53A169"
-  icon: TBD
+  color: '#53A169'
+  icon: google_sheets.svg
   static_config:
-    table: "sheets_table"
+    table: 'sheets_table'
+hubspot:
+  name: Hubspot
+  icon: hubspot.svg
+  color: '#ff7959'
+  static_config: null

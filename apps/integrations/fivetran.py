@@ -46,15 +46,20 @@ class FivetranClient:
         service = self.integration.service
         service_conf = get_services()[service]
 
-        schema = f"{self.integration.project.team.slug}_{service}_{self.integration.pk}"
+        schema = (
+            f"team_{self.integration.project.team.pk}_{service}_{self.integration.pk}"
+        )
 
         res = requests.post(
             f"{settings.FIVETRAN_URL}/connectors",
             json={
                 "service": service,
                 "group_id": settings.FIVETRAN_GROUP,
-                # "run_setup_tests": False,
-                "config": {"schema": schema, **service_conf["static_config"]},
+                "run_setup_tests": False,
+                "config": {
+                    "schema": schema,
+                    # **service_conf.get("static_config", {}),
+                },
             },
             headers=settings.FIVETRAN_HEADERS,
         ).json()
@@ -104,5 +109,5 @@ class FivetranClient:
         self.integration.save()
 
 
-if settings.MOCK_FIVETRAN:
-    FivetranClient = MockFivetranClient
+# if settings.MOCK_FIVETRAN:
+#     FivetranClient = MockFivetranClient

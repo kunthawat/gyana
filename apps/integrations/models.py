@@ -122,4 +122,6 @@ class Integration(models.Model):
         return reverse("project_integrations:detail", args=(self.project.id, self.id))
 
     def icon(self):
+        if self.kind == Integration.Kind.FIVETRAN:
+            return f"images/integrations/fivetran/{self.service}.svg"
         return f"images/integrations/{self.kind}.svg"

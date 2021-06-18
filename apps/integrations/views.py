@@ -15,14 +15,14 @@ from django.urls import reverse
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
 from django.views.generic.edit import DeleteView
-from django_tables2 import SingleTableView, Table, Column
+from django_tables2 import Column, SingleTableView, Table
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
 from .fivetran import FivetranClient, get_services
-from .forms import CSVForm, FivetranForm, GoogleSheetsForm
+from .forms import FORM_CLASS_MAP, CSVForm
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
 from .tasks import poll_fivetran_historical_sync
@@ -61,12 +61,8 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
         context_data = super().get_context_data(**kwargs)
         context_data["integration_kind"] = Integration.Kind
         context_data["service_account"] = settings.GCP_BQ_SVC_ACCOUNT
+        context_data["services"] = get_services()
 
-        if (
-            self.request.GET.get("kind") == Integration.Kind.FIVETRAN
-            and self.request.GET.get("service") is None
-        ):
-            context_data["services"] = get_services()
         return context_data
 
     def get_initial(self):
@@ -82,20 +78,13 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
                 self.request.user.id, NEW_INTEGRATION_START_EVENT, {"type": kind}
             )
 
-            if kind == Integration.Kind.GOOGLE_SHEETS:
-                return GoogleSheetsForm
-            elif kind == Integration.Kind.CSV:
-                return CSVForm
-            elif kind == Integration.Kind.FIVETRAN:
-                return FivetranForm
+            return FORM_CLASS_MAP[kind]
 
         return CSVForm
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
         response = super().form_valid(form)
-        # after the model is saved by the super call, we start syncing it.
-        form.instance.start_sync()
 
         analytics.track(
             self.request.user.id,
@@ -106,6 +95,17 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
                 "name": form.instance.name,
             },
         )
+
+        if form.instance.kind == Integration.Kind.FIVETRAN:
+            client = FivetranClient(form.instance)
+            client.create()
+            redirect = client.authorize(
+                f"{settings.EXTERNAL_URL}{self.get_success_url()}"
+            )
+            return redirect
+
+        # after the model is saved by the super call, we start syncing it.
+        form.instance.start_sync()
 
         return response
 
@@ -152,10 +152,7 @@ class IntegrationUpdate(ProjectMixin, TurboUpdateView):
         return context_data
 
     def get_form_class(self):
-        if self.object.kind == Integration.Kind.GOOGLE_SHEETS:
-            return GoogleSheetsForm
-        elif self.object.kind == Integration.Kind.CSV:
-            return CSVForm
+        return FORM_CLASS_MAP[self.object.kind]
 
     def get_success_url(self) -> str:
         return reverse(
@@ -209,10 +206,7 @@ class IntegrationSettings(ProjectMixin, TurboUpdateView):
         return context_data
 
     def get_form_class(self):
-        if self.object.kind == Integration.Kind.GOOGLE_SHEETS:
-            return GoogleSheetsForm
-        elif self.object.kind == Integration.Kind.CSV:
-            return CSVForm
+        return FORM_CLASS_MAP[self.object.kind]
 
     def get_success_url(self) -> str:
         return reverse(

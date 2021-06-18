@@ -17,6 +17,8 @@ urlpatterns = [
         views.authorize_fivetran_redirect,
         name="authorize-fivetran-redirect",
     ),
+    path("<int:pk>/generate-signed-url", views.generate_signed_url),
+    path("<int:pk>/start-sync", views.start_sync),
 ]
 
 project_urlpatterns = (

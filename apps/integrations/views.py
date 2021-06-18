@@ -2,10 +2,8 @@ import json
 
 import analytics
 from apps.projects.mixins import ProjectMixin
-from apps.utils.segment_analytics import (
-    INTEGRATION_CREATED_EVENT,
-    NEW_INTEGRATION_START_EVENT,
-)
+from apps.utils.segment_analytics import (INTEGRATION_CREATED_EVENT,
+                                          NEW_INTEGRATION_START_EVENT)
 from apps.utils.table_data import get_table
 from django.conf import settings
 from django.db.models.query import QuerySet
@@ -99,9 +97,10 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
         if form.instance.kind == Integration.Kind.FIVETRAN:
             client = FivetranClient(form.instance)
             client.create()
-            redirect = client.authorize(
-                f"{settings.EXTERNAL_URL}{self.get_success_url()}"
+            internal_redirect = reverse(
+                "integrations:authorize-fivetran-redirect", args=(form.instance.id,)
             )
+            redirect = client.authorize(f"{settings.EXTERNAL_URL}{internal_redirect}")
             return redirect
 
         # after the model is saved by the super call, we start syncing it.
@@ -296,4 +295,6 @@ def authorize_fivetran_redirect(request: HttpRequest, pk: int):
 
     integration.save()
 
-    return redirect(request.GET.get("original_uri"))
+    return redirect(
+        reverse("project_integrations:detail", args=(integration.project.id, integration.id))
+    )

@@ -14,7 +14,11 @@ SERVICES = "lib/services.yaml"
 
 @lru_cache
 def get_services():
-    return yaml.load(open(SERVICES, "r"))
+    return {
+        key: val
+        for key, val in yaml.load(open(SERVICES, "r")).items()
+        if val["internal"] != "t"
+    }
 
 
 @dataclass
@@ -58,7 +62,7 @@ class FivetranClient:
                 "run_setup_tests": False,
                 "config": {
                     "schema": schema,
-                    # **service_conf.get("static_config", {}),
+                    **service_conf.get("static_config", {}),
                 },
             },
             headers=settings.FIVETRAN_HEADERS,

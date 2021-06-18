@@ -35,7 +35,7 @@
 
       {% else %}
       <div class="h-full w-full flex justify-center items-center">
-        <div class="flex-1 grid grid-cols-2 gap-4 max-w-xl">
+        <div class="flex-1 grid grid-cols-6 gap-4">
           <a 
             class="card card--inline card--square card--green"
             href="{% url 'project_integrations:create' project.id %}?kind={{ integration_kind.GOOGLE_SHEETS }}"
@@ -64,7 +64,7 @@
             href="{% url 'project_integrations:create' project.id %}?kind={{ integration_kind.FIVETRAN }}&service={{ service_id }}"
           >
             <div class="flex flex-col items-center">
-              <img class="mb-4" src="{% static 'images/integrations/fivetran/'|add:service.icon %}" alt="{{ service.name }}" height="50" width="50" />
+              <img class="mb-4" style="height:50px;" src="{% static 'images/integrations/fivetran/'|add:service_id|add:'.svg' %}" alt="{{ service.name }}" />
               <span class="block">{{ service.name }}</span>
             </div>
           </a>

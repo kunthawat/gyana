@@ -127,18 +127,24 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
             redirect = client.authorize(f"{settings.EXTERNAL_URL}{internal_redirect}")
             return redirect
 
-        return (
-            TurboStream("create-container")
-            .append.template(
-                "integrations/_file_upload.html",
-                {
-                    "integration": form.instance,
-                    "file_input_id": "id_file",
-                    "redirect": self.get_success_url(),
-                },
+        if form.instance.kind == Integration.Kind.CSV:
+            return (
+                TurboStream("create-container")
+                .append.template(
+                    "integrations/_file_upload.html",
+                    {
+                        "integration": form.instance,
+                        "file_input_id": "id_file",
+                        "redirect": self.get_success_url(),
+                    },
+                )
+                .response(self.request)
             )
-            .response(self.request)
-        )
+
+        if form.instance.kind == Integration.Kind.GOOGLE_SHEETS:
+            form.instance.start_sync()
+
+        return response
 
     def get_success_url(self) -> str:
         return reverse(

@@ -62,7 +62,7 @@ class FivetranClient:
                 "run_setup_tests": False,
                 "config": {
                     "schema": schema,
-                    **service_conf.get("static_config", {}),
+                    **(service_conf.get("static_config") or {}),
                 },
             },
             headers=settings.FIVETRAN_HEADERS,

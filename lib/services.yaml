@@ -27,63 +27,40 @@ google_analytics:
   color: '#e37400'
   internal: f
   requires_schema_prefix: f
-  static_config: |
-    {
-      "sync_mode": "AllAccounts",
-      "timeframe_months": "ALL_TIME",
-      "reports": [
-        {
-          "table": "adwords_campaigns",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "ADWORDS_CAMPAIGNS"
-        },
-        {
-          "table": "adwords_hourly_stats",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "ADWORDS_HOURLY_STATS"
-        },
-        {
-          "table": "adwords_keyword",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "ADWORDS_KEYWORD"
-        },
-        {
-          "table": "audience_overview",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "AUDIENCE_OVERVIEW"
-        },
-        {
-          "table": "browser_and_operating_system_overview",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "BROWSER_AND_OPERATING_SYSTEM_OVERVIEW"
-        },
-        {
-          "table": "campaign_performance",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "CAMPAIGN_PERFORMANCE"
-        },
-        {
-          "table": "channel_traffic",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "CHANNEL_TRAFFIC"
-        },
-        {
-          "table": "events_overview",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "EVENTS_OVERVIEW"
-        },
-        {
-          "table": "social_media_acquisitions",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "SOCIAL_MEDIA_ACQUISITIONS"
-        },
-        {
-          "table": "traffic",
-          "config_type": "Prebuilt",
-          "prebuilt_report": "TRAFFIC"
-        }
-      ]
-    }
+  static_config:
+    sync_mode: AllAccounts
+    timeframe_months: ALL_TIME
+    reports:
+      - table: adwords_campaigns
+        config_type: Prebuilt
+        prebuilt_report: ADWORDS_CAMPAIGNS
+      - table: adwords_hourly_stats
+        config_type: Prebuilt
+        prebuilt_report: ADWORDS_HOURLY_STATS
+      - table: adwords_keyword
+        config_type: Prebuilt
+        prebuilt_report: ADWORDS_KEYWORD
+      - table: audience_overview
+        config_type: Prebuilt
+        prebuilt_report: AUDIENCE_OVERVIEW
+      - table: browser_and_operating_system_overview
+        config_type: Prebuilt
+        prebuilt_report: BROWSER_AND_OPERATING_SYSTEM_OVERVIEW
+      - table: campaign_performance
+        config_type: Prebuilt
+        prebuilt_report: CAMPAIGN_PERFORMANCE
+      - table: channel_traffic
+        config_type: Prebuilt
+        prebuilt_report: CHANNEL_TRAFFIC
+      - table: events_overview
+        config_type: Prebuilt
+        prebuilt_report: EVENTS_OVERVIEW
+      - table: social_media_acquisitions
+        config_type: Prebuilt
+        prebuilt_report: SOCIAL_MEDIA_ACQUISITIONS
+      - table: traffic
+        config_type: Prebuilt
+        prebuilt_report: TRAFFIC
 google_cloud_postgresql:
   name: Google Cloud Postgres
   color: '#33668f'
@@ -95,7 +72,8 @@ google_sheets:
   color: '#53A169'
   internal: f
   requires_schema_prefix: f
-  static_config: '{ "table": "sheets_table" }'
+  static_config:
+    table: sheets_table
 heap:
   name: Heap
   color: '#e7455d'

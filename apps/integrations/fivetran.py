@@ -60,10 +60,7 @@ class FivetranClient:
                 "service": service,
                 "group_id": settings.FIVETRAN_GROUP,
                 "run_setup_tests": False,
-                "config": {
-                    "schema": schema,
-                    **(service_conf.get("static_config") or {}),
-                },
+                "config": {"schema": schema, **(service_conf["static_config"] or {})},
             },
             headers=settings.FIVETRAN_HEADERS,
         ).json()
@@ -113,5 +110,5 @@ class FivetranClient:
         self.integration.save()
 
 
-# if settings.MOCK_FIVETRAN:
-#     FivetranClient = MockFivetranClient
+if settings.MOCK_FIVETRAN:
+    FivetranClient = MockFivetranClient

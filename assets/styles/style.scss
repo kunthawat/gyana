@@ -32,6 +32,8 @@
 @use "pages/project";
 @use "pages/workflow";
 
+@use "vendors/libcodemirror";
+
 :root {
   background-color: var(--c-gray-10);
   color: var(--c-black);

@@ -14,7 +14,11 @@ SERVICES = "lib/services.yaml"
 
 @lru_cache
 def get_services():
-    return yaml.load(open(SERVICES, "r"))
+    return {
+        key: val
+        for key, val in yaml.load(open(SERVICES, "r")).items()
+        if val["internal"] != "t"
+    }
 
 
 @dataclass
@@ -46,15 +50,20 @@ class FivetranClient:
         service = self.integration.service
         service_conf = get_services()[service]
 
-        schema = f"{self.integration.project.team.slug}_{service}_{self.integration.pk}"
+        schema = (
+            f"team_{self.integration.project.team.pk}_{service}_{self.integration.pk}"
+        )
 
         res = requests.post(
             f"{settings.FIVETRAN_URL}/connectors",
             json={
                 "service": service,
                 "group_id": settings.FIVETRAN_GROUP,
-                # "run_setup_tests": False,
-                "config": {"schema": schema, **service_conf["static_config"]},
+                "run_setup_tests": False,
+                "config": {
+                    "schema": schema,
+                    **(service_conf.get("static_config") or {}),
+                },
             },
             headers=settings.FIVETRAN_HEADERS,
         ).json()
@@ -104,5 +113,5 @@ class FivetranClient:
         self.integration.save()
 
 
-if settings.MOCK_FIVETRAN:
-    FivetranClient = MockFivetranClient
+# if settings.MOCK_FIVETRAN:
+#     FivetranClient = MockFivetranClient

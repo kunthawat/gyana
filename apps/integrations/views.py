@@ -33,7 +33,13 @@ from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
 from .fivetran import FivetranClient, get_services
-from .forms import CSVCreateForm, CSVForm, FivetranForm, GoogleSheetsForm
+from .forms import (
+    FORM_CLASS_MAP,
+    CSVCreateForm,
+    CSVForm,
+    FivetranForm,
+    GoogleSheetsForm,
+)
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
 from .tasks import poll_fivetran_historical_sync
@@ -72,12 +78,8 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
         context_data = super().get_context_data(**kwargs)
         context_data["integration_kind"] = Integration.Kind
         context_data["service_account"] = settings.GCP_BQ_SVC_ACCOUNT
+        context_data["services"] = get_services()
 
-        if (
-            self.request.GET.get("kind") == Integration.Kind.FIVETRAN
-            and self.request.GET.get("service") is None
-        ):
-            context_data["services"] = get_services()
         return context_data
 
     def get_initial(self):
@@ -116,18 +118,33 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
             },
         )
 
-        return (
-            TurboStream("create-container")
-            .append.template(
-                "integrations/_file_upload.html",
-                {
-                    "integration": form.instance,
-                    "file_input_id": "id_file",
-                    "redirect": self.get_success_url(),
-                },
+        if form.instance.kind == Integration.Kind.FIVETRAN:
+            client = FivetranClient(form.instance)
+            client.create()
+            internal_redirect = reverse(
+                "integrations:authorize-fivetran-redirect", args=(form.instance.id,)
             )
-            .response(self.request)
-        )
+            redirect = client.authorize(f"{settings.EXTERNAL_URL}{internal_redirect}")
+            return redirect
+
+        if form.instance.kind == Integration.Kind.CSV:
+            return (
+                TurboStream("create-container")
+                .append.template(
+                    "integrations/_file_upload.html",
+                    {
+                        "integration": form.instance,
+                        "file_input_id": "id_file",
+                        "redirect": self.get_success_url(),
+                    },
+                )
+                .response(self.request)
+            )
+
+        if form.instance.kind == Integration.Kind.GOOGLE_SHEETS:
+            form.instance.start_sync()
+
+        return response
 
     def get_success_url(self) -> str:
         return reverse(
@@ -172,10 +189,7 @@ class IntegrationUpdate(ProjectMixin, TurboUpdateView):
         return context_data
 
     def get_form_class(self):
-        if self.object.kind == Integration.Kind.GOOGLE_SHEETS:
-            return GoogleSheetsForm
-        elif self.object.kind == Integration.Kind.CSV:
-            return CSVForm
+        return FORM_CLASS_MAP[self.object.kind]
 
     def get_success_url(self) -> str:
         return reverse(
@@ -229,10 +243,7 @@ class IntegrationSettings(ProjectMixin, TurboUpdateView):
         return context_data
 
     def get_form_class(self):
-        if self.object.kind == Integration.Kind.GOOGLE_SHEETS:
-            return GoogleSheetsForm
-        elif self.object.kind == Integration.Kind.CSV:
-            return CSVForm
+        return FORM_CLASS_MAP[self.object.kind]
 
     def get_success_url(self) -> str:
         return reverse(
@@ -365,4 +376,8 @@ def authorize_fivetran_redirect(request: HttpRequest, pk: int):
 
     integration.save()
 
-    return redirect(request.GET.get("original_uri"))
+    return redirect(
+        reverse(
+            "project_integrations:detail", args=(integration.project.id, integration.id)
+        )
+    )

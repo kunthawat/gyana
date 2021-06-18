@@ -20,14 +20,16 @@
         {% endfor %}
       </ul>
       {% else %}
-      <form method="post" action="{{ request.get_full_path }}" class="form max-w-xl">
-        {% csrf_token %}
+      <div id='create-container'>
+        <form id="create-form" method="post" action="{{ request.get_full_path }}" class="form max-w-xl">
+          {% csrf_token %}
 
-        {% include "django/forms/default_form.html" %}
+          {% include "django/forms/default_form.html" %}
 
-        <p>It may take a moment to upload your file. To keep the upload going, stay within the app.</p>
-        <button type="submit" class="button button--success">Create</button>
-      </form>
+          <p>It may take a moment to upload your file. To keep the upload going, stay within the app.</p>
+          <button type="submit" class="button button--success">Create</button>
+        </form>
+      </div>
       {% endif %}
 
       {% else %}

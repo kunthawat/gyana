@@ -117,7 +117,7 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
         )
 
         return (
-            TurboStream("global-upload-container")
+            TurboStream("create-container")
             .append.template(
                 "integrations/_file_upload.html",
                 {

@@ -20,21 +20,6 @@ export default class extends Controller {
     if (!window.gyanaFileState) {
       // Prepare the state
       window.gyanaFileState = {}
-
-      const styles = {
-        display: 'block',
-        position: 'absolute',
-        right: '40px',
-        bottom: '40px',
-        width: '250px',
-        minHeight: '150px',
-      }
-
-      // Set styles for the container, its only supposed to show up at our first
-      // file upload.
-      const container = document.getElementById('global-upload-container')
-      container.className = 'border border-gray-50 rounded-sm bg-white'
-      Object.assign(container.style, styles)
     }
   }
 
@@ -53,6 +38,9 @@ export default class extends Controller {
     if (!window.gyanaFileState[this.fileIdValue]) {
       const file = document.getElementById(this.fileInputIdValue).files[0]
 
+      // Now that we got the file we don't need the form anymore.
+      document.getElementById('create-form').remove()
+
       const { url: target } = await getApiClient().action(
         window.schema,
         ['integrations', 'generate-signed-url', 'create'],
@@ -68,9 +56,6 @@ export default class extends Controller {
       }))
 
       uploader.start()
-      // This redirect might be needed after we start the upload on a successful
-      // integration create action.
-      if (this.redirectToValue) Turbo.visit(this.redirectToValue)
     }
 
     const self = this
@@ -80,13 +65,15 @@ export default class extends Controller {
       e.returnValue = ''
     }
     this.progressCall = (progress) => {
-      self.element.querySelector('#progress').innerHTML = progress
+      self.element.querySelector('#progress').innerHTML = progress + '%'
     }
     this.successCall = () => {
       getApiClient().action(window.schema, ['integrations', 'start-sync', 'create'], {
         id: this.fileIdValue,
       })
       window.removeEventListener('beforeunload', self.onUnloadCall)
+      // After the upload is successful we redirect to the right location.
+      if (self.redirectToValue) Turbo.visit(self.redirectToValue)
     }
     // This unload call spawns a warning when the user tries to unload the page (visiting another url, refreshing the page, etc..)
     window.addEventListener('beforeunload', this.onUnloadCall)

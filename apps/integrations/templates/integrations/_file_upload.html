@@ -5,6 +5,9 @@
   data-file-upload-file-input-id-value="{{ file_input_id }}"
   data-file-upload-signed-url-value="{{ signed_url }}"
   data-file-upload-redirect-to-value="{{ redirect }}">
-  <p>{{integration.name}}</p>
-  <div id="progress">0</div>
+  <h1>{{integration.name}}</h1>
+  <div class="flex flex-row items-center">
+    <p>Uploading file: <strong class='font-semibold' id="progress">0%</strong></p>
+  </div>
+  <p>Uploading the file might take a while, make sure to stay on the page.</p>
 </div>

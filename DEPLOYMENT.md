@@ -104,6 +104,11 @@ These config variables are set in the [Settings](https://dashboard.heroku.com/ap
 - `EXTERNAL_URL` = `https://app.gyana.com`
 - `CLOUD_NAMESPACE` = `heroku`
 - `GS_BUCKET_NAME` = `gyana-app`
+- `FIVETRAN_KEY` = `<api_key_for_fivetran>`
+- _Only for beta deployment_ `FIVETRAN_GROUP` = `intended_monsieur`
+- `SENDGRID_API_KEY` = `<sendgrid_api_secret>`
+- `SEGMENT_ANALYTICS_JS_WRITE_KEY` = `<segment_js_secret>`
+- `SEGMENT_ANALYTICS_WRITE_KEY` = `<segment_py_secret>`
 
 #### **Deploy**
 

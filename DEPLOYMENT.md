@@ -37,8 +37,7 @@ Important attributes within this project:
 - A service account which:
   - Has its email is set to the `GCP_BQ_SVC_ACCOUNT` env variable
   - Has `BigQuery Admin` role in IAM
-  - Has `Storage Object Creator` role in IAM
-  - Has `Storage Object Viewer` role in IAM
+  - Has `Storage Admin` role in IAM
 
 #### **BigQuery**
 

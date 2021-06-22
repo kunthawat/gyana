@@ -34,3 +34,5 @@ FF_ALPHA = False
 EMAIL_BACKEND = "anymail.backends.sendgrid.EmailBackend"
 DEFAULT_FROM_EMAIL = "notifcations@gyana.com"
 ANYMAIL = {"SENDGRID_API_KEY": os.environ.get("SENDGRID_API_KEY")}
+
+FIVETRAN_GROUP = os.environ.get("FIVETRAN_GROUP", "general_candor")

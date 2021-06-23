@@ -1,3 +1,5 @@
+import logging
+
 import analytics
 from apps.dashboards.mixins import DashboardMixin
 from apps.tables.models import Table
@@ -215,12 +217,17 @@ class WidgetOutput(DetailView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        if self.object.is_valid:
-            if self.object.kind == Widget.Kind.TABLE:
-                context_data.update(table_to_output(self.object))
-            elif self.object.kind == Widget.Kind.TEXT:
-                pass
-            else:
-                context_data.update(chart_to_output(self.object))
+        try:
+
+            if self.object.is_valid:
+                if self.object.kind == Widget.Kind.TABLE:
+                    context_data.update(table_to_output(self.object))
+                elif self.object.kind == Widget.Kind.TEXT:
+                    pass
+                else:
+                    context_data.update(chart_to_output(self.object))
+        except Exception as e:
+            context_data["is_error"] = True
+            logging.warning(e, exc_info=e)
 
         return context_data

@@ -167,19 +167,12 @@ class WidgetUpdate(DashboardMixin, FormsetUpdateView):
         return r
 
 
-class WidgetDelete(DashboardMixin, TurboStreamDeleteView):
+class WidgetDelete(TurboStreamDeleteView):
     template_name = "widgets/delete.html"
     model = Widget
 
     def get_turbo_stream_target(self):
         return f"widget-{self.object.pk}"
-
-    def delete(self, request, *args, **kwargs):
-        with transaction.atomic():
-            self.dashboard.save()
-            response = super().delete(request, *args, **kwargs)
-
-        return response
 
     def get_success_url(self) -> str:
         return reverse(

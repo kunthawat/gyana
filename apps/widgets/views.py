@@ -45,6 +45,12 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
     def form_valid(self, form):
         form.instance.dashboard = self.dashboard
 
+        # give different dimensions to text widget
+        # TODO: make an abstraction with default values per widget kind
+        if form.instance.kind == Widget.Kind.TEXT:
+            form.instance.width = 30
+            form.instance.height = 200
+
         with transaction.atomic():
             super().form_valid(form)
             self.dashboard.save()

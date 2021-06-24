@@ -74,6 +74,7 @@ class WidgetCreate(DashboardMixin, TurboCreateView):
                         "object": form.instance,
                         "project": self.dashboard.project,
                         "dashboard": self.dashboard,
+                        "is_new": True,
                     },
                 )
                 .render(request=self.request),

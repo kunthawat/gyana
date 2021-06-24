@@ -2,19 +2,23 @@ import { Controller } from 'stimulus'
 import CodeMirror from 'codemirror/lib/codemirror.js'
 import 'codemirror/addon/mode/simple.js'
 import 'codemirror/addon/hint/show-hint.js'
-
+import 'codemirror/addon/edit/closebrackets.js'
+import 'codemirror/addon/edit/matchbrackets.js'
 export default class extends Controller {
   static targets = ['textarea']
   connect() {
     const columns = JSON.parse(this.element.querySelector('#columns').innerHTML).map((column) => ({
       text: column,
       loweredText: column.toLowerCase(),
+      className: 'text-pink',
     }))
     this.CodeMirror = CodeMirror.fromTextArea(this.textareaTarget, {
       mode: 'gyanaformula',
       hintOptions: {
         hint: autocomplete(columns),
       },
+      autoCloseBrackets: true,
+      matchBrackets: true,
     })
     // From https://stackoverflow.com/a/54377763
     this.CodeMirror.on('inputRead', function (instance) {
@@ -98,7 +102,7 @@ CodeMirror.defineSimpleMode('gyanaformula', {
   start: [
     { regex: /"(?:[^\\]|\\.)*?(?:"|$)/, token: 'string' },
     {
-      regex: new RegExp(`(?:${operations.join('|')}+)\\(`),
+      regex: new RegExp(`\(${operations.join('|')}\)\\(`),
       token: 'keyword',
     },
     { regex: /[a-zA-Z_][0-9a-zA-Z_]*/, token: 'variable' },
@@ -107,6 +111,7 @@ CodeMirror.defineSimpleMode('gyanaformula', {
     { regex: /[-+\/*=<>!]+/, token: 'operator' },
   ],
 })
+const operationCompletions = operations.map((op) => ({ text: op, className: 'text-blue' }))
 
 const autocomplete = (columns) => (editor, option) => {
   let cursor = editor.getCursor(),
@@ -117,9 +122,10 @@ const autocomplete = (columns) => (editor, option) => {
   while (start && /\w/.test(line.charAt(start - 1))) --start
   // get the end of the word
   while (end < line.length && /\w/.test(line.charAt(end))) ++end
+
   const word = line.slice(start, end).toLowerCase()
   if (word) {
-    const list = operations.filter((op) => op.startsWith(word)) || []
+    const list = operationCompletions.filter((op) => op.text.startsWith(word)) || []
     list.push(...(columns.filter((column) => column.loweredText.startsWith(word)) || []))
     return {
       list,

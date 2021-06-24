@@ -27,11 +27,11 @@
           <div class="flex flex-row items-center p-4">
             <div class="w-8 mr-6">
               {% if request.GET.mode|default:'view' == mode.0 %}
-                <i class="fas fa-check"></i>
+                <i class="fas fa-check text-blue"></i>
               {% endif %}
             </div>
             <div class="flex flex-col">
-              <h4><i class="fas fa-{{ mode.1 }}"></i> {{ mode.0|title }}</h4>
+              <h4 class='text-blue'><i class="fas fa-{{ mode.1 }}"></i> {{ mode.0|title }}</h4>
               <p class='text-black-50'>Switch dashboard to {{ mode.0 }} mode</p>
             </div>
           </div>

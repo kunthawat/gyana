@@ -31,6 +31,7 @@ const GyWidget_: React.FC<{ children: React.ReactElement; root: HTMLElement }> =
 
   return (
     <ReactRnd
+      data-zindex-target='entity'
       enableResizing={mode !== 'view'}
       disableDragging={mode === 'view'}
       default={{

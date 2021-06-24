@@ -1,7 +1,11 @@
 from dataclasses import dataclass
+from datetime import time
 
 from apps.filters.bigquery import create_filter_query
-from lib.clients import ibis_client
+from apps.tables.models import Table
+from django.utils import timezone
+from ibis.expr.datatypes import String
+from lib.clients import DATAFLOW_ID, bigquery_client, ibis_client
 from lib.formulas import to_ibis
 
 
@@ -243,6 +247,93 @@ def get_distinct_query(node):
     return query.group_by(distinct_columns).aggregate(columns)
 
 
+def _format_literal(value, type_):
+    """Formats a value to the right SQL type to be used in a string query.
+
+    Wraps a string in quotes and replaces spaces from values with `_`
+    """
+    if value is None:
+        return "null"
+    if isinstance(type_, String):
+        return f'"{value}" {value.replace(" ", "_")}'
+    return str(value)
+
+
+def _create_pivot_query(node, client):
+    """Creates the pivot query in BigQuery syntax"""
+    parent = node.parents.first().get_query()
+    column_type = parent[node.pivot_column].type()
+
+    # The new column names consist of the values inside the selected column
+    names_query = {
+        _format_literal(row.values()[0], column_type)
+        for row in client.query(parent[node.pivot_column].compile()).result()
+    }
+    # `pivot_index` is optional and won't be displayed if not selected
+    selection = ", ".join(
+        filter(None, (node.pivot_index, node.pivot_column, node.pivot_value))
+    )
+
+    return (
+        f"SELECT * FROM"
+        f"  (SELECT {selection} FROM ({parent.compile()}))"
+        f"  PIVOT({node.pivot_aggregation}({node.pivot_value})"
+        f"      FOR {node.pivot_column} IN ({' ,'.join(names_query)})"
+        f"  )"
+    )
+
+
+def _get_parent_updated(node):
+    """Walks through the node and its parents and returns the `data_updated` value."""
+    yield node.data_updated
+
+    # For an input node check whether the input_table has changed
+    # e.g. whether a file has been synced again or a workflow ran
+    if node.kind == "input":
+        yield node.input_table.data_updated
+
+    for parent in node.parents.all():
+        yield from _get_parent_updated(parent)
+
+
+def get_pivot_query(node):
+    client = bigquery_client()
+    table = node.pivot_table
+    conn = ibis_client()
+
+    # If the table doesn't need updating we can simply return the previous computed pivot table
+    if table and table.data_updated > max(tuple(_get_parent_updated(node))):
+        return conn.table(table.bq_table, database=table.bq_dataset)
+
+    query = _create_pivot_query(node, client)
+    if table:
+        client.query(
+            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table.bq_table} as ({query})"
+        ).result()
+        node.pivot_table.data_updated = timezone.now()
+        node.pivot_table.save()
+    else:
+        table_id = f"table_pivot_{node.pk}"
+        client.query(
+            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table_id} as ({query})"
+        ).result()
+
+        table = Table(
+            source=Table.Source.PIVOT_NODE,
+            bq_table=table_id,
+            bq_dataset=DATAFLOW_ID,
+            project=node.workflow.project,
+            pivot_node=node,
+        )
+        node.pivot_table = table
+        table.save()
+
+    node.data_updated = timezone.now()
+    node.save()
+
+    return conn.table(node.pivot_table.bq_table, database=node.pivot_table.bq_dataset)
+
+
 NODE_FROM_CONFIG = {
     "input": get_input_query,
     "output": get_output_query,
@@ -258,4 +349,5 @@ NODE_FROM_CONFIG = {
     "rename": get_rename_query,
     "formula": get_formula_query,
     "distinct": get_distinct_query,
+    "pivot": get_pivot_query,
 }

@@ -11,10 +11,12 @@ from apps.workflows.nodes import (
     StringOperations,
     TimeOperations,
 )
+from dirtyfields import DirtyFieldsMixin
 from django.conf import settings
 from django.core.validators import RegexValidator
 from django.db import models
 from django.urls import reverse
+from django.utils import timezone
 
 
 class Workflow(models.Model):
@@ -136,10 +138,27 @@ NodeConfig = {
         "description": "Select unqiue values from selected columns",
         "section": "Table manipulations",
     },
+    "pivot": {
+        "displayName": "Pivot",
+        "icon": "fa-redo-alt",
+        "description": "Pivot your table",
+        "section": "Table manipulations",
+    },
 }
 
 
-class Node(models.Model):
+class AggregationFunctions(models.TextChoices):
+    # These functions need to correspond to ibis Column methods
+    # https://ibis-project.org/docs/api.html
+    SUM = "sum", "Sum"
+    COUNT = "count", "Count"
+    MEAN = "mean", "Average"
+    MAX = "max", "Maximum"
+    MIN = "min", "Minimum"
+    STD = "std", "Standard deviation"
+
+
+class Node(DirtyFieldsMixin, models.Model):
     class Kind(models.TextChoices):
         INPUT = "input", "Input"
         OUTPUT = "output", "Output"
@@ -156,6 +175,7 @@ class Node(models.Model):
         TEXT = "text", "Text"
         FORMULA = "formula", "Formula"
         DISTINCT = "distinct", "Distinct"
+        PIVOT = "pivot", "Pivot"
 
     workflow = models.ForeignKey(
         Workflow, on_delete=models.CASCADE, related_name="nodes"
@@ -167,6 +187,10 @@ class Node(models.Model):
     parents = models.ManyToManyField(
         "self", symmetrical=False, related_name="children", blank=True
     )
+
+    created = models.DateTimeField(auto_now_add=True, editable=False)
+    data_updated = models.DateTimeField(auto_now_add=True, editable=False)
+
     error = models.CharField(max_length=300, null=True)
 
     # ======== Node specific columns ========= #
@@ -220,6 +244,23 @@ class Node(models.Model):
     # Text
     text_text = models.TextField(null=True)
 
+    # Pivot
+    pivot_index = models.CharField(
+        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True, blank=True
+    )
+    pivot_column = models.CharField(
+        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True, blank=True
+    )
+    pivot_value = models.CharField(
+        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True, blank=True
+    )
+    pivot_aggregation = models.CharField(
+        max_length=20, choices=AggregationFunctions.choices, null=True, blank=True
+    )
+    pivot_table = models.ForeignKey(
+        Table, on_delete=models.CASCADE, null=True, related_name="pivot_table"
+    )
+
     def save(self, *args, **kwargs):
         super(Node, self).save(*args, **kwargs)
         self.workflow.save()
@@ -243,31 +284,46 @@ class Node(models.Model):
     def get_table_name(self):
         return f"Workflow:{self.workflow.name}:{self.output_name}"
 
+    def save(self, *args, **kwargs) -> None:
+        dirty_fields = set(self.get_dirty_fields(check_relationship=True).keys()) - {
+            "name",
+            "x",
+            "y",
+            "error",
+        }
 
-class Column(models.Model):
+        if dirty_fields and "data_updated" not in dirty_fields:
+            self.data_updated = timezone.now()
+
+        return super().save(*args, **kwargs)
+
+
+class SaveParentModel(DirtyFieldsMixin, models.Model):
+    class Meta:
+        abstract = True
+
+    def save(self, *args, **kwargs) -> None:
+        if self.is_dirty():
+            self.node.data_updated = timezone.now()
+            self.node.save()
+        return super().save(*args, **kwargs)
+
+
+class Column(SaveParentModel):
     column = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
     node = models.ForeignKey(Node, on_delete=models.CASCADE, related_name="columns")
 
 
-class FunctionColumn(models.Model):
-    class Functions(models.TextChoices):
-        # These functions need to correspond to ibis Column methods
-        # https://ibis-project.org/docs/api.html
-        SUM = "sum", "Sum"
-        COUNT = "count", "Count"
-        MEAN = "mean", "Average"
-        MAX = "max", "Maximum"
-        MIN = "min", "Minimum"
-        STD = "std", "Standard deviation"
+class FunctionColumn(SaveParentModel):
 
     column = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
-    function = models.CharField(max_length=20, choices=Functions.choices)
+    function = models.CharField(max_length=20, choices=AggregationFunctions.choices)
     node = models.ForeignKey(
         Node, on_delete=models.CASCADE, related_name="aggregations"
     )
 
 
-class SortColumn(models.Model):
+class SortColumn(SaveParentModel):
     node = models.ForeignKey(
         Node, on_delete=models.CASCADE, related_name="sort_columns"
     )
@@ -275,7 +331,7 @@ class SortColumn(models.Model):
     column = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
 
 
-class AbstractOperationColumn(models.Model):
+class AbstractOperationColumn(SaveParentModel):
     class Meta:
         abstract = True
 
@@ -361,7 +417,7 @@ class AddColumn(AbstractOperationColumn):
     )
 
 
-class RenameColumn(models.Model):
+class RenameColumn(SaveParentModel):
     node = models.ForeignKey(
         Node, on_delete=models.CASCADE, related_name="rename_columns"
     )
@@ -372,7 +428,7 @@ class RenameColumn(models.Model):
     )
 
 
-class FormulaColumn(models.Model):
+class FormulaColumn(SaveParentModel):
     node = models.ForeignKey(
         Node, on_delete=models.CASCADE, related_name="formula_columns"
     )

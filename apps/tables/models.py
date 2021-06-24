@@ -10,6 +10,7 @@ class Table(models.Model):
     class Source(models.TextChoices):
         INTEGRATION = "integration", "Integration"
         WORKFLOW_NODE = "workflow_node", "Workflow node"
+        PIVOT_NODE = "pivot_node", "Pivot node"
 
     bq_table = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
     bq_dataset = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
@@ -23,6 +24,12 @@ class Table(models.Model):
     )
     workflow_node = models.OneToOneField(
         "workflows.Node", on_delete=models.CASCADE, null=True
+    )
+    pivot_node = models.OneToOneField(
+        "workflows.Node",
+        on_delete=models.CASCADE,
+        null=True,
+        related_name="pivot_node",
     )
 
     num_rows = models.IntegerField()

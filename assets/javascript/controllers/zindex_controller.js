@@ -31,8 +31,6 @@ export default class extends Controller {
       })
       closest.style.zIndex = 1
     }
-
-    console.log(event, this)
   }
 
   connect() {

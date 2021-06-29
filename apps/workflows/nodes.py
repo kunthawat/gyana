@@ -283,6 +283,37 @@ def _create_pivot_query(node, client):
     )
 
 
+def _create_or_replace_intermediate_table(table, node, query):
+    """Creates a new intermediate table or replaces an existing one"""
+    client = bigquery_client()
+    if table:
+        client.query(
+            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table.bq_table} as ({query})"
+        ).result()
+        node.intermediate_table.data_updated = timezone.now()
+        node.intermediate_table.save()
+    else:
+        table_id = f"table_pivot_{node.pk}"
+        client.query(
+            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table_id} as ({query})"
+        ).result()
+
+        table = Table(
+            source=Table.Source.PIVOT_NODE,
+            bq_table=table_id,
+            bq_dataset=DATAFLOW_ID,
+            project=node.workflow.project,
+            intermediate_node=node,
+        )
+        node.intermediate_table = table
+        table.save()
+
+    node.data_updated = timezone.now()
+    node.save()
+
+    return table
+
+
 def _get_parent_updated(node):
     """Walks through the node and its parents and returns the `data_updated` value."""
     yield node.data_updated
@@ -297,41 +328,41 @@ def _get_parent_updated(node):
 
 
 def get_pivot_query(node):
-    client = bigquery_client()
-    table = node.pivot_table
+    table = node.intermediate_table
     conn = ibis_client()
 
     # If the table doesn't need updating we can simply return the previous computed pivot table
     if table and table.data_updated > max(tuple(_get_parent_updated(node))):
         return conn.table(table.bq_table, database=table.bq_dataset)
 
+    client = bigquery_client()
     query = _create_pivot_query(node, client)
-    if table:
-        client.query(
-            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table.bq_table} as ({query})"
-        ).result()
-        node.pivot_table.data_updated = timezone.now()
-        node.pivot_table.save()
-    else:
-        table_id = f"table_pivot_{node.pk}"
-        client.query(
-            f"CREATE OR REPLACE TABLE {DATAFLOW_ID}.{table_id} as ({query})"
-        ).result()
+    table = _create_or_replace_intermediate_table(table, node, query)
 
-        table = Table(
-            source=Table.Source.PIVOT_NODE,
-            bq_table=table_id,
-            bq_dataset=DATAFLOW_ID,
-            project=node.workflow.project,
-            pivot_node=node,
-        )
-        node.pivot_table = table
-        table.save()
+    return conn.table(table.bq_table, database=table.bq_dataset)
 
-    node.data_updated = timezone.now()
-    node.save()
 
-    return conn.table(node.pivot_table.bq_table, database=node.pivot_table.bq_dataset)
+def get_unpivot_query(node):
+    table = node.intermediate_table
+    conn = ibis_client()
+
+    # If the table doesn't need updating we can simply return the previous computed pivot table
+    if table and table.data_updated > max(tuple(_get_parent_updated(node))):
+        return conn.table(table.bq_table, database=table.bq_dataset)
+
+    selection_columns = [col.column for col in node.secondary_columns.all()]
+    selection = (
+        f"{' ,'.join(selection_columns)}, {node.unpivot_column}, {node.unpivot_value}"
+        if selection_columns
+        else "*"
+    )
+    query = (
+        f"SELECT {selection} FROM ({node.parents.first().get_query().compile()})"
+        f" UNPIVOT({node.unpivot_value} FOR {node.unpivot_column} IN ({' ,'.join([col.column for col in node.columns.all()])}))"
+    )
+    table = _create_or_replace_intermediate_table(table, node, query)
+
+    return conn.table(table.bq_table, database=table.bq_dataset)
 
 
 NODE_FROM_CONFIG = {
@@ -350,4 +381,5 @@ NODE_FROM_CONFIG = {
     "formula": get_formula_query,
     "distinct": get_distinct_query,
     "pivot": get_pivot_query,
+    "unpivot": get_unpivot_query,
 }

@@ -1,3 +1,4 @@
+from apps.utils.table import NaturalDatetimeColumn
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -7,7 +8,7 @@ from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
-from django.views.generic import DetailView
+from django.views.generic import DetailView, DeleteView, UpdateView
 from django_tables2 import Column, Table
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
@@ -26,15 +27,40 @@ from .serializers import InvitationSerializer, TeamSerializer
 class TeamCreate(LoginRequiredMixin, TurboCreateView):
     model = Team
     form_class = TeamChangeForm
-    template_name = "teams/settings.html"
+    template_name = "teams/create.html"
 
     def form_valid(self, form: forms.Form) -> HttpResponse:
         form.save()
         form.instance.members.add(self.request.user, through_defaults={"role": "admin"})
+
         return super().form_valid(form)
 
     def get_success_url(self) -> str:
-        return reverse("team_projects:list", args=(self.object.slug,))
+        return reverse("teams:detail", args=(self.object.slug,))
+
+
+class TeamUpdate(LoginRequiredMixin, UpdateView):
+    template_name = "teams/settings.html"
+    model = Team
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        return context_data
+
+    def get_form_class(self):
+        return TeamChangeForm
+
+    def get_success_url(self) -> str:
+        return reverse("teams:settings", args=(self.object.slug,))
+
+
+class TeamDelete(LoginRequiredMixin, DeleteView):
+    template_name = "teams/delete.html"
+    model = Team
+
+    def get_success_url(self) -> str:
+        return reverse("web:home")
 
 
 class TeamProjectsTable(Table):
@@ -51,6 +77,8 @@ class TeamProjectsTable(Table):
         )
 
     name = Column(linkify=True)
+    created = NaturalDatetimeColumn()
+    updated = NaturalDatetimeColumn()
 
 
 class TeamDetail(DetailView):

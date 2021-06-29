@@ -6,13 +6,14 @@
 <li>
   <a class="sidebar__link {% if user_team.slug == team.slug %}sidebar__link--active{% endif %}"
      href="{% url 'teams:detail' user_team.slug %}">
-    <span class="inline-block fa-fw mr-6">{{ user_team.name|slice:1 }}.</span>{{ user_team.name }}
+    <span class="inline-block fa-fw mr-6 uppercase bold">{{ user_team.name|slice:1 }}.</span>
+    {{ user_team.name }}
   </a>
 </li>
 {% endfor %}
 
 <li>
-  <a class="sidebar__link" href="{% url 'teams:create_team' %}">
+  <a class="sidebar__link" title="New Team" href="{% url 'teams:create_team' %}">
     <i class="fas fa-fw fa-plus mr-6"></i>New Team
   </a>
 </li>

@@ -45,13 +45,12 @@ class WorkflowList(ProjectMixin, SingleTableView):
     paginate_by = 20
 
     def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
 
-        context_data["workflow_count"] = Workflow.objects.filter(
+        context["workflow_count"] = Workflow.objects.filter(
             project=self.project
         ).count()
-
-        return context_data
+        return context
 
     def get_queryset(self) -> QuerySet:
         return Workflow.objects.filter(project=self.project).all()
@@ -65,6 +64,7 @@ class WorkflowCreate(ProjectMixin, TurboCreateView):
     def get_initial(self):
         initial = super().get_initial()
         initial["project"] = self.project
+
         return initial
 
     def get_success_url(self) -> str:
@@ -176,6 +176,7 @@ class NodeUpdate(FormsetUpdateView):
             "edit",
             "aggregation",
             "filter",
+            "unpivot",
         ]
         return context
 

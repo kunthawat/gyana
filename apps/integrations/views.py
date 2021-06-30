@@ -39,7 +39,7 @@ from .forms import (
     CSVForm,
     FivetranForm,
     GoogleSheetsForm,
-    IntegrationForm
+    IntegrationForm,
 )
 from .models import Integration, Project
 from .tables import IntegrationTable, StructureTable
@@ -407,9 +407,6 @@ def start_sync(request: Request, session_key: str):
     form_data = request.session[session_key]
 
     integration = CSVCreateForm(data=form_data).save()
-    # integration.project = get_object_or_404(Project, pk=form_data["project"])
-    # integration.save()
-    # integration = get_object_or_404(request.user.integration_set, pk=pk)
     integration.start_sync()
 
     return Response(

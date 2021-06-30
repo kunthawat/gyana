@@ -1,5 +1,5 @@
 import pandas as pd
-from apps.widgets.models import Widget
+from apps.widgets.models import MULTI_VALUES_CHARTS, Widget
 
 from lib.fusioncharts import FusionCharts
 
@@ -11,38 +11,19 @@ def to_chart(df: pd.DataFrame, widget: Widget) -> FusionCharts:
 
     """Render a chart from a table."""
     if widget.kind == Widget.Kind.SCATTER.value:
-        data = {
-            "dataset": [
-                {
-                    "data": df.rename(
-                        columns={widget.label: "x", widget.value: "y"}
-                    ).to_dict(orient="records")
-                }
-            ]
-        }
+        data = to_scatter(widget, df)
     elif widget.kind == Widget.Kind.RADAR.value:
-        data = {
-            "categories": [
-                {"category": [{"label": label} for label in df[widget.label].to_list()]}
-            ],
-            "dataset": [
-                {
-                    "data": [{"value": value} for value in df[widget.value].to_list()],
-                }
-            ],
-        }
+        data = to_radar(widget, df)
+    elif widget.kind in MULTI_VALUES_CHARTS:
+        data = to_multi_value_data(widget, df)
     else:
-        data = {
-            "data": df.rename(
-                columns={widget.label: "label", widget.value: "value"}
-            ).to_dict(orient="records")
-        }
+        data = to_single_value(widget, df)
 
     dataSource = {
         "chart": {
             "theme": "fusion",
             "xAxisName": widget.label,
-            "yAxisName": widget.value,
+            "yAxisName": widget.values.first().column,
         },
         **data,
     }
@@ -56,3 +37,60 @@ def to_chart(df: pd.DataFrame, widget: Widget) -> FusionCharts:
         "json",
         dataSource,
     )
+
+
+def to_multi_value_data(widget, df):
+    values = widget.values.all()
+    return {
+        "categories": [
+            {"category": [{"label": label} for label in df[widget.label].to_list()]}
+        ],
+        "dataset": [
+            {
+                **({"seriesname": value.column} if len(values) > 1 else dict()),
+                "data": [{"value": value} for value in df[value.column].to_list()],
+            }
+            for value in values
+        ],
+    }
+
+
+def to_scatter(widget, df):
+    values = widget.values.all()
+    df = df.rename(columns={widget.label: "x"})
+    return {
+        "categories": [{"category": [{"label": label} for label in df.x.to_list()]}],
+        "dataset": [
+            {
+                **({"seriesname": value.column} if len(values) > 1 else dict()),
+                "data": df.rename(columns={value.column: "y"})[["x", "y"]].to_dict(
+                    orient="records"
+                ),
+            }
+            for value in values
+        ],
+    }
+
+
+def to_radar(widget, df):
+    return {
+        "categories": [
+            {"category": [{"label": label} for label in df[widget.label].to_list()]}
+        ],
+        "dataset": [
+            {
+                "data": [
+                    {"value": value}
+                    for value in df[widget.values.first().column].to_list()
+                ],
+            }
+        ],
+    }
+
+
+def to_single_value(widget, df):
+    return {
+        "data": df.rename(
+            columns={widget.label: "label", widget.values.first().column: "value"}
+        ).to_dict(orient="records")
+    }

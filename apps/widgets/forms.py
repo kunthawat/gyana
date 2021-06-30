@@ -2,21 +2,21 @@ from apps.filters.forms import FilterForm
 from apps.filters.models import Filter
 from apps.tables.models import Table
 from apps.utils.live_update_form import LiveUpdateForm
+from apps.utils.schema_form_mixin import SchemaFormMixin
 from apps.widgets.widgets import VisualSelect
 from apps.workflows.widgets import SourceSelect
 from django import forms
 
-from .models import Widget
+from .models import MULTI_VALUES_CHARTS, MultiValues, Widget
 
 
 class WidgetConfigForm(LiveUpdateForm):
 
     label = forms.ChoiceField(choices=())
-    value = forms.ChoiceField(choices=())
 
     class Meta:
         model = Widget
-        fields = ["description", "table", "kind", "label", "aggregator", "value"]
+        fields = ["description", "table", "kind", "label", "aggregator"]
         widgets = {"kind": VisualSelect(), "table": SourceSelect()}
 
     def __init__(self, *args, **kwargs):
@@ -36,7 +36,6 @@ class WidgetConfigForm(LiveUpdateForm):
         if schema and "label" in self.fields:
             columns = [(column, column) for column in schema]
             self.fields["label"].choices = columns
-            self.fields["value"].choices = columns
 
     def get_live_fields(self):
 
@@ -46,13 +45,34 @@ class WidgetConfigForm(LiveUpdateForm):
         kind = self.get_live_field("kind")
 
         if table and kind and kind != Widget.Kind.TABLE:
-            fields += ["label", "aggregator", "value"]
+            fields += [
+                "label",
+                "aggregator",
+            ]
 
         return fields
 
 
+class ValueForm(SchemaFormMixin, LiveUpdateForm):
+    column = forms.ChoiceField(choices=())
+
+    class Meta:
+        model = MultiValues
+        fields = ("column",)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["column"] = forms.ChoiceField(
+            choices=[(column, column) for column in self.schema]
+        )
+
+
 FilterFormset = forms.inlineformset_factory(
     Widget, Filter, form=FilterForm, can_delete=True, extra=0
+)
+
+ValueFormset = forms.inlineformset_factory(
+    Widget, MultiValues, form=ValueForm, can_delete=True, extra=0
 )
 
 

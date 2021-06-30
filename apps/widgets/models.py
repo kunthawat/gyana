@@ -1,5 +1,6 @@
 from apps.dashboards.models import Dashboard
 from apps.tables.models import Table
+from django.conf import settings
 from django.db import models
 from model_clone import CloneMixin
 
@@ -14,8 +15,8 @@ class Widget(CloneMixin, models.Model):
         TEXT = "text", "Text"
         TABLE = "table", "Table"
         # using fusioncharts name for database
-        COLUMN = "column2d", "Column"
-        LINE = "line", "Line"
+        COLUMN = "mscolumn2d", "Column"
+        LINE = "msline", "Line"
         PIE = "pie2d", "Pie"
         AREA = "area2d", "Area"
         DONUT = "doughnut2d", "Donut"
@@ -42,8 +43,9 @@ class Widget(CloneMixin, models.Model):
     kind = models.CharField(max_length=32, choices=Kind.choices, default=Kind.COLUMN)
     aggregator = models.CharField(max_length=32, choices=Aggregator.choices)
     # maximum length of bigquery column name
-    label = models.CharField(max_length=300, null=True, blank=True)
-    value = models.CharField(max_length=300, null=True, blank=True)
+    label = models.CharField(
+        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True, blank=True
+    )
 
     description = models.CharField(max_length=255, null=True, blank=True)
 
@@ -77,12 +79,17 @@ class Widget(CloneMixin, models.Model):
     @property
     def is_valid(self) -> bool:
         """Returns bool stating whether this Widget is ready to be displayed"""
-        if self.kind == self.Kind.TABLE or self.kind == self.Kind.TEXT:
+        if self.kind in [self.Kind.TABLE, self.Kind.TEXT]:
             return True
         elif self.kind is not None:
-            return self.kind and self.label and self.value and self.aggregator
+            return self.kind and self.label and self.values.first() and self.aggregator
 
         return False
+
+
+class MultiValues(CloneMixin, models.Model):
+    widget = models.ForeignKey(Widget, on_delete=models.CASCADE, related_name="values")
+    column = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH)
 
 
 WIDGET_KIND_TO_WEB = {
@@ -101,4 +108,11 @@ WIDGET_KIND_TO_WEB = {
 
 WIDGET_CHOICES_ARRAY = [
     (choices + WIDGET_KIND_TO_WEB[choices[0]]) for choices in Widget.Kind.choices
+]
+
+MULTI_VALUES_CHARTS = [
+    Widget.Kind.COLUMN,
+    Widget.Kind.SCATTER,
+    Widget.Kind.LINE,
+    Widget.Kind.AREA,
 ]

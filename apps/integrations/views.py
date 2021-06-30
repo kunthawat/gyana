@@ -1,7 +1,7 @@
 import datetime
-import json
 import os
 import time
+import uuid
 
 import analytics
 import coreapi
@@ -32,7 +32,7 @@ from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
-from .fivetran import FivetranClient, get_services, get_service_categories
+from .fivetran import FivetranClient, get_service_categories, get_services
 from .forms import (
     FORM_CLASS_MAP,
     CSVCreateForm,
@@ -41,7 +41,7 @@ from .forms import (
     GoogleSheetsForm,
     IntegrationForm
 )
-from .models import Integration
+from .models import Integration, Project
 from .tables import IntegrationTable, StructureTable
 from .tasks import poll_fivetran_historical_sync
 
@@ -70,6 +70,7 @@ class IntegrationList(ProjectMixin, SingleTableView):
             .all()
         )
 
+
 class IntegrationUpload(ProjectMixin, TurboCreateView):
     template_name = "integrations/upload.html"
     model = Integration
@@ -89,14 +90,22 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
 
     def get_form_class(self):
         analytics.track(
-            self.request.user.id, NEW_INTEGRATION_START_EVENT, {"type": Integration.Kind.CSV}
+            self.request.user.id,
+            NEW_INTEGRATION_START_EVENT,
+            {"type": Integration.Kind.CSV},
         )
 
         return CSVCreateForm
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        response = super().form_valid(form)
+
+        instance_session_key = uuid.uuid4().hex
+
+        self.request.session[instance_session_key] = {
+            **form.cleaned_data,
+            "project": form.cleaned_data["project"].id,
+        }
 
         analytics.track(
             self.request.user.id,
@@ -113,9 +122,9 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
             .append.template(
                 "integrations/_file_upload.html",
                 {
-                    "integration": form.instance,
+                    "instance_session_key": instance_session_key,
                     "file_input_id": "id_file",
-                    "redirect": self.get_success_url(),
+                    # "redirect": self.get_success_url(),
                 },
             )
             .response(self.request)
@@ -125,6 +134,7 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
         return reverse(
             "project_integrations:detail", args=(self.project.id, self.object.id)
         )
+
 
 class IntegrationCreate(ProjectMixin, TurboCreateView):
     template_name = "integrations/create.html"
@@ -372,9 +382,7 @@ class IntegrationAuthorize(DetailView):
         ]
     )
 )
-def generate_signed_url(request: Request, pk: int):
-    integration = get_object_or_404(request.user.integration_set, pk=pk)
-
+def generate_signed_url(request: Request, session_key: str):
     filename = request.data["filename"]
     filename, file_extension = os.path.splitext(filename)
     path = f"{settings.CLOUD_NAMESPACE}/integrations/{filename}-{slugify(time.time())}{file_extension}"
@@ -389,18 +397,29 @@ def generate_signed_url(request: Request, pk: int):
         method="RESUMABLE",
     )
 
-    integration.file = path
-    integration.save()
+    request.session[session_key]["file"] = path
 
     return Response({"url": url})
 
 
 @api_view(["POST"])
-def start_sync(request: Request, pk: int):
-    integration = get_object_or_404(request.user.integration_set, pk=pk)
+def start_sync(request: Request, session_key: str):
+    form_data = request.session[session_key]
+
+    integration = CSVCreateForm(data=form_data).save()
+    # integration.project = get_object_or_404(Project, pk=form_data["project"])
+    # integration.save()
+    # integration = get_object_or_404(request.user.integration_set, pk=pk)
     integration.start_sync()
 
-    return Response({})
+    return Response(
+        {
+            "redirect": reverse(
+                "project_integrations:detail",
+                args=(integration.project.id, integration.id),
+            )
+        }
+    )
 
 
 def authorize_fivetran(request: HttpRequest, pk: int):

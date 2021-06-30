@@ -45,7 +45,7 @@ export default class extends Controller {
         window.schema,
         ['integrations', 'generate-signed-url', 'create'],
         {
-          id: this.fileIdValue,
+          session_key: this.fileIdValue,
           filename: file.name,
         }
       )
@@ -66,15 +66,20 @@ export default class extends Controller {
     }
     this.progressCall = (progress) => {
       self.element.querySelector('#progress').innerHTML = progress + '%'
-      self.element.querySelector('#progress-bar').style.strokeDashoffset = 471 - (progress * 4.39822971503)
+      self.element.querySelector('#progress-bar').style.strokeDashoffset =
+        471 - progress * 4.39822971503
     }
-    this.successCall = () => {
-      getApiClient().action(window.schema, ['integrations', 'start-sync', 'create'], {
-        id: this.fileIdValue,
-      })
+    this.successCall = async () => {
+      const { redirect } = await getApiClient().action(
+        window.schema,
+        ['integrations', 'start-sync', 'create'],
+        {
+          session_key: this.fileIdValue,
+        }
+      )
       window.removeEventListener('beforeunload', self.onUnloadCall)
       // After the upload is successful we redirect to the right location.
-      if (self.redirectToValue) Turbo.visit(self.redirectToValue)
+      if (redirect) Turbo.visit(redirect)
     }
     // This unload call spawns a warning when the user tries to unload the page (visiting another url, refreshing the page, etc..)
     window.addEventListener('beforeunload', this.onUnloadCall)

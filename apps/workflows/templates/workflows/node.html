@@ -3,7 +3,7 @@
 <turbo-frame id="workflow-modal">
   {% if node.kind == "input" or parents %}
   <div class="workflow-modal__section">
-    <div class="pad">
+    <div class="workflow-modal__header">
       <h3>{{ node.kind|capfirst }} {% if node.name %}- {{ node.name }}{% endif %}</h3>
     </div>
 
@@ -16,7 +16,8 @@
           data-controller="trigger"
           {% endif %}
           data-trigger-event-value="node-updated-{{ node.id }}"
-          data-action="submit->trigger#dispatch">
+          data-action="submit->trigger#dispatch change->tf-modal#change"
+          data-tf-modal-target='form'>
       <div class="workflow-detail__sidebar">
         <div data-controller="turbo-issue-186-workaround">
           {{ form.media }}
@@ -101,13 +102,14 @@
       <div class='workflow-modal__footer'>
         <div class="flex flex-1 gap-7 pad">
           <input type='submit' class="button button--success"
-                 data-action=" click->tf-modal#close"
+                 data-action=" click->tf-modal#forceClose"
                  name='submit'
                  value='Save & Close' />
           <input
                  type='submit'
                  class="button button--outline button--success"
                  name='submit'
+                 data-action=" click->tf-modal#save"
                  value='Save & Preview' />
         </div>
       </div>

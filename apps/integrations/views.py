@@ -12,6 +12,7 @@ from apps.utils.segment_analytics import (
 )
 from apps.utils.table_data import get_table
 from django.conf import settings
+from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
 from django.http.response import HttpResponseBadRequest
@@ -65,11 +66,18 @@ class IntegrationList(ProjectMixin, SingleTableView):
         return context_data
 
     def get_queryset(self) -> QuerySet:
-        return (
-            Integration.objects.filter(project=self.project)
-            .prefetch_related("table_set")
-            .all()
-        )
+        queryset = Integration.objects.filter(project=self.project)
+        # Add search query if it exists
+        if query := self.request.GET.get("q"):
+            queryset = (
+                queryset.annotate(
+                    similarity=TrigramSimilarity("name", query),
+                )
+                .filter(similarity__gt=0.05)
+                .order_by("-similarity")
+            )
+
+        return queryset.prefetch_related("table_set").all()
 
 
 class IntegrationUpload(ProjectMixin, TurboCreateView):

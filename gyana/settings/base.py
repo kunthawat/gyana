@@ -43,6 +43,7 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.humanize",
     "django.forms",
+    "django.contrib.postgres",
 ]
 
 # Put your third-party apps here

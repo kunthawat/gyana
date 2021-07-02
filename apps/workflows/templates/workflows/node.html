@@ -4,7 +4,7 @@
   {% if node.kind == "input" or parents %}
   <div class="workflow-modal__section">
     <div class="workflow-modal__header">
-      <h3>{{ node.kind|capfirst }} {% if node.name %}- {{ node.name }}{% endif %}</h3>
+      {% include 'workflows/node_name.html' %}
     </div>
 
     <form class="form--no-layout overflow-hidden flex-1"
@@ -114,7 +114,7 @@
         </div>
       </div>
     </form>
-  </div>
+  </div>  
 
   <div class="workflow-modal__section">
     <div class="workflow-modal__table">

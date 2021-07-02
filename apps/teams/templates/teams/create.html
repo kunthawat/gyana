@@ -1,14 +1,21 @@
 {% extends "teams/base.html" %}
 
 {% block tab %}
-<h1 class="mb-7">Create your new team</h1>
-<div class="max-w-lg mb-auto">
-  <form method="post" class="form">
-    {% csrf_token %}
+<div class="flex flex-col justify-center items-center">
+  <div class="flex flex-col items-center mb-12">
+    <i class="fas fa-fw fa-5x fa-users text-black-50 mb-4"></i>
+    <h1>Create your new team</h1>
+    <p>Teams gather all your projects into one place, for ease of sharing with others.</p>
+  </div>
 
-    {% include "django/forms/default_form.html" %}
+  <div class="max-w-lg mb-auto">
+    <form method="post" class="form">
+      {% csrf_token %}
 
-    <button type="submit" class="button button--sm button--filled button--green mt-7">Create</button>
-  </form>
+      {% include "django/forms/default_form.html" %}
+
+      <button type="submit" class="button button--filled button--green mt-7">Create</button>
+    </form>
+  </div>
 </div>
 {% endblock %}

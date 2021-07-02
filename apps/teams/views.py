@@ -1,5 +1,3 @@
-from apps.utils.table import NaturalDatetimeColumn
-from apps.users.models import CustomUser
 from django import forms
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -10,7 +8,6 @@ from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from django.views.decorators.http import require_POST
 from django.views.generic import DetailView, DeleteView, UpdateView
-from django_tables2 import Column, Table
 from rest_framework import viewsets
 from rest_framework.exceptions import PermissionDenied, ValidationError
 from turbo_response.views import TurboCreateView
@@ -66,55 +63,23 @@ class TeamDelete(LoginRequiredMixin, DeleteView):
         return reverse("web:home")
 
 
-class TeamProjectsTable(Table):
-    class Meta:
-        model = Project
-        attrs = {"class": "table"}
-        fields = (
-            "name",
-            "integration_count",
-            "workflow_count",
-            "dashboard_count",
-            "created",
-            "updated",
-        )
-
-    name = Column(linkify=True)
-    created = NaturalDatetimeColumn()
-    updated = NaturalDatetimeColumn()
-    integration_count = Column(verbose_name="Integrations")
-    workflow_count = Column(verbose_name="Workflows")
-    dashboard_count = Column(verbose_name="Dashboards")
-
-
 class TeamDetail(DetailView):
     template_name = "teams/detail.html"
     model = Team
 
     def get_context_data(self, **kwargs):
+        from .tables import TeamProjectsTable
         from apps.projects.models import Project
 
         context = super().get_context_data(**kwargs)
         context["team_projects"] = TeamProjectsTable(
             Project.objects.filter(team=self.object)
         )
+        context["project_count"] = Project.objects.filter(team=self.object).count()
 
         return context
 
 
-class TeamMembersTable(Table):
-    class Meta:
-        model = CustomUser
-        attrs = {"class": "table"}
-        fields = (
-            "email",
-            "last_login",
-            "date_joined",
-        )
-
-    email = Column(verbose_name="Email")
-    last_login = NaturalDatetimeColumn()
-    date_joined = NaturalDatetimeColumn()
 
 
 class TeamMembers(DetailView):
@@ -122,6 +87,8 @@ class TeamMembers(DetailView):
     model = Team
 
     def get_context_data(self, **kwargs):
+        from .tables import TeamMembersTable
+
         context = super().get_context_data(**kwargs)
         context["team_members"] = TeamMembersTable(
             self.object.members.all()

@@ -23,14 +23,27 @@
 </div>
 
 <div class="pad overflow-auto">
-  <form>
-    <div class="flex flex-row items-center mb-4">
-    <input type="search" id="site-search" name="q" placeholder="Find integration"
-      aria-label="Search through site content" />
+  <div class='flex flex-row w-full'>
+    <form>
+      <div class="flex flex-row items-center mb-4">
+        <input type="search" id="site-search" name="q" placeholder="Find integration"
+          aria-label="Search through site content" />
 
-    <button type="submit" class="button button--primary button--circle ml-2"><i class="fas fa-search"></i></button>
-    </div>
-  </form>
+        <button type="submit" class="button button--primary button--circle ml-2"><i class="fas fa-search"></i></button>
+      </div>
+    </form>
+
+    <form class='ml-auto'>
+      <input class="ml-auto" type="search" id="site-search" name="kind" list="kind-selection" placeholder="Filter by kind" />
+
+        <datalist id="kind-selection">
+          {% for kind in integration_kinds %}
+            <option value="{{kind.0}}">{{kind.1}}</option>
+          {% endfor %}
+        </datalist>
+    </form>
+  </div>
+
   <div class="card card--none mb-8">
     {% render_table table %}
 

@@ -63,6 +63,8 @@ class IntegrationList(ProjectMixin, SingleTableView):
             project=self.project
         ).count()
 
+        context_data["integration_kinds"] = Integration.Kind.choices
+
         return context_data
 
     def get_queryset(self) -> QuerySet:
@@ -76,6 +78,8 @@ class IntegrationList(ProjectMixin, SingleTableView):
                 .filter(similarity__gt=0.05)
                 .order_by("-similarity")
             )
+        if (kind := self.request.GET.get("kind")) and kind in Integration.Kind.values:
+            queryset = queryset.filter(kind=kind)
 
         return queryset.prefetch_related("table_set").all()
 

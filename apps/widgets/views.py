@@ -167,7 +167,27 @@ class WidgetUpdate(DashboardMixin, FormsetUpdateView):
                 "type": form.instance.kind,
             },
         )
+        if self.request.POST.get("submit") == "Save & Preview":
+            return r
 
+        context = {"widget": self.object}
+        add_output_context(context, self.object)
+        return (
+            TurboStream(f"widgets-output-{self.object.id}")
+            .replace.template("widgets/output.html", context)
+            .response(request=self.request)
+        )
+
+    def form_invalid(self, form):
+        r = super().form_invalid(form)
+        if self.request.POST.get("close"):
+            context = {"widget": self.object}
+            add_output_context(context, self.object)
+            return (
+                TurboStream(f"widgets-output-{self.object.id}")
+                .replace.template("widgets/output.html", context)
+                .response(request=self.request)
+            )
         return r
 
 
@@ -192,7 +212,11 @@ class WidgetPartialUpdate(viewsets.GenericViewSet, mixins.UpdateModelMixin):
 
 # Turbo frames
 
-
+# ====== Not used right now =======
+# TODO: decide whether we want to cache the output of the chart or
+# Remove this. You will also need to add back the caching logic in urls.py.
+# We removed this for now because with the modal we are rendering the same FusionChart
+# Twice which leads to an id conflict
 def last_modified_widget_output(request, pk):
     widget = Widget.objects.get(pk=pk)
     return (
@@ -204,12 +228,26 @@ def last_modified_widget_output(request, pk):
 
 def etag_widget_output(request, pk):
     last_modified = last_modified_widget_output(request, pk)
-    return f"{int(last_modified.timestamp() * 1_000_000)}"
+    return str(int(last_modified.timestamp() * 1_000_000))
 
 
 widget_output_condition = condition(
     etag_func=etag_widget_output, last_modified_func=last_modified_widget_output
 )
+
+# ==================================================
+
+
+def add_output_context(context, widget):
+    if widget.is_valid:
+        if widget.kind == Widget.Kind.TABLE:
+            context.update(table_to_output(widget))
+        elif widget.kind == Widget.Kind.TEXT:
+            pass
+        else:
+            chart, chart_id = chart_to_output(widget)
+            context.update(chart)
+            context["chart_id"] = chart_id
 
 
 class WidgetOutput(DetailView):
@@ -220,14 +258,8 @@ class WidgetOutput(DetailView):
         context_data = super().get_context_data(**kwargs)
 
         try:
+            add_output_context(context_data, self.object)
 
-            if self.object.is_valid:
-                if self.object.kind == Widget.Kind.TABLE:
-                    context_data.update(table_to_output(self.object))
-                elif self.object.kind == Widget.Kind.TEXT:
-                    pass
-                else:
-                    context_data.update(chart_to_output(self.object))
         except Exception as e:
             context_data["is_error"] = True
             logging.warning(e, exc_info=e)

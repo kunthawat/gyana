@@ -60,16 +60,15 @@ THIRD_PARTY_APPS = [
     "crispy_tailwind",
     "django_filters",
     "django_tables2",
-    # stripe integration
+    "invitations",
     "djstripe",
 ]
 
 # Put your project-specific apps here
 PROJECT_APPS = [
-    "apps.subscriptions.apps.SubscriptionConfig",
     "apps.users.apps.UserConfig",
     "apps.web",
-    "apps.teams.apps.TeamConfig",
+    "apps.teams",
     "apps.projects",
     "apps.integrations",
     "apps.workflows",
@@ -77,6 +76,7 @@ PROJECT_APPS = [
     "apps.widgets",
     "apps.filters",
     "apps.tables",
+    "apps.invites.apps.InvitesConfig",
     "apps.utils",
 ]
 
@@ -180,7 +180,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Allauth setup
 
-ACCOUNT_ADAPTER = "apps.teams.adapter.AcceptInvitationAdapter"
+ACCOUNT_ADAPTER = "invitations.models.InvitationsAdapter"
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
@@ -296,30 +296,6 @@ GOOGLE_ANALYTICS_ID = (
 )
 
 
-# Stripe config
-
-# modeled to be the same as https://github.com/dj-stripe/dj-stripe
-STRIPE_LIVE_PUBLIC_KEY = os.environ.get(
-    "STRIPE_LIVE_PUBLIC_KEY", "<your publishable key>"
-)
-STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
-STRIPE_TEST_PUBLIC_KEY = os.environ.get(
-    "STRIPE_TEST_PUBLIC_KEY", "pk_test_<your publishable key>"
-)
-STRIPE_TEST_SECRET_KEY = os.environ.get(
-    "STRIPE_TEST_SECRET_KEY", "sk_test_<your secret key>"
-)
-STRIPE_LIVE_MODE = False  # Change to True in production
-
-# Get it from the section in the Stripe dashboard where you added the webhook endpoint
-# or from the stripe CLI when testing
-DJSTRIPE_WEBHOOK_SECRET = os.environ.get("DJSTRIPE_WEBHOOK_SECRET", "whsec_xxx")
-
-DJSTRIPE_FOREIGN_KEY_TO_FIELD = (
-    "id"  # change to 'djstripe_id' if not a new installation
-)
-DJSTRIPE_USE_NATIVE_JSONFIELD = True  # change to False if not a new installation
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
 
@@ -363,3 +339,31 @@ FF_ALPHA = True
 SEGMENT_ANALYTICS_WRITE_KEY = os.environ.get("SEGMENT_ANALYTICS_WRITE_KEY", "")
 # web write key
 SEGMENT_ANALYTICS_JS_WRITE_KEY = os.environ.get("SEGMENT_ANALYTICS_JS_WRITE_KEY", "")
+
+INVITATIONS_INVITATION_MODEL = "invites.Invite"
+INVITATIONS_INVITATION_EXPIRY = 3
+
+
+# TODO: Delete stripe config once djstripe is uninstalled
+
+# modeled to be the same as https://github.com/dj-stripe/dj-stripe
+STRIPE_LIVE_PUBLIC_KEY = os.environ.get(
+    "STRIPE_LIVE_PUBLIC_KEY", "<your publishable key>"
+)
+STRIPE_LIVE_SECRET_KEY = os.environ.get("STRIPE_LIVE_SECRET_KEY", "<your secret key>")
+STRIPE_TEST_PUBLIC_KEY = os.environ.get(
+    "STRIPE_TEST_PUBLIC_KEY", "pk_test_<your publishable key>"
+)
+STRIPE_TEST_SECRET_KEY = os.environ.get(
+    "STRIPE_TEST_SECRET_KEY", "sk_test_<your secret key>"
+)
+STRIPE_LIVE_MODE = False  # Change to True in production
+
+# Get it from the section in the Stripe dashboard where you added the webhook endpoint
+# or from the stripe CLI when testing
+DJSTRIPE_WEBHOOK_SECRET = os.environ.get("DJSTRIPE_WEBHOOK_SECRET", "whsec_xxx")
+
+DJSTRIPE_FOREIGN_KEY_TO_FIELD = (
+    "id"  # change to 'djstripe_id' if not a new installation
+)
+DJSTRIPE_USE_NATIVE_JSONFIELD = True  # change to False if not a new installation

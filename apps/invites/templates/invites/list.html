@@ -1,0 +1,11 @@
+{% extends "teams/base.html" %}
+{% load render_table from django_tables2 %}
+{% block tab %}
+<h1>Listing</h1>
+<a href="{% url 'team_invites:create' team.id %}"
+  >Invite</a
+>
+<div class="card card--none">
+{% render_table table %} 
+</div>
+{% endblock %} 

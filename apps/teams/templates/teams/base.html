@@ -1,8 +1,9 @@
 {% extends "web/app/app_base.html" %}
 {% load static %}
+{% load team_tags %}
 
 {% block app %}
-{% if team.slug %}
+{% if team.id %}
 <div class="workflow-detail__header">
   <h3 class="mr-auto flex justify-center items-center">
     {{ team.name }}
@@ -11,15 +12,19 @@
 
 <nav class="tabbar">
   <a class="tabbar__link {% if request.resolver_match.url_name == 'detail' %} tabbar__link--active {% endif %}"
-     href="{% url 'teams:detail' team.slug %}">
+     href="{% url 'teams:detail' team.id %}">
     Projects
   </a>
   <a class="tabbar__link {% if request.resolver_match.url_name == 'members' %} tabbar__link--active {% endif %}"
-     href="{% url 'teams:members' team.slug %}">Members</a>
-  <a class="tabbar__link {% if request.resolver_match.url_name == 'settings' %} tabbar__link--active {% endif %}"
-     href="{% url 'teams:settings' team.slug %}">
+     href="{% url 'teams:members' team.id %}">Members</a>
+  {% if request.user|is_admin_of:team %}
+    <a class="tabbar__link {% if request.resolver_match.app_name == 'team_invites' %} tabbar__link--active {% endif %}"
+      href="{% url 'team_invites:list' team.id %}">Invites</a>
+  <a class="tabbar__link {% if request.resolver_match.app_name == 'teams' and request.resolver_match.url_name == 'update' %} tabbar__link--active {% endif %}"
+     href="{% url 'teams:update' team.id %}">
     Settings
   </a>
+  {% endif %}
 </nav>
 {% endif %}
 

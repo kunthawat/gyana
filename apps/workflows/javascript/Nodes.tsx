@@ -7,6 +7,7 @@ export const NodeContext = createContext({
   client: null,
   getIncomingNodes: (id: string): [Node, Node[]] | null => null,
   addNode: (node) => {},
+  workflowId: '',
 })
 
 const DeleteButton = ({ id }) => {
@@ -19,7 +20,7 @@ const DeleteButton = ({ id }) => {
 }
 
 const OpenButton = ({ id }) => {
-  const workflowId = window.location.pathname.split('/')[4]
+  const { workflowId } = useContext(NodeContext)
 
   return (
     <button data-action='click->tf-modal#open'>
@@ -82,8 +83,7 @@ const NodeName = ({ name, id }: { name: string; id: string }) => {
 }
 
 const Description = ({ id, data }) => {
-  const { client } = useContext(NodeContext)
-  const workflowId = window.location.pathname.split('/')[4]
+  const { client, workflowId } = useContext(NodeContext)
 
   const [description, setDescription] = useState()
 
@@ -103,10 +103,7 @@ const Description = ({ id, data }) => {
   }, [])
 
   return (
-    <p
-      title={description || data.description}
-      className='max-w-full overflow-hidden h-full overflow-ellipsis text-xs'
-    >
+    <p title={description || data.description} className='text-xs overflow-hidden'>
       {description || data.description}
     </p>
   )
@@ -141,7 +138,7 @@ const WarningIcon = ({ text }) => (
 )
 
 const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
-  const workflowId = window.location.pathname.split('/')[4]
+  const { workflowId } = useContext(NodeContext)
 
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
@@ -171,12 +168,10 @@ const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
 }
 
 const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
-  const workflowId = window.location.pathname.split('/')[4]
-
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
 
-  const { getIncomingNodes } = useContext(NodeContext)
+  const { getIncomingNodes, workflowId } = useContext(NodeContext)
   const incoming = getIncomingNodes(id)
 
   const showWarning = incoming && incoming[1].length < 1
@@ -212,12 +207,10 @@ const DefaultNode = ({
   targetPosition = Position.Left,
   sourcePosition = Position.Right,
 }: NodeProps) => {
-  const workflowId = window.location.pathname.split('/')[4]
-
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
 
-  const { getIncomingNodes } = useContext(NodeContext)
+  const { getIncomingNodes, workflowId } = useContext(NodeContext)
   const incoming = getIncomingNodes(id)
 
   const showWarning =

@@ -1,8 +1,10 @@
-from django.http import HttpResponse
 import json
 from collections import OrderedDict
-from io import StringIO
 from enum import Enum
+from io import StringIO
+
+from django.conf import settings
+
 
 # Common base class for FC
 class FusionCharts:
@@ -10,6 +12,7 @@ class FusionCharts:
     baseTemplate = """
         <script type="text/javascript">
             FusionCharts.ready(function () {
+                __LC__
                 __TS__
                 __FC__
             });
@@ -89,6 +92,17 @@ class FusionCharts:
             self.readyJson = self.readyJson.replace("\\", "")
             self.readyJson = self.readyJson.replace('"{', "{")
             self.readyJson = self.readyJson.replace('}"', "}")
+
+        if settings.FUSIONCHARTS_LICENCE:
+            self.readyJson = self.readyJson.replace(
+                "__LC__",
+                f"""
+                    FusionCharts.options.license({{
+                        key: "{settings.FUSIONCHARTS_LICENCE}",
+                        creditLabel: false,
+                    }})
+                """,
+            )
 
         return self.readyJson
 

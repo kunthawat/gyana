@@ -1,36 +1,12 @@
 import time
 from dataclasses import dataclass
-from functools import lru_cache
 
 import backoff
 import requests
-import yaml
 from apps.integrations.models import Integration
+from apps.integrations.utils import get_services
 from django.conf import settings
 from django.shortcuts import redirect
-
-SERVICES = "lib/services.yaml"
-
-
-@lru_cache
-def get_services():
-    return {
-        key: val
-        for key, val in yaml.load(open(SERVICES, "r")).items()
-        if val["internal"] != "t"
-    }
-
-
-@lru_cache
-def get_service_categories():
-    services = get_services()
-    service_categories = []
-
-    for service in services:
-        if services[service]["category"] not in service_categories:
-            service_categories.append(services[service]["category"])
-
-    return service_categories
 
 
 @dataclass

@@ -1,5 +1,5 @@
 adwords:
-  name: Google Adwords
+  name: Google Ads
   color: '#e37400'
   internal: f
   requires_schema_prefix: f
@@ -52,6 +52,13 @@ facebook_ads:
 facebook_pages:
   name: Facebook Pages
   color: '#4867AA'
+  internal: f
+  requires_schema_prefix: f
+  category: CRM & marketing
+  static_config:
+google_ads_account:
+  name: Google Ads Account
+  color: '#e37400'
   internal: f
   requires_schema_prefix: f
   category: CRM & marketing

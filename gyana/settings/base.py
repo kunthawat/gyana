@@ -222,6 +222,7 @@ SOCIALACCOUNT_PROVIDERS = {
         },
     }
 }
+SOCIALACCOUNT_ADAPTER = "apps.users.adapter.SocialAccountAdapter"
 
 
 # Internationalization

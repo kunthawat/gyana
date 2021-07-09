@@ -34,7 +34,7 @@ from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
-from .fivetran import FivetranClient, get_service_categories, get_services
+from .fivetran import FivetranClient
 from .forms import (
     FORM_CLASS_MAP,
     CSVCreateForm,
@@ -46,6 +46,7 @@ from .forms import (
 from .models import Integration, Project
 from .tables import IntegrationTable, StructureTable
 from .tasks import poll_fivetran_historical_sync
+from .utils import get_service_categories, get_services
 
 # CRUDL
 
@@ -319,7 +320,7 @@ class IntegrationGrid(SingleTableMixin, TemplateView):
     paginate_by = 15
 
     def get_table_kwargs(self):
-        return {'attrs': {"class": "table-data"}}
+        return {"attrs": {"class": "table-data"}}
 
     def get_context_data(self, **kwargs):
         self.integration = Integration.objects.get(id=kwargs["pk"])

@@ -3,6 +3,7 @@ import time
 
 import celery
 from apps.dashboards.models import Dashboard
+from apps.integrations.utils import get_services
 from apps.projects.models import Project
 from apps.users.models import CustomUser
 from apps.workflows.models import Workflow
@@ -100,6 +101,14 @@ class Integration(models.Model):
     @property
     def used_in(self):
         return self.used_in_workflows.union(self.used_in_dashboards)
+
+    @property
+    def display_kind(self):
+        return (
+            self.get_kind_display()
+            if self.kind != self.Kind.FIVETRAN
+            else get_services()[self.service]["name"]
+        )
 
     def get_query(self):
         conn = ibis_client()

@@ -6,6 +6,7 @@ from apps.tables.models import Table
 from django.conf import settings
 from django.db import transaction
 from google.cloud import bigquery
+from lib.bigquery import query_table
 from lib.clients import DATASET_ID, bigquery_client, ibis_client
 
 DEFAULT_LIMIT = 50
@@ -99,12 +100,9 @@ def sync_integration(integration: Integration):
 
 
 def query_integration(integration: Integration):
-
-    conn = ibis_client()
-
-    return conn.table(
+    return query_table(
         integration.table_set.first().bq_table,
-        database=integration.schema
+        integration.schema
         if integration.kind == Integration.Kind.FIVETRAN
         else DATASET_ID,
     )

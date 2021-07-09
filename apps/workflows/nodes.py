@@ -5,15 +5,14 @@ from apps.filters.bigquery import create_filter_query
 from apps.tables.models import Table
 from django.utils import timezone
 from ibis.expr.datatypes import String
+from lib.bigquery import query_table
 from lib.clients import DATAFLOW_ID, bigquery_client, ibis_client
 from lib.formulas import to_ibis
 
 
 def get_input_query(node):
-    conn = ibis_client()
-    # The input can have no selected integration
     return (
-        conn.table(node.input_table.bq_table, database=node.input_table.bq_dataset)
+        query_table(node.input_table.bq_table, node.input_table.bq_dataset)
         if node.input_table
         else None
     )

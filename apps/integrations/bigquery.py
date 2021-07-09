@@ -9,6 +9,18 @@ from google.cloud import bigquery
 from lib.clients import DATASET_ID, bigquery_client, ibis_client
 
 DEFAULT_LIMIT = 50
+# https://fivetran.com/docs/getting-started/system-columns-and-tables#systemcolumns
+FIVETRAN_COLUMNS = set(
+    [
+        "_fivetran_synced",
+        "_fivetran_deleted",
+        "_fivetran_index",
+        "_fivetran_id",
+        "_fivetran_active",
+        "_fivetran_start",
+        "_fivetran_end",
+    ]
+)
 
 
 def create_external_config(integration: Integration):
@@ -102,12 +114,18 @@ def query_integration(integration: Integration):
 
     conn = ibis_client()
 
-    return conn.table(
+    tbl = conn.table(
         integration.table_set.first().bq_table,
         database=integration.schema
         if integration.kind == Integration.Kind.FIVETRAN
         else DATASET_ID,
     )
+
+    if integration.kind == Integration.Kind.FIVETRAN:
+        # Drop the intersection of fivetran cols and schema cols
+        return tbl.drop(set(tbl.schema().names) & FIVETRAN_COLUMNS)
+
+    return tbl
 
 
 def get_tables_in_dataset(integration):

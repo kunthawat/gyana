@@ -52,7 +52,6 @@ const GyWidget_: React.FC<{ children: React.ReactElement; root: HTMLElement }> =
       dragGrid={[stepSize, stepSize]}
       minHeight='200'
       minWidth='200'
-      dragHandleClassName='rnd-handle'
       onResizeStop={(...args) => {
         const node = args[2]
         const parent = root

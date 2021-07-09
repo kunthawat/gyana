@@ -93,16 +93,17 @@ class FusionCharts:
             self.readyJson = self.readyJson.replace('"{', "{")
             self.readyJson = self.readyJson.replace('}"', "}")
 
-        if settings.FUSIONCHARTS_LICENCE:
-            self.readyJson = self.readyJson.replace(
-                "__LC__",
-                f"""
-                    FusionCharts.options.license({{
-                        key: "{settings.FUSIONCHARTS_LICENCE}",
-                        creditLabel: false,
-                    }})
-                """,
-            )
+        self.readyJson = self.readyJson.replace(
+            "__LC__",
+            f"""
+                FusionCharts.options.license({{
+                    key: "{settings.FUSIONCHARTS_LICENCE}",
+                    creditLabel: false,
+                }})
+            """
+            if settings.FUSIONCHARTS_LICENCE
+            else "",
+        )
 
         return self.readyJson
 

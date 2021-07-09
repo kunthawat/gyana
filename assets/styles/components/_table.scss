@@ -62,7 +62,7 @@
     }
   }
 
-  td a[href] {
+  td a[href]:not(.button) {
     color: var(--c-blue);
     padding: 1.2rem 0; 
     
@@ -71,7 +71,7 @@
     }
   }
 
-  .card & thead th {
+  .card > .table-container & thead th {
     &:first-child {
       border-top-left-radius: 10px;
     }

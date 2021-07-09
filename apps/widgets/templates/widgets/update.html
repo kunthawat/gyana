@@ -2,11 +2,11 @@
 
 <turbo-frame id="widget-modal">  
   {{ form.media.js }}
-  <div class="flex items-center gap-4 mb-4">
+  <div class="flex items-center gap-4 mb-4 flex-shrink-0">
     <h1>{{ object.name }}</h1>
   </div>
 
-  <div class="flex flex-wrap mb-4">
+  <div class="flex flex-wrap mb-4 h-full">
     <div class="w-1/2">
       <h3>Config</h3>
       <form 
@@ -60,7 +60,7 @@
         </div>
       </form>
     </div>
-    <div class="w-1/2">
+    <div class="w-1/2 h-full overflow-y-auto">
       {% if widget.is_valid %}
       <turbo-frame id="widgets-output-{{ widget.id }}" src="{% url 'dashboard_widgets:output' project.id dashboard.id object.id %}">
         <div class='placeholder-scr placeholder-scr--fillscreen'>

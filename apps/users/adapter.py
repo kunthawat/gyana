@@ -5,6 +5,10 @@ from allauth.account.utils import user_email, user_field
 from allauth.socialaccount.adapter import DefaultSocialAccountAdapter
 
 
+# Taken from https://stackoverflow.com/a/30591838
+# Longer discussion on the topic:
+# - https://github.com/pennersr/django-allauth/issues/215
+# - https://github.com/pennersr/django-allauth/issues/418
 class SocialAccountAdapter(DefaultSocialAccountAdapter):
     def pre_social_login(self, request, sociallogin):
         """

@@ -291,6 +291,15 @@ class IntegrationData(ProjectMixin, DetailView):
     template_name = "integrations/data.html"
     model = Integration
 
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["tables"] = []
+
+        for table in self.object.table_set.all():
+            context_data["tables"].append({"title": table.bq_table})
+
+        return context_data
+
 
 class IntegrationSettings(ProjectMixin, TurboUpdateView):
     template_name = "integrations/settings.html"

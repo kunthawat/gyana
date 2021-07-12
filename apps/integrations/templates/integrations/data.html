@@ -4,6 +4,7 @@
 
 <div class="flex flex-row flex-1 overflow-hidden">
 
+  {% if tables|length > 1 %}
   <div class="bg-white overflow-auto w-60 border-gray border-0 border-r flex-shrink-0">
     <h3 class="px-4 py-2">Tables</h3>
     <hr />
@@ -17,6 +18,7 @@
       {% endfor %}
     </ul>
   </div>
+  {% endif %}
 
   <div class="pad flex-1 overflow-hidden">
     <turbo-frame id="integrations-grid" src="{% url 'integrations:grid' object.id %}?table_id={{ request.GET.table_id }}">

@@ -1,7 +1,7 @@
 {% load render_table from django_tables2 %}
 
 <turbo-frame id="integrations-grid">
-  <h1>{{ table_instance.bq_table }}</h1>
+  {% if table_instance.integration.table_set.count > 1 %}<h1>{{ table_instance.bq_table }}</h1>{% endif %}
   <div class="card card--none py-4 overflow-auto">
     {% render_table table %}
   </div>

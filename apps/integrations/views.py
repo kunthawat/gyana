@@ -6,6 +6,7 @@ import uuid
 import analytics
 import coreapi
 from apps.projects.mixins import ProjectMixin
+from apps.tables.models import Table
 from apps.utils.segment_analytics import (
     INTEGRATION_CREATED_EVENT,
     NEW_INTEGRATION_START_EVENT,
@@ -332,28 +333,23 @@ class IntegrationGrid(SingleTableMixin, TemplateView):
     def get_context_data(self, **kwargs):
         self.integration = Integration.objects.get(id=kwargs["pk"])
 
-        context_data = super().get_context_data(**kwargs)
-
         table_id = self.request.GET.get("table_id")
-        table = (
-            self.integration.table_set.get(pk=table_id)
-            if table_id
-            else self.integration.table_set.first()
-        )
-        context_data["table_instance"] = table
+        try:
+            self.table_instance = (
+                self.integration.table_set.get(pk=table_id)
+                if table_id
+                else self.integration.table_set.first()
+            )
+        except (Table.DoesNotExist, ValueError):
+            self.table_instance = self.integration.table_set.first()
 
+        context_data = super().get_context_data(**kwargs)
+        context_data["table_instance"] = self.table_instance
         return context_data
 
     def get_table(self, **kwargs):
-        table_id = self.request.GET.get("table_id")
-        print(table_id)
-        table = (
-            self.integration.table_set.get(pk=table_id)
-            if table_id
-            else self.integration.table_set.first()
-        )
         query = query_table(
-            table.bq_table,
+            self.table_instance.bq_table,
             self.integration.schema
             if self.integration.kind == Integration.Kind.FIVETRAN
             else DATASET_ID,

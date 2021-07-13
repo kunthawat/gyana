@@ -29,9 +29,10 @@
         {% if formula_columns_formset %}
         {{ formula_columns_formset.media }}
         {% endif %}
-        <span data-live-update-target="loading" class="hidden">
-          <i class="placeholder-scr__icon fad fa-spinner-third fa-spin"></i>
-        </span>
+        <div class="h-6">
+          <span data-live-update-target="loading" class="hidden"><i
+              class="placeholder-scr__icon fad fa-spinner-third fa-spin"></i></span>
+        </div>
         {% csrf_token %}
 
         {% include "django/forms/default_form.html" %}

@@ -37,6 +37,7 @@ project_urlpatterns = (
             name="structure",
         ),
         path("<hashid:pk>/data", views.IntegrationData.as_view(), name="data"),
+        path("<hashid:pk>/schema", views.IntegrationSchema.as_view(), name="schema"),
         path(
             "<hashid:pk>/settings", views.IntegrationSettings.as_view(), name="settings"
         ),

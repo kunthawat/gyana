@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import CreateView, DeleteView, FormMixin
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -32,6 +32,8 @@ from rest_framework.decorators import api_view, schema
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
+from turbo_response.mixins import TurboFrameTemplateResponseMixin
+from turbo_response.response import HttpResponseSeeOther
 from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
@@ -298,6 +300,59 @@ class IntegrationData(ProjectMixin, DetailView):
         context_data["tables"] = self.object.table_set.all()
 
         return context_data
+
+
+class IntegrationSchema(ProjectMixin, DetailView):
+    template_name = "integrations/schema.html"
+    model = Integration
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        context_data["integration"] = self.get_object()
+        context_data["schemas"] = FivetranClient(
+            context_data["integration"]
+        ).get_schema()
+
+        return context_data
+
+    def post(self, request, *args, **kwargs):
+        integration = self.get_object()
+        client = FivetranClient(integration)
+        schema = client.get_schema()
+
+        # Construct a dictionary with all allowed schema changes and set them to false
+        # By default when checkboxes are checked they are sent in a post request, if they
+        # are unchecked they will be omitted from the POST data.
+        update = {
+            key: {
+                "enabled": False,
+                "tables": {
+                    table: {"enabled": False}
+                    for table, table_content in value["tables"].items()
+                    if table_content["enabled_patch_settings"]["allowed"]
+                },
+            }
+            for key, value in schema.items()
+        }
+
+        # Loop over our post data and update the changed schemas and tables values
+        for key in request.POST.keys():
+            if key == "csrfmiddlewaretoken":
+                continue
+
+            if len(ids := key.split(".")) > 1:
+                schema, table = ids
+                update[schema]["tables"][table] = {"enabled": True}
+            else:
+                update[key]["enabled"] = True
+
+        client.update_schema({"schemas": update})
+
+        return TurboStream(f"{integration.id}-schema-update-message").replace.response(
+            f"""<p id="{ integration.id }-schema-update-message" class="ml-4 text-green">Successfully updated the schema</p>""",
+            is_safe=True,
+        )
 
 
 class IntegrationSettings(ProjectMixin, TurboUpdateView):

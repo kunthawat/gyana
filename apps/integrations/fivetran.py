@@ -101,6 +101,31 @@ class FivetranClient:
         self.integration.historical_sync_complete = True
         self.integration.save()
 
+    def get_schema(self):
+        res = requests.get(
+            f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}/schemas",
+            headers=settings.FIVETRAN_HEADERS,
+        ).json()
+
+        if res["code"] != "Success":
+            # TODO
+            pass
+
+        return res["data"].get("schemas", {})
+
+    def update_schema(self, schema):
+        res = requests.patch(
+            f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}/schemas",
+            json=schema,
+            headers=settings.FIVETRAN_HEADERS,
+        ).json()
+
+        if res["code"] != "Success":
+            # TODO
+            pass
+
+        return res
+
 
 if settings.MOCK_FIVETRAN:
     FivetranClient = MockFivetranClient

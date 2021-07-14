@@ -4,11 +4,11 @@ from . import views
 
 app_name = "workflows"
 urlpatterns = [
-    path("<hashid:pk>/run_workflow", views.workflow_run, name="run_workflow"),
-    path(
-        "<hashid:pk>/out_of_date", views.worflow_out_of_date, name="worflow_out_of_date"
-    ),
+    # html
     path("<hashid:pk>/last_run", views.WorkflowLastRun.as_view(), name="last_run"),
+    # rest api
+    path("<int:pk>/run_workflow", views.workflow_run, name="run_workflow"),
+    path("<int:pk>/out_of_date", views.worflow_out_of_date, name="worflow_out_of_date"),
 ]
 
 

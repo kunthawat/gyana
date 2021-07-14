@@ -52,6 +52,7 @@ class FivetranClient:
                 "service": service,
                 "group_id": settings.FIVETRAN_GROUP,
                 "run_setup_tests": False,
+                "paused": True,
                 "config": config,
             },
             headers=settings.FIVETRAN_HEADERS,

@@ -107,6 +107,14 @@ class FivetranClient:
             headers=settings.FIVETRAN_HEADERS,
         ).json()
 
+        if res.get("code") == "NotFound_SchemaConfig":
+            # First try a reload in case this connector is new
+            # https://fivetran.com/docs/rest-api/connectors#reloadaconnectorschemaconfig
+            res = requests.post(
+                f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}/schemas/reload",
+                headers=settings.FIVETRAN_HEADERS,
+            ).json()
+
         if res["code"] != "Success":
             # TODO
             pass

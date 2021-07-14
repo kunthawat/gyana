@@ -26,7 +26,8 @@ urlpatterns = [
 project_urlpatterns = (
     [
         path("", views.IntegrationList.as_view(), name="list"),
-        path("new", views.IntegrationCreate.as_view(), name="create"),
+        path("new", views.IntegrationNew.as_view(), name="new"),
+        path("create", views.IntegrationCreate.as_view(), name="create"),
         path("upload", views.IntegrationUpload.as_view(), name="upload"),
         path("<hashid:pk>", views.IntegrationDetail.as_view(), name="detail"),
         path("<hashid:pk>/update", views.IntegrationUpdate.as_view(), name="update"),

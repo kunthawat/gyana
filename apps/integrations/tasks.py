@@ -42,6 +42,22 @@ def poll_fivetran_historical_sync(self, integration_id):
 
 
 @shared_task(bind=True)
+def update_integration_fivetran_schema(self, integration_id, updated_checkboxes):
+    integration = get_object_or_404(Integration, pk=integration_id)
+    FivetranClient(integration).update_schema(updated_checkboxes)
+
+    return integration_id
+
+
+@shared_task(bind=True)
+def start_fivetran_integration_task(self, integration_id):
+    integration = get_object_or_404(Integration, pk=integration_id)
+    FivetranClient(integration).start()
+
+    return integration_id
+
+
+@shared_task(bind=True)
 def run_external_table_sync(self, integration_id):
     integration = get_object_or_404(Integration, pk=integration_id)
 

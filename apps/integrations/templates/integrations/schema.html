@@ -9,56 +9,7 @@
     (E.g. disable syncing big tables with many rows that are not going to be used.)
   </p>
 
-  <form method="post" action="{% url 'project_integrations:schema' project.id integration.id %}" class="form">
-    {% csrf_token %}
-    {% for schema, content in schemas.items %}
-    <div class="flex flex-col my-6 gap-2">
-      <div class="flex flex-row items-center gap-2">
-        <input id="{{ schema }}" name="{{ schema }}" data-schema-checkbox="{{ schema }}" type="checkbox"
-               {% if content.enabled %}checked{% endif %} />
-        <label for="{{ schema }}">
-          {% if schemas.items|length > 1 %}
-          {{ schema }}
-          {% else %}
-          {{ integration.name }}
-          {% endif %}
-        </label>
-      </div>
-
-      <div class="flex flex-col ml-8 gap-2">
-        {% for table, table_content in content.tables.items %}
-        {% if table_content.enabled_patch_settings.allowed %}
-        <div class="flex flex-row items-center gap-2">
-          <input id="{{ schema }}.{{ table }}" name="{{ schema }}.{{ table }}" data-parent-schema="{{ schema }}"
-                 type="checkbox" {% if table_content.enabled %}checked{% endif %} />
-          <label for="{{ schema }}.{{ table }}">{{ table }}</label>
-        </div>
-        {% endif %}
-        {% endfor %}
-      </div>
-
-      <div class="flex flex-row items-center">
-        <button type="submit" class="button button--success mt-2">Update</button>
-        <p id="{{ integration.id }}-schema-update-message"></p>
-      </div>
-    </div>
-    {% endfor %}
-  </form>
+  {% include "integrations/_schema.html" with confirmation_text="Update" %}  
 </div>
-<script>
-  document
-    .querySelectorAll("input[data-schema-checkbox]")
-    .forEach(function (input) {
-      input.addEventListener("change", function (event) {
-        document
-          .querySelectorAll(
-            "input[data-parent-schema='" + input.dataset.schemaCheckbox + "']"
-          )
-          .forEach(function (child) {
-            child.checked = event.target.checked;
-          });
-      });
-    });
-</script>
 
 {% endblock %}

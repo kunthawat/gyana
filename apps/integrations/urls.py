@@ -19,6 +19,11 @@ urlpatterns = [
         views.authorize_fivetran_redirect,
         name="authorize-fivetran-redirect",
     ),
+    path(
+        "<hashid:pk>/start-fivetran-integration",
+        views.start_fivetran_integration,
+        name="start-fivetran-integration",
+    ),
     path("<str:session_key>/generate-signed-url", views.generate_signed_url),
     path("<str:session_key>/start-sync", views.start_sync),
 ]
@@ -30,6 +35,7 @@ project_urlpatterns = (
         path("create", views.IntegrationCreate.as_view(), name="create"),
         path("upload", views.IntegrationUpload.as_view(), name="upload"),
         path("<hashid:pk>", views.IntegrationDetail.as_view(), name="detail"),
+        path("<hashid:pk>/setup", views.IntegrationSetup.as_view(), name="setup"),
         path("<hashid:pk>/update", views.IntegrationUpdate.as_view(), name="update"),
         path("<hashid:pk>/delete", views.IntegrationDelete.as_view(), name="delete"),
         path(

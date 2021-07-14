@@ -7,22 +7,20 @@ import analytics
 import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
-from apps.utils.segment_analytics import (
-    INTEGRATION_CREATED_EVENT,
-    NEW_INTEGRATION_START_EVENT,
-)
+from apps.utils.segment_analytics import (INTEGRATION_CREATED_EVENT,
+                                          NEW_INTEGRATION_START_EVENT)
 from apps.utils.table_data import get_table
 from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
-from django.http.response import HttpResponseBadRequest
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import DeleteView
+from django.views.generic.edit import DeleteView, UpdateView
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -37,16 +35,13 @@ from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
 from .fivetran import FivetranClient
-from .forms import (
-    FORM_CLASS_MAP,
-    CSVCreateForm,
-    FivetranForm,
-    GoogleSheetsForm,
-    IntegrationForm,
-)
+from .forms import (FORM_CLASS_MAP, CSVCreateForm, FivetranForm,
+                    GoogleSheetsForm, IntegrationForm)
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
-from .tasks import poll_fivetran_historical_sync
+from .tasks import (poll_fivetran_historical_sync,
+                    start_fivetran_integration_task,
+                    update_integration_fivetran_schema)
 from .utils import get_service_categories, get_services
 
 # CRUDL
@@ -327,39 +322,51 @@ class IntegrationSchema(ProjectMixin, DetailView):
     def post(self, request, *args, **kwargs):
         integration = self.get_object()
         client = FivetranClient(integration)
-        schema = client.get_schema()
-
-        # Construct a dictionary with all allowed schema changes and set them to false
-        # By default when checkboxes are checked they are sent in a post request, if they
-        # are unchecked they will be omitted from the POST data.
-        update = {
-            key: {
-                "enabled": False,
-                "tables": {
-                    table: {"enabled": False}
-                    for table, table_content in value["tables"].items()
-                    if table_content["enabled_patch_settings"]["allowed"]
-                },
-            }
-            for key, value in schema.items()
-        }
-
-        # Loop over our post data and update the changed schemas and tables values
-        for key in request.POST.keys():
-            if key == "csrfmiddlewaretoken":
-                continue
-
-            if len(ids := key.split(".")) > 1:
-                schema, table = ids
-                update[schema]["tables"][table] = {"enabled": True}
-            else:
-                update[key]["enabled"] = True
-
-        client.update_schema({"schemas": update})
+        client.update_schema(
+            [key for key in request.POST.keys() if key != "csrfmiddlewaretoken"]
+        )
 
         return TurboStream(f"{integration.id}-schema-update-message").replace.response(
             f"""<p id="{ integration.id }-schema-update-message" class="ml-4 text-green">Successfully updated the schema</p>""",
             is_safe=True,
+        )
+
+
+class IntegrationSetup(ProjectMixin, DetailView):
+    template_name = "integrations/setup.html"
+    model = Integration
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["integration"] = self.get_object()
+        context_data["service"] = get_services()[self.get_object().service]
+        context_data["schemas"] = FivetranClient(
+            context_data["integration"]
+        ).get_schema()
+
+        return context_data
+
+    def post(self, request, *args, **kwargs):
+        integration = self.get_object()
+
+        task_id = update_integration_fivetran_schema.delay(
+            self.kwargs.get(self.pk_url_kwarg),
+            [key for key in request.POST.keys() if key != "csrfmiddlewaretoken"],
+        )
+
+        return (
+            TurboStream("integration-setup-container")
+            .replace.template(
+                "integrations/fivetran_setup/_flow.html",
+                {
+                    "table_select_task_id": task_id,
+                    "turbo_url": reverse(
+                        "integrations:start-fivetran-integration",
+                        args=(integration.id,),
+                    ),
+                },
+            )
+            .response(request)
         )
 
 
@@ -527,6 +534,28 @@ def start_sync(request: Request, session_key: str):
     )
 
 
+@api_view(["GET"])
+def start_fivetran_integration(request: HttpRequest, pk: int):
+    integration = get_object_or_404(Integration, pk=pk)
+
+    task_id = start_fivetran_integration_task.delay(pk)
+
+    return (
+        TurboStream("integration-setup-container")
+        .replace.template(
+            "integrations/fivetran_setup/_flow.html",
+            {
+                "connector_start_task_id": task_id,
+                "redirect_url": reverse(
+                    "project_integrations:detail",
+                    args=(integration.project.id, integration.id),
+                ),
+            },
+        )
+        .response(request)
+    )
+
+
 def authorize_fivetran(request: HttpRequest, pk: int):
 
     integration = get_object_or_404(Integration, pk=pk)
@@ -550,6 +579,6 @@ def authorize_fivetran_redirect(request: HttpRequest, pk: int):
 
     return redirect(
         reverse(
-            "project_integrations:detail", args=(integration.project.id, integration.id)
+            "project_integrations:setup", args=(integration.project.id, integration.id)
         )
     )

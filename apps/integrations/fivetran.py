@@ -10,25 +10,6 @@ from django.shortcuts import redirect
 
 
 @dataclass
-class MockFivetranClient:
-
-    integration: Integration
-
-    def create(self):
-        self.integration.fivetran_id = settings.MOCK_FIVETRAN_ID
-        self.integration.schema = settings.MOCK_FIVETRAN_SCHEMA
-        self.integration.save()
-
-    def authorize(self, redirect_uri):
-        return redirect(redirect_uri)
-
-    def block_until_synced(self):
-        time.sleep(settings.MOCK_FIVETRAN_HISTORICAL_SYNC_SECONDS)
-        self.integration.historical_sync_complete = True
-        self.integration.save()
-
-
-@dataclass
 class FivetranClient:
 
     integration: Integration
@@ -65,6 +46,21 @@ class FivetranClient:
         self.integration.fivetran_id = res["data"]["id"]
         self.integration.schema = schema
         self.integration.save()
+
+    def start(self):
+        res = requests.patch(
+            f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}",
+            json={
+                "paused": False,
+            },
+            headers=settings.FIVETRAN_HEADERS,
+        ).json()
+
+        if res["code"] != "Success":
+            # TODO
+            pass
+
+        return res
 
     def authorize(self, redirect_uri):
 
@@ -122,10 +118,46 @@ class FivetranClient:
 
         return res["data"].get("schemas", {})
 
-    def update_schema(self, schema):
+    def update_schema(self, updated_checkboxes):
+        """
+        Transforms an array of schema and schema-table combinations to the correct Fivetran
+        format. When checkboxes are unticked they're excluded and therefore assumed to be
+        disabled. We create an initial structure with all schema and schema-table combinations
+        set to false and the overlap with `updated_checkboxes` becomes enabled.
+
+        Updating the schema relies on `updated_checkboxes` to be in an array with entries
+        in the format of `{schema}` or `{schema}.{table}`.
+
+        Refer to `integrations/_schema.html` for an example of the structure.
+        """
+        schema = self.get_schema()
+
+        # Construct a dictionary with all allowed schema changes and set them to false
+        # By default when checkboxes are checked they are sent in a post request, if they
+        # are unchecked they will be omitted from the POST data.
+        update = {
+            key: {
+                "enabled": False,
+                "tables": {
+                    table: {"enabled": False}
+                    for table, table_content in value["tables"].items()
+                    if table_content["enabled_patch_settings"]["allowed"]
+                },
+            }
+            for key, value in schema.items()
+        }
+
+        # Loop over our post data and update the changed schemas and tables values
+        for key in updated_checkboxes:
+            if len(ids := key.split(".")) > 1:
+                schema, table = ids
+                update[schema]["tables"][table] = {"enabled": True}
+            else:
+                update[key]["enabled"] = True
+
         res = requests.patch(
             f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}/schemas",
-            json=schema,
+            json={"schemas": update},
             headers=settings.FIVETRAN_HEADERS,
         ).json()
 
@@ -136,5 +168,24 @@ class FivetranClient:
         return res
 
 
-if settings.MOCK_FIVETRAN:
-    FivetranClient = MockFivetranClient
+@dataclass
+class MockFivetranClient:
+
+    integration: Integration
+
+    def create(self):
+        self.integration.fivetran_id = settings.MOCK_FIVETRAN_ID
+        self.integration.schema = settings.MOCK_FIVETRAN_SCHEMA
+        self.integration.save()
+
+    def authorize(self, redirect_uri):
+        return redirect(redirect_uri)
+
+    def block_until_synced(self):
+        time.sleep(settings.MOCK_FIVETRAN_HISTORICAL_SYNC_SECONDS)
+        self.integration.historical_sync_complete = True
+        self.integration.save()
+
+
+# if settings.MOCK_FIVETRAN:
+#     FivetranClient = MockFivetranClient

@@ -69,6 +69,7 @@ urlpatterns = [
     path("widgets/", include("apps.widgets.urls")),
     path("tables/", include("apps.tables.urls")),
     path("invitations/", include("invitations.urls")),
+    path("nodes/", include("apps.nodes.urls")),
     path("", include("apps.web.urls")),
     path("celery-progress/", include("celery_progress.urls")),
     # API docs

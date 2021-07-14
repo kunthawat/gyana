@@ -3,10 +3,10 @@ import { Handle, NodeProps, Position, Node, useStoreState } from 'react-flow-ren
 import { useDebouncedCallback } from 'use-debounce'
 
 export const NodeContext = createContext({
-  removeById: (id: string) => { },
+  removeById: (id: string) => {},
   client: null,
   getIncomingNodes: (id: string): [Node, Node[]] | null => null,
-  addNode: (node) => { },
+  addNode: (node) => {},
   workflowId: '',
 })
 
@@ -20,11 +20,9 @@ const DeleteButton = ({ id }) => {
 }
 
 const OpenButton = ({ id }) => {
-  const { workflowId } = useContext(NodeContext)
-
   return (
     <button data-action='click->tf-modal#open'>
-      <i data-src={`/workflows/${workflowId}/nodes/${id}`} className='fas fa-edit fa-lg'></i>
+      <i data-src={`/nodes/${id}`} className='fas fa-edit fa-lg'></i>
     </button>
   )
 }
@@ -35,7 +33,7 @@ const DuplicateButton = ({ id }) => {
     <button
       onClick={() =>
         client
-          .action(window.schema, ['workflows', 'duplicate_node', 'create'], {
+          .action(window.schema, ['nodes', 'duplicate', 'create'], {
             id,
           })
           .then((res) => addNode(res))
@@ -50,7 +48,7 @@ const NodeName = ({ name, id }: { name: string; id: string }) => {
   const { client } = useContext(NodeContext)
   const [text, setText] = useState(name)
   const updateName = useDebouncedCallback((name: string) => {
-    client.action(window.schema, ['workflows', 'api', 'nodes', 'partial_update'], {
+    client.action(window.schema, ['nodes', 'api', 'nodes', 'partial_update'], {
       id,
       name,
     }),
@@ -88,7 +86,7 @@ const Description = ({ id, data }) => {
   const [description, setDescription] = useState()
 
   const onNodeConfigUpdate = async () => {
-    const result = await client.action(window.schema, ['workflows', 'api', 'nodes', 'read'], {
+    const result = await client.action(window.schema, ['nodes', 'api', 'nodes', 'read'], {
       workflow: workflowId,
       id,
     })
@@ -138,8 +136,6 @@ const WarningIcon = ({ text }) => (
 )
 
 const InputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
-  const { workflowId } = useContext(NodeContext)
-
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
 
@@ -165,7 +161,7 @@ const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
 
-  const { getIncomingNodes, workflowId } = useContext(NodeContext)
+  const { getIncomingNodes } = useContext(NodeContext)
   const incoming = getIncomingNodes(id)
 
   const showWarning = incoming && incoming[1].length < 1
@@ -176,10 +172,9 @@ const OutputNode = ({ id, data, isConnectable, selected }: NodeProps) => {
       {showWarning && <WarningIcon text='Output needs to be connected!' />}
       <Handle type='target' position={Position.Left} isConnectable={isConnectable} />
 
-
       <i
         data-action='dblclick->tf-modal#open'
-        data-src={`/workflows/${workflowId}/nodes/${id}`}
+        data-src={`/nodes/${id}`}
         className={`fas fa-fw ${data.icon} ${showContent && 'absolute opacity-10'}`}
       ></i>
       {showContent && (
@@ -203,7 +198,7 @@ const DefaultNode = ({
   const [, , zoom] = useStoreState((state) => state.transform)
   const showContent = zoom >= 1.8
 
-  const { getIncomingNodes, workflowId } = useContext(NodeContext)
+  const { getIncomingNodes } = useContext(NodeContext)
   const incoming = getIncomingNodes(id)
 
   const showWarning =
@@ -218,7 +213,7 @@ const DefaultNode = ({
 
       <i
         data-action='dblclick->tf-modal#open'
-        data-src={`/workflows/${workflowId}/nodes/${id}`}
+        data-src={`/nodes/${id}`}
         className={`fas fa-fw ${data.icon} ${showContent && 'absolute opacity-10'}`}
       ></i>
       {showContent && <Description id={id} data={data} />}
@@ -235,7 +230,7 @@ const TextNode = ({ id, data, selected }: NodeProps) => {
   const { client } = useContext(NodeContext)
 
   const update = () =>
-    client.action(window.schema, ['workflows', 'api', 'nodes', 'partial_update'], {
+    client.action(window.schema, ['nodes', 'api', 'nodes', 'partial_update'], {
       id,
       text_text: text,
     })

@@ -22,7 +22,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import CreateView, DeleteView, FormMixin
+from django.views.generic.edit import DeleteView
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -32,8 +32,6 @@ from rest_framework.decorators import api_view, schema
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.schemas import AutoSchema
-from turbo_response.mixins import TurboFrameTemplateResponseMixin
-from turbo_response.response import HttpResponseSeeOther
 from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
@@ -42,12 +40,11 @@ from .fivetran import FivetranClient
 from .forms import (
     FORM_CLASS_MAP,
     CSVCreateForm,
-    CSVForm,
     FivetranForm,
     GoogleSheetsForm,
     IntegrationForm,
 )
-from .models import Integration, Project
+from .models import Integration
 from .tables import IntegrationTable, StructureTable
 from .tasks import poll_fivetran_historical_sync
 from .utils import get_service_categories, get_services
@@ -155,6 +152,18 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
         )
 
 
+class IntegrationNew(ProjectMixin, TemplateView):
+    template_name = "integrations/new.html"
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+        context_data["integration_kind"] = Integration.Kind
+        context_data["services"] = get_services()
+        context_data["service_categories"] = get_service_categories()
+
+        return context_data
+
+
 class IntegrationCreate(ProjectMixin, TurboCreateView):
     template_name = "integrations/create.html"
     model = Integration
@@ -162,7 +171,6 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["integration_kind"] = Integration.Kind
-        context_data["service_account"] = settings.GCP_BQ_SVC_ACCOUNT
         context_data["services"] = get_services()
         context_data["service_categories"] = get_service_categories()
 

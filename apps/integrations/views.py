@@ -7,8 +7,10 @@ import analytics
 import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
-from apps.utils.segment_analytics import (INTEGRATION_CREATED_EVENT,
-                                          NEW_INTEGRATION_START_EVENT)
+from apps.utils.segment_analytics import (
+    INTEGRATION_CREATED_EVENT,
+    NEW_INTEGRATION_START_EVENT,
+)
 from apps.utils.table_data import get_table
 from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
@@ -35,13 +37,20 @@ from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
 from .fivetran import FivetranClient
-from .forms import (FORM_CLASS_MAP, CSVCreateForm, FivetranForm,
-                    GoogleSheetsForm, IntegrationForm)
+from .forms import (
+    FORM_CLASS_MAP,
+    CSVCreateForm,
+    FivetranForm,
+    GoogleSheetsForm,
+    IntegrationForm,
+)
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
-from .tasks import (poll_fivetran_historical_sync,
-                    start_fivetran_integration_task,
-                    update_integration_fivetran_schema)
+from .tasks import (
+    poll_fivetran_historical_sync,
+    start_fivetran_integration_task,
+    update_integration_fivetran_schema,
+)
 from .utils import get_service_categories, get_services
 
 # CRUDL

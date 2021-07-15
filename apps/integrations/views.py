@@ -12,6 +12,7 @@ from apps.utils.segment_analytics import (
     NEW_INTEGRATION_START_EVENT,
 )
 from apps.utils.table_data import get_table
+from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
@@ -47,7 +48,9 @@ from .forms import (
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
 from .tasks import (
+    file_sync,
     poll_fivetran_historical_sync,
+    send_integration_email,
     start_fivetran_integration_task,
     update_integration_fivetran_schema,
 )
@@ -140,7 +143,7 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
         return (
             TurboStream("create-container")
             .append.template(
-                "integrations/_create_flow.html",
+                "integrations/file_setup/_create_flow.html",
                 {
                     "instance_session_key": instance_session_key,
                     "file_input_id": "id_file",
@@ -518,29 +521,72 @@ def generate_signed_url(request: Request, session_key: str):
 def start_sync(request: Request, session_key: str):
     form_data = request.session[session_key]
 
-    integration = CSVCreateForm(data=form_data).save()
-    integration.file = form_data["file"]
-    integration.created_by = request.user
-    integration.save()
-    integration.start_sync()
+    file_sync_task_id = file_sync.delay(form_data["file"], form_data["project"])
+
+    request.session[session_key] = {
+        **request.session[session_key],
+        "file_sync_task_id": str(file_sync_task_id),
+    }
 
     return (
         TurboStream("integration-validate-flow")
         .replace.template(
-            "integrations/_create_flow.html",
+            "integrations/file_setup/_create_flow.html",
             {
                 "instance_session_key": session_key,
                 "file_input_id": "id_file",
                 "stage": "validate",
-                "external_table_sync_task_id": integration.external_table_sync_task_id,
-                "redirect_url": reverse(
-                    "project_integrations:detail",
-                    args=(integration.project.id, integration.id),
+                "file_sync_task_id": file_sync_task_id,
+                "turbo_stream_url": reverse(
+                    "integrations:upload_complete",
+                    args=(session_key,),
                 ),
             },
         )
         .response(request)
     )
+
+
+@api_view(["GET"])
+def upload_complete(request: Request, session_key: str):
+    form_data = request.session[session_key]
+    file_sync_task_result = AsyncResult(
+        request.session[session_key]["file_sync_task_id"]
+    )
+
+    if file_sync_task_result.state == "SUCCESS":
+        table_id, time_elapsed = file_sync_task_result.get()
+        table = get_object_or_404(Table, pk=table_id)
+
+        integration = CSVCreateForm(data=form_data).save()
+        integration.file = form_data["file"]
+        integration.created_by = request.user
+        integration.save()
+
+        table.integration = integration
+        table.save()
+
+        finalise_upload_task_id = send_integration_email.delay(
+            integration.id, time_elapsed
+        )
+
+        return (
+            TurboStream("integration-validate-flow")
+            .replace.template(
+                "integrations/file_setup/_create_flow.html",
+                {
+                    "instance_session_key": session_key,
+                    "file_input_id": "id_file",
+                    "stage": "finalise",
+                    "finalise_upload_task_id": finalise_upload_task_id,
+                    "redirect_url": reverse(
+                        "project_integrations:detail",
+                        args=(integration.project.id, integration.id),
+                    ),
+                },
+            )
+            .response(request)
+        )
 
 
 @api_view(["GET"])

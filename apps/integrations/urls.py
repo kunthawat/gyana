@@ -26,6 +26,11 @@ urlpatterns = [
     ),
     path("<str:session_key>/generate-signed-url", views.generate_signed_url),
     path("<str:session_key>/start-sync", views.start_sync),
+    path(
+        "<str:session_key>/upload-complete",
+        views.upload_complete,
+        name="upload_complete",
+    ),
 ]
 
 project_urlpatterns = (

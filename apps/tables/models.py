@@ -5,6 +5,7 @@ from apps.utils.models import BaseModel
 from django.conf import settings
 from django.core.cache import cache
 from django.db import models
+from google.api_core.exceptions import NotFound
 from lib.cache import get_cache_key
 from lib.clients import bigquery_client, ibis_client
 
@@ -52,7 +53,7 @@ class Table(BaseModel):
         # Tables can exist before their respective bq_table entity exists. Defaults to num_rows 0
         try:
             self.num_rows = self.bq_obj.num_rows
-        except NameError:
+        except (NameError, NotFound):
             self.num_rows = 0
 
         super().save(*args, **kwargs)

@@ -187,5 +187,5 @@ class MockFivetranClient:
         self.integration.save()
 
 
-# if settings.MOCK_FIVETRAN:
-#     FivetranClient = MockFivetranClient
+if settings.MOCK_FIVETRAN:
+    FivetranClient = MockFivetranClient

@@ -48,10 +48,10 @@ urlpatterns = [
         name="start-fivetran-integration",
     ),
     # TODO: access control?
-    path("<str:session_key>/generate-signed-url", views.generate_signed_url),
-    path("<str:session_key>/start-sync", views.start_sync),
+    path("files/<str:session_key>/generate-signed-url", views.generate_signed_url),
+    path("files/<str:session_key>/start-sync", views.start_sync),
     path(
-        "<str:session_key>/upload-complete",
+        "files/<str:session_key>/upload-complete",
         views.upload_complete,
         name="upload_complete",
     ),

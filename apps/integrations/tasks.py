@@ -11,6 +11,7 @@ from django.conf import settings
 from django.core.mail import EmailMessage, send_mail
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from google.api_core.exceptions import GoogleAPICallError
 from lib.clients import DATASET_ID
 
 from .fivetran import FivetranClient
@@ -103,8 +104,14 @@ def file_sync(self, file: str, project_id: int):
 
     progress_recorder.set_progress(*calc_progress(query_job.query_plan))
 
-    # The next yield happens when the sync has finalised, only then we finish this task
-    next(sync_generator)
+    # 4. Let the rest of the generator run, if the sync is successful this yields.
+    # Otherwise it raises
+    try:
+        next(sync_generator)
+    except (GoogleAPICallError, TimeoutError) as e:
+        # If our bigquery sync failed we also delete the table to avoid dangling entities
+        table.delete()
+        raise e
 
     sync_end_time = time.time()
 

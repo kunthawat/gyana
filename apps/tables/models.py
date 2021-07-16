@@ -15,6 +15,14 @@ class Table(BaseModel):
         WORKFLOW_NODE = "workflow_node", "Workflow node"
         PIVOT_NODE = "intermediate_node", "Intermediate node"
 
+    # This field has a specific getter function. This allows for a default table name.
+    # It can be overridden to hold a non-default table name. This happens when the Table
+    # is bound to a Fivetran created table in bigquery
+    _bq_table = models.CharField(
+        db_column="bq_table",
+        null=True,
+        max_length=settings.BIGQUERY_TABLE_NAME_LENGTH,
+    )
     bq_dataset = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -41,11 +49,17 @@ class Table(BaseModel):
         return getattr(self, self.source).get_table_name()
 
     def save(self, *args, **kwargs):
+        # Tables can exist before their respective bq_table entity exists. Defaults to num_rows 0
+        try:
+            self.num_rows = self.bq_obj.num_rows
+        except NameError:
+            self.num_rows = 0
+
         super().save(*args, **kwargs)
 
     @property
     def bq_table(self):
-        return f"table_{self.id}"
+        return self._bq_table or f"table_{self.id}"
 
     @property
     def bq_external_table_id(self):

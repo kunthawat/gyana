@@ -119,7 +119,7 @@ def get_tables_in_dataset(integration):
         for bq_table in bq_tables:
             table = Table(
                 source=Table.Source.INTEGRATION,
-                bq_table=bq_table.table_id,
+                _bq_table=bq_table.table_id,
                 bq_dataset=integration.schema,
                 project=integration.project,
                 integration=integration,

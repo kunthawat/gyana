@@ -39,7 +39,14 @@ def create_external_config(
 
 
 def create_external_table(table: Table, external_config: bigquery.ExternalConfig):
+    """
+    Creates an external table. In short, external tables are bq entities that get their data
+    from external datasources (such as google sheets and files in gcs).
 
+    https://cloud.google.com/bigquery/external-data-sources
+
+    https://cloud.google.com/bigquery/docs/tables-intro
+    """
     client = bigquery_client()
 
     bq_dataset = client.get_dataset(DATASET_ID)
@@ -54,7 +61,13 @@ def copy_table_from_external_table(
     table: Table,
     external_config: bigquery.ExternalConfig,
 ):
+    """
+    Copies data from an external table to a native bq table.
 
+    Having data in a bq table rather than an external source makes using it much faster.
+
+    https://cloud.google.com/bigquery/docs/tables-intro
+    """
     client = bigquery_client()
 
     job_config = bigquery.QueryJobConfig(
@@ -125,6 +138,9 @@ def get_tables_in_dataset(integration):
                 integration=integration,
             )
             table.save()
+
+        integration.last_synced = datetime.now()
+        integration.save()
 
 
 def get_sheets_id_from_url(url):

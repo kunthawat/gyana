@@ -169,7 +169,7 @@ class FivetranClient:
 
 
 @dataclass
-class MockFivetranClient:
+class MockFivetranClient(FivetranClient):
 
     integration: Integration
 

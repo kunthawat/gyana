@@ -228,7 +228,7 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
             return redirect
 
         if form.instance.kind == Integration.Kind.GOOGLE_SHEETS:
-            form.instance.start_sync()
+            form.instance.start_sheets_sync()
 
         return response
 
@@ -457,7 +457,8 @@ class IntegrationSync(TurboUpdateView):
         return context_data
 
     def form_valid(self, form):
-        self.object.start_sync()
+        if self.object.kind == Integration.Kind.GOOGLE_SHEETS:
+            self.object.start_sheets_sync()
         return super().form_valid(form)
 
     def get_success_url(self) -> str:

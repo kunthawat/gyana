@@ -1,4 +1,5 @@
 import time
+from datetime import datetime
 from functools import reduce
 
 import analytics
@@ -171,15 +172,32 @@ def send_integration_email(self, integration_id: int, time_elapsed: int):
 
 
 @shared_task(bind=True)
-def run_external_table_sync(self, integration_data):
-    return
-    # integration = get_object_or_404(Integration, pk=integration_id)
+def run_sheets_sync(self, integration_id):
+    integration = get_object_or_404(Integration, pk=integration_id)
+
+    if not integration.table_set.exists():
+        table = Table(
+            source=Table.Source.INTEGRATION,
+            bq_dataset=DATASET_ID,
+            project=integration.project,
+            integration=integration,
+            num_rows=0,
+        )
+        table.save()
+    else:
+        table = integration.table_set.first()
 
     # We track the time it takes to sync for our analytics
     sync_start_time = time.time()
 
     progress_recorder = ProgressRecorder(self)
-    sync_generator = sync_integration(integration)
+
+    sync_generator = sync_table(
+        table=table,
+        url=integration.url,
+        cell_range=integration.cell_range,
+        kind=Integration.Kind.GOOGLE_SHEETS,
+    )
     query_job = next(sync_generator)
 
     def calc_progress(jobs):

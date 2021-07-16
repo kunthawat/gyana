@@ -52,10 +52,10 @@ class Integration(BaseModel):
     def num_rows(self):
         return self.table_set.all().aggregate(models.Sum("num_rows"))["num_rows__sum"]
 
-    def start_sync(self):
-        from apps.integrations.tasks import run_external_table_sync
+    def start_sheets_sync(self):
+        from apps.integrations.tasks import run_sheets_sync
 
-        result = run_external_table_sync.delay(self.id)
+        result = run_sheets_sync.delay(self.id)
         self.external_table_sync_task_id = result.task_id
 
         self.save()

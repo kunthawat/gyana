@@ -15,7 +15,6 @@ class Table(BaseModel):
         WORKFLOW_NODE = "workflow_node", "Workflow node"
         PIVOT_NODE = "intermediate_node", "Intermediate node"
 
-    bq_table = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
     bq_dataset = models.CharField(max_length=settings.BIGQUERY_TABLE_NAME_LENGTH)
 
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -42,8 +41,15 @@ class Table(BaseModel):
         return getattr(self, self.source).get_table_name()
 
     def save(self, *args, **kwargs):
-        self.num_rows = self.bq_obj.num_rows
         super().save(*args, **kwargs)
+
+    @property
+    def bq_table(self):
+        return f"table_{self.id}"
+
+    @property
+    def bq_external_table_id(self):
+        return f"table_{self.id}_external"
 
     @property
     def bq_id(self):

@@ -130,6 +130,10 @@ def get_tables_in_dataset(integration):
     with transaction.atomic():
 
         for bq_table in bq_tables:
+            # Ignore fivetran managed tables
+            if bq_table.table_id == "fivetran_audit":
+                continue
+
             table = Table(
                 source=Table.Source.INTEGRATION,
                 _bq_table=bq_table.table_id,

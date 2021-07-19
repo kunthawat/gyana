@@ -7,6 +7,7 @@ import analytics
 import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
+from apps.tables.tables import TableTable
 from apps.utils.segment_analytics import (
     INTEGRATION_CREATED_EVENT,
     NEW_INTEGRATION_START_EVENT,
@@ -17,13 +18,13 @@ from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.http.response import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import DeleteView, UpdateView
+from django.views.generic.edit import DeleteView
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -36,7 +37,6 @@ from rest_framework.schemas import AutoSchema
 from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
-from .bigquery import query_integration
 from .fivetran import FivetranClient
 from .forms import (
     FORM_CLASS_MAP,
@@ -465,7 +465,18 @@ class IntegrationSync(TurboUpdateView):
         return reverse("integrations:sync", args=(self.object.id,))
 
 
-# Turbo frames
+class IntegrationTablesList(ProjectMixin, SingleTableView):
+    template_name = "tables/list.html"
+    model = Integration
+    table_class = TableTable
+    paginate_by = 20
+
+    def get_queryset(self) -> QuerySet:
+        queryset = Table.objects.filter(
+            project=self.project, integration_id=self.kwargs["pk"]
+        )
+
+        return queryset
 
 
 class IntegrationAuthorize(DetailView):

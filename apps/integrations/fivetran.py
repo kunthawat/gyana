@@ -167,6 +167,23 @@ class FivetranClient:
 
         return res
 
+    def update_table_config(self, table_name: str, enabled: bool):
+        res = requests.patch(
+            f"{settings.FIVETRAN_URL}/connectors/{self.integration.fivetran_id}/schemas/{self.integration.schema}/tables/{table_name}",
+            json={
+                "enabled": enabled,
+            },
+            headers=settings.FIVETRAN_HEADERS,
+        ).json()
+
+        # Future note: If we write this to raise an error table deletion will stop working
+        # for tables that fivetran won't allow to stop being synced. (This is on the TableDelete view)
+        if res["code"] != "Success":
+            # TODO
+            pass
+
+        return res
+
 
 @dataclass
 class MockFivetranClient(FivetranClient):

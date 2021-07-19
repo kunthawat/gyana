@@ -7,7 +7,7 @@ from django_tables2 import Table as DjangoTable
 from .models import Table
 
 
-def get_data_url(record):
+def get_integration_data_url(record):
     return f"{reverse('project_integrations:data', args=(record.project.id, record.integration.id) )}?table_id={record.id}"
 
 

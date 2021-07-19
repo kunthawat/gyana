@@ -1,3 +1,4 @@
+from apps.integrations.fivetran import FivetranClient
 from apps.projects.mixins import ProjectMixin
 from django.urls.base import reverse
 from django.views.generic.edit import DeleteView
@@ -27,6 +28,28 @@ class TableList(ProjectMixin, SingleTableView):
 class TableDelete(ProjectMixin, DeleteView):
     template_name = "integrations/fivetran_tables/list.html"
     model = Table
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Handles deletion of data in third party places. BigQuery and Fivetran atm.
+
+        If the table can't be unselected from the Fivetran schema it's important to
+        keep the data around for the connector to function. So when it errors we also
+        keep the BigQuery table, otherwise we throw it all away :).
+        """
+        table = self.get_object()
+        # Stop syncing the table on the Fivetran connector
+        client = FivetranClient(table.integration)
+        # This call will return an error when the table being deleted
+        # cannot be unselected in the Fivetran schema. This is fine and
+        # we can ignore the error.
+        res = client.update_table_config(table.bq_table, False)
+
+        if res["code"] == "Success":
+            # TODO: Delete the table in Big Query
+            pass
+
+        return super().delete(request, *args, **kwargs)
 
     def get_success_url(self) -> str:
         if self.request.GET.get("on-integration"):

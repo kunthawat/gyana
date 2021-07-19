@@ -71,7 +71,7 @@ class FivetranClient:
         connect_card_token = card.json()["token"]
 
         return redirect(
-            f"https://fivetran.com/connect-card/setup?redirect_uri={redirect_uri}&auth={connect_card_token}&hide_setup_guide=true"
+            f"https://fivetran.com/connect-card/setup?redirect_uri={redirect_uri}&auth={connect_card_token}"
         )
 
     def _is_historical_synced(self):

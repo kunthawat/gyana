@@ -24,7 +24,7 @@ class TableTable(DjangoTable):
 
     bq_table = Column(
         verbose_name="Name",
-        linkify=get_data_url,
+        linkify=get_integration_data_url,
         attrs={"a": {"data-turbo-frame": "_top"}},
     )
     created = NaturalDatetimeColumn()

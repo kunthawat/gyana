@@ -7,6 +7,7 @@ import analytics
 import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
+from apps.tables.tables import TableTable
 from apps.utils.segment_analytics import (
     INTEGRATION_CREATED_EVENT,
     NEW_INTEGRATION_START_EVENT,
@@ -465,7 +466,23 @@ class IntegrationSync(TurboUpdateView):
         return reverse("integrations:sync", args=(self.object.id,))
 
 
-# Turbo frames
+class IntegrationTablesList(ProjectMixin, SingleTableView):
+    template_name = "tables/list.html"
+    model = Integration
+    table_class = TableTable
+    paginate_by = 20
+
+    def get_context_data(self, **kwargs):
+        context_data = super().get_context_data(**kwargs)
+
+        return context_data
+
+    def get_queryset(self) -> QuerySet:
+        queryset = Table.objects.filter(
+            project=self.project, integration_id=self.kwargs["pk"]
+        )
+
+        return queryset
 
 
 class IntegrationAuthorize(DetailView):

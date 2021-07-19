@@ -118,6 +118,11 @@ project_urlpatterns = (
             name="settings",
         ),
         path(
+            "<hashid:pk>/tables",
+            login_and_project_required(views.IntegrationTablesList.as_view()),
+            name="tables",
+        ),
+        path(
             "<hashid:pk>/sheet-verify",
             login_and_project_required(views.IntegrationDetail.as_view()),
             name="sheet-verify",

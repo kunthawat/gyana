@@ -8,10 +8,8 @@ import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
 from apps.tables.tables import TableTable
-from apps.utils.segment_analytics import (
-    INTEGRATION_CREATED_EVENT,
-    NEW_INTEGRATION_START_EVENT,
-)
+from apps.utils.segment_analytics import (INTEGRATION_CREATED_EVENT,
+                                          NEW_INTEGRATION_START_EVENT)
 from apps.utils.table_data import get_table
 from celery.result import AsyncResult
 from django.conf import settings
@@ -39,22 +37,13 @@ from turbo_response.views import TurboCreateView, TurboUpdateView
 
 from .bigquery import query_integration
 from .fivetran import FivetranClient
-from .forms import (
-    FORM_CLASS_MAP,
-    CSVCreateForm,
-    FivetranForm,
-    GoogleSheetsForm,
-    IntegrationForm,
-)
+from .forms import (FORM_CLASS_MAP, CSVCreateForm, FivetranForm,
+                    GoogleSheetsForm, IntegrationForm)
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
-from .tasks import (
-    file_sync,
-    poll_fivetran_historical_sync,
-    send_integration_email,
-    start_fivetran_integration_task,
-    update_integration_fivetran_schema,
-)
+from .tasks import (file_sync, poll_fivetran_historical_sync,
+                    send_integration_email, start_fivetran_integration_task,
+                    update_integration_fivetran_schema)
 from .utils import get_service_categories, get_services
 
 # CRUDL
@@ -471,11 +460,6 @@ class IntegrationTablesList(ProjectMixin, SingleTableView):
     model = Integration
     table_class = TableTable
     paginate_by = 20
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-
-        return context_data
 
     def get_queryset(self) -> QuerySet:
         queryset = Table.objects.filter(

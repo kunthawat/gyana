@@ -8,21 +8,23 @@ import coreapi
 from apps.projects.mixins import ProjectMixin
 from apps.tables.models import Table
 from apps.tables.tables import TableTable
-from apps.utils.segment_analytics import (INTEGRATION_CREATED_EVENT,
-                                          NEW_INTEGRATION_START_EVENT)
+from apps.utils.segment_analytics import (
+    INTEGRATION_CREATED_EVENT,
+    NEW_INTEGRATION_START_EVENT,
+)
 from apps.utils.table_data import get_table
 from celery.result import AsyncResult
 from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
-from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.http.response import HttpResponseBadRequest
 from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
 from django.views.generic.base import TemplateView
-from django.views.generic.edit import DeleteView, UpdateView
+from django.views.generic.edit import DeleteView
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
 from django_tables2.views import SingleTableMixin
@@ -35,15 +37,23 @@ from rest_framework.schemas import AutoSchema
 from turbo_response.stream import TurboStream
 from turbo_response.views import TurboCreateView, TurboUpdateView
 
-from .bigquery import query_integration
 from .fivetran import FivetranClient
-from .forms import (FORM_CLASS_MAP, CSVCreateForm, FivetranForm,
-                    GoogleSheetsForm, IntegrationForm)
+from .forms import (
+    FORM_CLASS_MAP,
+    CSVCreateForm,
+    FivetranForm,
+    GoogleSheetsForm,
+    IntegrationForm,
+)
 from .models import Integration
 from .tables import IntegrationTable, StructureTable
-from .tasks import (file_sync, poll_fivetran_historical_sync,
-                    send_integration_email, start_fivetran_integration_task,
-                    update_integration_fivetran_schema)
+from .tasks import (
+    file_sync,
+    poll_fivetran_historical_sync,
+    send_integration_email,
+    start_fivetran_integration_task,
+    update_integration_fivetran_schema,
+)
 from .utils import get_service_categories, get_services
 
 # CRUDL

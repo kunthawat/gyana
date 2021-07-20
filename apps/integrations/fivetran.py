@@ -187,9 +187,6 @@ class FivetranClient:
 
 @dataclass
 class MockFivetranClient(FivetranClient):
-
-    integration: Integration
-
     def create(self):
         self.integration.fivetran_id = settings.MOCK_FIVETRAN_ID
         self.integration.schema = settings.MOCK_FIVETRAN_SCHEMA

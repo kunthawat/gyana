@@ -18,12 +18,12 @@ from django.conf import settings
 from django.contrib.postgres.search import TrigramSimilarity
 from django.db.models.query import QuerySet
 from django.http import HttpRequest
-from django.http.response import HttpResponseBadRequest
-from django.shortcuts import get_object_or_404, redirect
+from django.http.response import HttpResponseBadRequest, HttpResponseRedirect
+from django.shortcuts import get_object_or_404
 from django.urls import reverse
 from django.utils.text import slugify
 from django.views.generic import DetailView
-from django.views.generic.base import TemplateView
+from django.views.generic.base import TemplateResponseMixin, TemplateView, View
 from django.views.generic.edit import DeleteView
 from django_tables2 import SingleTableView
 from django_tables2.config import RequestConfig
@@ -130,16 +130,6 @@ class IntegrationUpload(ProjectMixin, TurboCreateView):
             "project": form.cleaned_data["project"].id,
         }
 
-        analytics.track(
-            self.request.user.id,
-            INTEGRATION_CREATED_EVENT,
-            {
-                "id": form.instance.id,
-                "type": form.instance.kind,
-                "name": form.instance.name,
-            },
-        )
-
         return (
             TurboStream("create-container")
             .append.template(
@@ -206,31 +196,50 @@ class IntegrationCreate(ProjectMixin, TurboCreateView):
 
     def form_valid(self, form):
         form.instance.created_by = self.request.user
-        response = super().form_valid(form)
 
-        analytics.track(
-            self.request.user.id,
-            INTEGRATION_CREATED_EVENT,
-            {
-                "id": form.instance.id,
-                "type": form.instance.kind,
-                "name": form.instance.name,
-            },
-        )
+        if form.is_valid():
+            instance_session_key = uuid.uuid4().hex
 
-        if form.instance.kind == Integration.Kind.FIVETRAN:
-            client = FivetranClient(form.instance)
-            client.create()
-            internal_redirect = reverse(
-                "integrations:authorize-fivetran-redirect", args=(form.instance.id,)
+            analytics.track(
+                self.request.user.id,
+                INTEGRATION_CREATED_EVENT,
+                {
+                    "id": form.instance.id,
+                    "type": form.instance.kind,
+                    "name": form.instance.name,
+                },
             )
-            redirect = client.authorize(f"{settings.EXTERNAL_URL}{internal_redirect}")
-            return redirect
 
-        if form.instance.kind == Integration.Kind.GOOGLE_SHEETS:
-            form.instance.start_sheets_sync()
+            if form.instance.kind == Integration.Kind.FIVETRAN:
+                client = FivetranClient()
+                fivetran_config = client.create(
+                    form.cleaned_data["service"], form.instance.project.team.id
+                )
 
-        return response
+                self.request.session[instance_session_key] = {
+                    **form.cleaned_data,
+                    **fivetran_config,
+                    "project": form.cleaned_data["project"].id,
+                    "team_id": form.instance.project.team.id,
+                    "fivetran_authorized": True,
+                }
+
+                internal_redirect = reverse(
+                    "project_integrations:setup",
+                    args=(form.instance.project.id, instance_session_key),
+                )
+
+                return client.authorize(
+                    fivetran_config["fivetran_id"],
+                    f"{settings.EXTERNAL_URL}{internal_redirect}",
+                )
+
+            if form.instance.kind == Integration.Kind.GOOGLE_SHEETS:
+                response = super().form_valid(form)
+                form.instance.start_sheets_sync()
+                return response
+
+        return HttpResponseBadRequest()
 
     def get_success_url(self) -> str:
         return reverse(
@@ -325,17 +334,16 @@ class IntegrationSchema(ProjectMixin, DetailView):
         context_data = super().get_context_data(**kwargs)
 
         context_data["integration"] = self.get_object()
-        context_data["schemas"] = FivetranClient(
-            context_data["integration"]
-        ).get_schema()
+        context_data["schemas"] = FivetranClient().get_schema(self.object.fivetran_id)
 
         return context_data
 
     def post(self, request, *args, **kwargs):
         integration = self.get_object()
-        client = FivetranClient(integration)
+        client = FivetranClient()
         client.update_schema(
-            [key for key in request.POST.keys() if key != "csrfmiddlewaretoken"]
+            integration.fivetran_id,
+            [key for key in request.POST.keys() if key != "csrfmiddlewaretoken"],
         )
 
         return TurboStream(f"{integration.id}-schema-update-message").replace.response(
@@ -344,25 +352,25 @@ class IntegrationSchema(ProjectMixin, DetailView):
         )
 
 
-class IntegrationSetup(ProjectMixin, DetailView):
+class ConnectorSetup(ProjectMixin, TemplateResponseMixin, View):
     template_name = "integrations/setup.html"
-    model = Integration
 
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["integration"] = self.get_object()
-        context_data["service"] = get_services()[self.get_object().service]
-        context_data["schemas"] = FivetranClient(
-            context_data["integration"]
-        ).get_schema()
+    def get_context_data(self, project_id, session_key, **kwargs):
+        integration_data = self.request.session[session_key]
+        return {
+            "service": integration_data["service"],
+            "schemas": FivetranClient().get_schema(integration_data["fivetran_id"]),
+            "project": self.project,
+        }
 
-        return context_data
+    def get(self, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
-    def post(self, request, *args, **kwargs):
-        integration = self.get_object()
-
+    def post(self, request, session_key, **kwargs):
+        integration_data = self.request.session[session_key]
         task_id = update_integration_fivetran_schema.delay(
-            self.kwargs.get(self.pk_url_kwarg),
+            integration_data["fivetran_id"],
             [key for key in request.POST.keys() if key != "csrfmiddlewaretoken"],
         )
 
@@ -374,7 +382,7 @@ class IntegrationSetup(ProjectMixin, DetailView):
                     "table_select_task_id": task_id,
                     "turbo_url": reverse(
                         "integrations:start-fivetran-integration",
-                        args=(integration.id,),
+                        args=(session_key,),
                     ),
                 },
             )
@@ -472,11 +480,9 @@ class IntegrationTablesList(ProjectMixin, SingleTableView):
     paginate_by = 20
 
     def get_queryset(self) -> QuerySet:
-        queryset = Table.objects.filter(
+        return Table.objects.filter(
             project=self.project, integration_id=self.kwargs["pk"]
         )
-
-        return queryset
 
 
 class IntegrationAuthorize(DetailView):
@@ -486,10 +492,9 @@ class IntegrationAuthorize(DetailView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        integration = context["integration"]
 
-        if integration.fivetran_id is None:
-            FivetranClient(integration).create()
+        if self.object.fivetran_id is None:
+            FivetranClient().create(self.object.service, self.object.projec.team.id)
 
         return context
 
@@ -603,10 +608,10 @@ def upload_complete(request: Request, session_key: str):
 
 
 @api_view(["GET"])
-def start_fivetran_integration(request: HttpRequest, pk: int):
-    integration = get_object_or_404(Integration, pk=pk)
+def start_fivetran_integration(request: HttpRequest, session_key: str):
+    integration_data = request.session[session_key]
 
-    task_id = start_fivetran_integration_task.delay(pk)
+    task_id = start_fivetran_integration_task.delay(integration_data["fivetran_id"])
 
     return (
         TurboStream("integration-setup-container")
@@ -615,8 +620,8 @@ def start_fivetran_integration(request: HttpRequest, pk: int):
             {
                 "connector_start_task_id": task_id,
                 "redirect_url": reverse(
-                    "project_integrations:detail",
-                    args=(integration.project.id, integration.id),
+                    "integrations:finalise-fivetran-integration",
+                    args=(session_key,),
                 ),
             },
         )
@@ -624,29 +629,32 @@ def start_fivetran_integration(request: HttpRequest, pk: int):
     )
 
 
-def authorize_fivetran(request: HttpRequest, pk: int):
-
-    integration = get_object_or_404(Integration, pk=pk)
-    uri = reverse("integrations:authorize-fivetran-redirect", args=(pk,))
-    redirect_uri = (
-        f"{settings.EXTERNAL_URL}{uri}?original_uri={request.GET.get('original_uri')}"
-    )
-
-    return FivetranClient(integration).authorize(redirect_uri)
-
-
-def authorize_fivetran_redirect(request: HttpRequest, pk: int):
-
-    integration = get_object_or_404(Integration, pk=pk)
-    integration.fivetran_authorized = True
-
-    result = poll_fivetran_historical_sync.delay(integration.id)
-    integration.fivetran_poll_historical_sync_task_id = result.task_id
-
+@api_view(["GET"])
+def finalise_fivetran_integration(request: HttpRequest, session_key: str):
+    integration_data = request.session[session_key]
+    # Create integration
+    integration = FivetranForm(data=integration_data).save()
+    integration.schema = integration_data["schema"]
+    integration.fivetran_id = integration_data["fivetran_id"]
+    integration.created_by = request.user
+    # Start polling
+    task_id = poll_fivetran_historical_sync.delay(integration.id)
+    integration.fivetran_poll_historical_sync_task_id = str(task_id)
     integration.save()
 
-    return redirect(
+    analytics.track(
+        request.user.id,
+        INTEGRATION_CREATED_EVENT,
+        {
+            "id": integration.id,
+            "type": integration.kind,
+            "name": integration.name,
+        },
+    )
+
+    return HttpResponseRedirect(
         reverse(
-            "project_integrations:setup", args=(integration.project.id, integration.id)
+            "project_integrations:detail",
+            args=(integration.project.id, integration.id),
         )
     )

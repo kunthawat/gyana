@@ -3,7 +3,7 @@ from apps.projects.access import login_and_project_required
 from apps.teams.roles import user_can_access_team
 from django.shortcuts import get_object_or_404
 from django.urls import path
-from lib.decorators import login_and_permission_to_access
+from lib.decorators import login_and_permission_to_access, login_and_teamid_in_session
 
 from . import views
 
@@ -33,19 +33,14 @@ urlpatterns = [
         name="authorize",
     ),
     path(
-        "<hashid:pk>/authorize-fivetran",
-        login_and_integration_required(views.authorize_fivetran),
-        name="authorize-fivetran",
-    ),
-    path(
-        "<hashid:pk>/authorize-fivetran-redirect",
-        login_and_integration_required(views.authorize_fivetran_redirect),
-        name="authorize-fivetran-redirect",
-    ),
-    path(
-        "<hashid:pk>/start-fivetran-integration",
-        login_and_integration_required(views.start_fivetran_integration),
+        "<str:session_key>/start-fivetran-integration",
+        login_and_teamid_in_session(views.start_fivetran_integration),
         name="start-fivetran-integration",
+    ),
+    path(
+        "<str:session_key>/finalise-fivetran-integration",
+        login_and_teamid_in_session(views.finalise_fivetran_integration),
+        name="finalise-fivetran-integration",
     ),
     # TODO: access control?
     path("file/<str:session_key>/generate-signed-url", views.generate_signed_url),
@@ -83,8 +78,8 @@ project_urlpatterns = (
             name="detail",
         ),
         path(
-            "<hashid:pk>/setup",
-            login_and_project_required(views.IntegrationSetup.as_view()),
+            "<str:session_key>/setup",
+            login_and_project_required(views.ConnectorSetup.as_view()),
             name="setup",
         ),
         path(

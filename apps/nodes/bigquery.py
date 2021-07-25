@@ -2,14 +2,13 @@ import inspect
 import logging
 
 import ibis
-from apps.filters.bigquery import create_filter_query
+from apps.columns.bigquery import compile_formula, compile_function
+from apps.filters.bigquery import get_query_from_filters
+from apps.tables.bigquery import get_query_from_table
 from apps.tables.models import Table
+from apps.utils.clients import DATAFLOW_ID, bigquery_client, ibis_client
 from django.utils import timezone
 from ibis.expr.datatypes import String
-from lib.bigquery import query_table
-from lib.clients import DATAFLOW_ID, bigquery_client, ibis_client
-from lib.formulas import to_ibis
-from lib.operations import compile_function
 
 JOINS = {
     "inner": "inner_join",
@@ -115,11 +114,7 @@ def use_intermediate_table(func):
 
 
 def get_input_query(node):
-    return (
-        query_table(node.input_table.bq_table, node.input_table.bq_dataset)
-        if node.input_table
-        else None
-    )
+    return get_query_from_table(node.input_table) if node.input_table else None
 
 
 def get_output_query(node, parent):
@@ -194,7 +189,7 @@ def get_limit_query(node, query):
 
 
 def get_filter_query(node, query):
-    return create_filter_query(query, node.filters.all())
+    return get_query_from_filters(query, node.filters.all())
 
 
 def get_edit_query(node, query):
@@ -222,7 +217,7 @@ def get_rename_query(node, query):
 
 def get_formula_query(node, query):
     new_columns = {
-        formula.label: to_ibis(query, formula.formula)
+        formula.label: compile_formula(query, formula.formula)
         for formula in node.formula_columns.iterator()
     }
 

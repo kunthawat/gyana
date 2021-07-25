@@ -1,7 +1,9 @@
 import ibis.expr.datatypes as dt
+from apps.nodes.bigquery import get_query_from_node
 from apps.nodes.models import Node
 from apps.widgets.models import Widget
 from lib.clients import get_dataframe
+from apps.tables.bigquery import get_query_from_table
 from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
@@ -26,7 +28,11 @@ def autocomplete_options(request):
         if request.GET["parentType"] == "widget"
         else get_object_or_404(Node, pk=request.GET["parentId"])
     )
-    query = parent.get_query()
+    query = (
+        get_query_from_table(parent)
+        if request.GET["parentType"] == "widget"
+        else get_query_from_node(parent)
+    )
 
     options = (
         get_dataframe(

@@ -1,4 +1,6 @@
-NodeConfig = {
+import functools
+
+NODE_CONFIG = {
     "input": {
         "displayName": "Get data",
         "icon": "fa-file",
@@ -21,7 +23,6 @@ NodeConfig = {
         "displayName": "Join",
         "icon": "fa-link",
         "description": "Combine rows from two tables based on a common column",
-        "maxParents": 2,
         "section": "Table manipulations",
     },
     "aggregation": {
@@ -34,7 +35,6 @@ NodeConfig = {
         "displayName": "Union",
         "icon": "fa-union",
         "description": "Combine two or more tables on top of each other",
-        "maxParents": -1,
         "section": "Table manipulations",
     },
     "sort": {
@@ -78,7 +78,6 @@ NodeConfig = {
         "icon": "fa-text",
         "description": "Annotate your workflow",
         "section": "Annotation",
-        "maxParents": 0,
     },
     "formula": {
         "displayName": "Formula",
@@ -109,7 +108,6 @@ NodeConfig = {
         "icon": "fa-intersection",
         "description": "Find the common rows between tables",
         "section": "Table manipulations",
-        "maxParents": -1,
     },
     "window": {
         "displayName": "Window",
@@ -118,3 +116,18 @@ NodeConfig = {
         "section": "Column manipulations",
     },
 }
+
+
+def _add_max_parents(name):
+    from apps.nodes.nodes import NODE_FROM_CONFIG
+    from lib.dag import get_arity_from_node_func
+
+    func = NODE_FROM_CONFIG.get(name, None)
+    # 0, False for text node
+    min_arity, variable_args = get_arity_from_node_func(func) if func else (0, False)
+    return -1 if variable_args else min_arity
+
+
+@functools.cache
+def get_node_config_with_arity():
+    return {k: {**v, "maxParents": _add_max_parents(k)} for k, v in NODE_CONFIG.items()}

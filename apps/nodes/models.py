@@ -1,8 +1,6 @@
-import logging
 from functools import cached_property
 
-from apps.nodes.config import NodeConfig
-from apps.nodes.nodes import NODE_FROM_CONFIG
+from apps.nodes.config import NODE_CONFIG
 from apps.tables.models import Table
 from apps.utils.models import BaseModel
 from apps.workflows.models import Workflow
@@ -218,21 +216,10 @@ class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
 
         return super().save(*args, **kwargs)
 
-    def get_query(self):
-        func = NODE_FROM_CONFIG[self.kind]
-        try:
-            query = func(self)
-            if self.error:
-                self.error = None
-                self.save()
-            return query
-        except Exception as err:
-            self.error = str(err)
-            self.save()
-            logging.error(err, exc_info=err)
-
     @cached_property
     def schema(self):
+
+        from lib.dag import get_query_from_node
 
         # in theory, we only need to fetch all parent nodes recursively
         # in practice, this is faster and less error prone
@@ -246,18 +233,27 @@ class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
         )
 
         if (res := cache.get(cache_key)) is None:
-            res = self.get_query().schema()
+            res = get_query_from_node(self).schema()
             cache.set(cache_key, res, 30)
 
         return res
 
     @property
     def display_name(self):
-        return NodeConfig[self.kind]["displayName"]
+        return NODE_CONFIG[self.kind]["displayName"]
 
     @property
     def icon(self):
-        return NodeConfig[self.kind]["icon"]
+        return NODE_CONFIG[self.kind]["icon"]
+
+    @property
+    def has_enough_parents(self):
+        from apps.nodes.nodes import NODE_FROM_CONFIG
+        from lib.dag import get_arity_from_node_func
+
+        func = NODE_FROM_CONFIG[self.kind]
+        min_arity, _ = get_arity_from_node_func(func)
+        return self.parents.count() >= min_arity
 
     def get_table_name(self):
         return f"Workflow:{self.workflow.name}:{self.output_name}"

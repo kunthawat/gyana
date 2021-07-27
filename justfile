@@ -50,3 +50,17 @@ format:
 
 startapp:
     pushd apps && cookiecutter cookiecutter-app && popd
+
+cypress-setup:
+    ./manage.py migrate --settings gyana.settings.cypress
+    ./manage.py flush --settings gyana.settings.cypress --noinput
+    ./manage.py loaddata --settings gyana.settings.cypress cypress/fixtures/fixtures.json
+
+cypress-server:
+    ./manage.py runserver --settings gyana.settings.cypress
+
+cypress-celery:
+    watchexec -w apps -e py -r "DJANGO_SETTINGS_MODULE=gyana.settings.cypress celery -A gyana worker -l info"
+
+cypress-fixtures:
+    ./manage.py dumpdata -e auth -e contenttypes -e sessions -e sites --settings gyana.settings.cypress > cypress/fixtures/fixtures.json

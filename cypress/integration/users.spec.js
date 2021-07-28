@@ -1,14 +1,21 @@
 /// <reference types="cypress" />
 
-describe('sign up', () => {
-  it('signs in headlessly', () => {
-    cy.login()
-
+describe('users', () => {
+  it('signs in to app', () => {
     cy.visit('/')
+
+    cy.get('input[type=email]').type('test@gyana.com')
+    cy.get('input[type=password]').type('seewhatmatters')
+    cy.get('button[type=submit]').click()
+
+    cy.url().should('contain', '/teams/1')
   })
 
   it('signs up to app', () => {
-    cy.visit('/accounts/signup')
+    cy.visit('/')
+
+    cy.contains('create one here').click()
+    cy.url().should('contain', '/accounts/signup')
 
     cy.get('input[type=email]').type('new@gyana.com')
     cy.get('input[type=password]').type('seewhatmatters')
@@ -20,17 +27,15 @@ describe('sign up', () => {
     cy.url().should('contain', '/teams/2')
   })
 
-  it('does this', () => {
+  it('resets password', () => {
     cy.visit('/')
 
     cy.contains('Forgot password?').click()
     cy.url().should('contain', '/accounts/password/reset')
-    cy.contains('Password Reset')
 
     cy.get('input[type=email]').type('test@gyana.com')
     cy.get('button[type=submit]').click()
     cy.url().should('contain', '/accounts/password/reset/done')
-    cy.contains('Password Reset')
 
     cy.outbox()
       .then((outbox) => outbox.count)
@@ -42,13 +47,11 @@ describe('sign up', () => {
       cy.visit(url)
     })
     cy.url().should('contain', 'accounts/password/reset/key/1-set-password')
-    cy.contains('Change Password')
 
     cy.get('input[type=password]').first().type('senseknowdecide')
     cy.get('input[type=password]').last().type('senseknowdecide')
     cy.get('input[type=submit]').click()
     cy.url().should('contain', 'accounts/password/reset/key/done')
-    cy.contains('Your password has been changed.')
 
     cy.visit('/')
 
@@ -57,5 +60,22 @@ describe('sign up', () => {
     cy.get('button[type=submit]').click()
 
     cy.url().should('contain', '/teams/1')
+  })
+
+  it('signs out', () => {
+    cy.login()
+
+    cy.visit('/')
+
+    cy.get('#sidebar-profile').click()
+    cy.url().should('contain', '/users/profile')
+
+    cy.contains('Sign out').click()
+
+    cy.url().should('contain', '/accounts/login')
+
+    cy.visit('/users/profile')
+
+    cy.url().should('contain', '/accounts/login')
   })
 })

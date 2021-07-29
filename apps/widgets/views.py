@@ -4,8 +4,7 @@ import analytics
 from apps.dashboards.mixins import DashboardMixin
 from apps.tables.models import Table
 from apps.utils.formset_update_view import FormsetUpdateView
-from apps.utils.segment_analytics import (WIDGET_CONFIGURED_EVENT,
-                                          WIDGET_CREATED_EVENT)
+from apps.utils.segment_analytics import WIDGET_CONFIGURED_EVENT, WIDGET_CREATED_EVENT
 from apps.widgets.serializers import WidgetSerializer
 from apps.widgets.visuals import chart_to_output, table_to_output
 from django.db import transaction
@@ -20,11 +19,9 @@ from django_tables2.views import SingleTableMixin
 from rest_framework import mixins, viewsets
 from turbo_response import TurboStream
 from turbo_response.response import TurboStreamResponse
-from turbo_response.views import (TurboCreateView, TurboStreamDeleteView,
-                                  TurboUpdateView)
+from turbo_response.views import TurboCreateView, TurboStreamDeleteView, TurboUpdateView
 
-from .forms import (FilterFormset, ValueFormset, WidgetConfigForm,
-                    WidgetDuplicateForm)
+from .forms import FORMS, FilterFormset, ValueFormset, WidgetDuplicateForm
 from .models import WIDGET_CHOICES_ARRAY, Widget
 
 
@@ -124,11 +121,13 @@ class WidgetDetail(DashboardMixin, TurboUpdateView):
 class WidgetUpdate(DashboardMixin, FormsetUpdateView):
     template_name = "widgets/update.html"
     model = Widget
-    form_class = WidgetConfigForm
 
     @property
     def formsets(self):
         return [FilterFormset, ValueFormset]
+
+    def get_form_class(self):
+        return FORMS[self.request.POST.get("kind") or self.object.kind]
 
     def get_formset_kwargs(self, formset):
         table = self.request.POST.get("table") or getattr(self.object, "table")

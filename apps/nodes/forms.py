@@ -11,6 +11,11 @@ from .widgets import InputNode, MultiSelect
 
 
 class NodeForm(LiveUpdateForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field in getattr(self.Meta, "required", []):
+            self.fields[field].required = True
+
     @cached_property
     def columns(self):
         """Returns the schema for the first parent."""
@@ -44,6 +49,7 @@ class OutputNodeForm(NodeForm):
         model = Node
         fields = ["output_name"]
         labels = {"output_name": "Output name"}
+        required = ["output_name"]
 
 
 class SelectNodeForm(NodeForm):
@@ -82,6 +88,7 @@ class JoinNodeForm(NodeForm):
         model = Node
         fields = ["join_how", "join_left", "join_right"]
         labels = {"join_how": "How", "join_left": "Left", "join_right": "Right"}
+        required = ["join_how", "join_left", "join_right"]
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -150,6 +157,7 @@ class UnpivotNodeForm(LiveUpdateForm):
     class Meta:
         model = Node
         fields = ["unpivot_value", "unpivot_column"]
+        required = ["unpivot_value", "unpivot_column"]
 
 
 KIND_TO_FORM = {

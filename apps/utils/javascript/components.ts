@@ -1,7 +1,7 @@
-import AutocompleteMultiSelect from './AutocompleteMultiSelect'
-import VisualSelect from './VisualSelect'
-import GyWidget from './GyWidget'
-import SourceSelect from './SourceSelect'
+import AutocompleteMultiSelect from 'apps/filters/javascript/components/AutocompleteMultiSelect'
+import VisualSelect from 'apps/widgets/javascript/components/VisualSelect'
+import GyWidget from 'apps/widgets/javascript/components/GyWidget'
+import SourceSelect from 'apps/widgets/javascript/components/SourceSelect'
 
 // if script is read multiple times don't register component again
 customElements.get('select-source') || customElements.define('select-source', SourceSelect)

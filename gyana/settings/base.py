@@ -81,7 +81,7 @@ PROJECT_APPS = [
     "apps.columns",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PROJECT_APPS
+INSTALLED_APPS = DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
     "honeybadger.contrib.DjangoHoneybadgerMiddleware",
@@ -119,7 +119,6 @@ ROOT_URLCONF = "gyana.urls"
 TEMPLATES = [
     {
         "BACKEND": "django.template.backends.django.DjangoTemplates",
-        "DIRS": [BASE_DIR / "templates"],
         "APP_DIRS": True,
         "OPTIONS": {
             "context_processors": [

@@ -1,3 +1,5 @@
+import datetime
+
 import googleapiclient
 from apps.base.clients import sheets_client
 from apps.integrations.bigquery import get_sheets_id_from_url
@@ -6,13 +8,23 @@ from django import forms
 from django.core.exceptions import ValidationError
 from django.forms.widgets import HiddenInput
 
+from .models import Sheet
+
 
 class GoogleSheetsForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["url", "name", "cell_range", "kind", "project", "enable_sync_emails"]
+        fields = [
+            "name",
+            "kind",
+            "project",
+            "enable_sync_emails",
+        ]
         widgets = {"kind": HiddenInput(), "project": HiddenInput()}
         help_texts = {}
+
+    url = forms.URLField(max_length=200)
+    cell_range = forms.CharField(required=False, max_length=64, empty_value=None)
 
     def clean_url(self):
         url = self.cleaned_data["url"]
@@ -51,3 +63,17 @@ class GoogleSheetsForm(forms.ModelForm):
             raise ValidationError(e._get_reason().strip())
 
         return cell_range
+
+    def save(self, commit=True):
+        instance = super().save(commit)
+
+        sheet = Sheet(
+            integration=instance,
+            url=self.cleaned_data["url"],
+            cell_range=self.cleaned_data["cell_range"],
+            # django setting `created = NULL`?
+            created=datetime.datetime.now()
+        )
+        sheet.save()
+
+        return instance

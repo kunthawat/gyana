@@ -1,9 +1,9 @@
 import re
 from datetime import datetime
 
+from apps.base.clients import DATASET_ID, bigquery_client, ibis_client
 from apps.integrations.models import Integration
 from apps.tables.models import Table
-from apps.base.clients import DATASET_ID, bigquery_client, ibis_client
 from django.conf import settings
 from django.db import transaction
 from google.cloud import bigquery
@@ -21,14 +21,14 @@ def create_external_config(
 
     For a CSV integration `file` is required
     """
-    if kind == Integration.Kind.GOOGLE_SHEETS:
+    if kind == Integration.Kind.SHEET:
         # https://cloud.google.com/bigquery/external-data-drive#python
         external_config = bigquery.ExternalConfig("GOOGLE_SHEETS")
         external_config.source_uris = [url]
         # Only include cell range when it exists
         if cell_range:
             external_config.options.range = cell_range
-    elif kind == Integration.Kind.CSV:
+    elif kind == Integration.Kind.UPLOAD:
         # See here for more infomation https://googleapis.dev/python/bigquery/1.24.0/generated/google.cloud.bigquery.external_config.CSVOptions.html
         external_config = bigquery.ExternalConfig("CSV")
         external_config.source_uris = [f"gs://{settings.GS_BUCKET_NAME}/{file}"]
@@ -119,7 +119,7 @@ def sync_table(
 def get_tables_in_dataset(integration):
 
     client = bigquery_client()
-    bq_tables = list(client.list_tables(integration.schema))
+    bq_tables = list(client.list_tables(integration.connector.schema))
 
     with transaction.atomic():
 
@@ -131,13 +131,13 @@ def get_tables_in_dataset(integration):
             table = Table(
                 source=Table.Source.INTEGRATION,
                 _bq_table=bq_table.table_id,
-                bq_dataset=integration.schema,
+                bq_dataset=integration.connector.schema,
                 project=integration.project,
                 integration=integration,
             )
             table.save()
 
-        integration.last_synced = datetime.now()
+        integration.connector.last_synced = datetime.now()
         integration.save()
 
 
@@ -149,6 +149,6 @@ def get_sheets_id_from_url(url):
 def get_query_from_integration(integration):
 
     conn = ibis_client()
-    if integration.kind == Integration.Kind.FIVETRAN:
-        return conn.table(integration.table_id, database=integration.schema)
+    if integration.kind == Integration.Kind.CONNECTOR:
+        return conn.table(integration.table_id, database=integration.connector.schema)
     return conn.table(integration.table_id)

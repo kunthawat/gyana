@@ -39,9 +39,9 @@ def run_sheets_sync(self, integration_id):
 
     sync_generator = sync_table(
         table=table,
-        url=integration.url,
-        cell_range=integration.cell_range,
-        kind=Integration.Kind.GOOGLE_SHEETS,
+        url=integration.sheet.url,
+        cell_range=integration.sheet.cell_range,
+        kind=Integration.Kind.SHEET,
     )
     query_job = next(sync_generator)
 
@@ -68,7 +68,7 @@ def run_sheets_sync(self, integration_id):
 
     sync_end_time = time.time()
 
-    integration.last_synced = datetime.now()
+    integration.sheet.last_synced = datetime.now()
     integration.save()
 
     url = reverse(

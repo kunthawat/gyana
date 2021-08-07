@@ -11,9 +11,9 @@ from django.urls import reverse
 
 class Integration(BaseModel):
     class Kind(models.TextChoices):
-        GOOGLE_SHEETS = "google_sheets", "Google Sheets"
-        CSV = "csv", "CSV"
-        FIVETRAN = "fivetran", "Fivetran"
+        SHEET = "sheet", "Google Sheets"
+        UPLOAD = "upload", "Upload"
+        CONNECTOR = "connector", "Connector"
 
     name = models.CharField(max_length=255)
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
@@ -21,36 +21,6 @@ class Integration(BaseModel):
 
     # Sync toggle
     enable_sync_emails = models.BooleanField(default=True)
-
-    # either a URL or file upload
-    url = models.URLField(null=True)
-    file = models.TextField(null=True)
-
-    # Sheets config
-    cell_range = models.CharField(max_length=64, null=True, blank=True)
-
-    # bigquery external tables
-    external_table_sync_task_id = models.UUIDField(null=True)
-    has_initial_sync = models.BooleanField(default=False)
-    last_synced = models.DateTimeField(null=True)
-
-    # fivetran
-    service = models.TextField(
-        max_length=255,
-        null=True,
-        help_text="Name of the Fivetran service, uses keys from services.yaml as value",
-    )
-    fivetran_id = models.TextField(
-        null=True,
-        help_text="ID of the connector in Fivetran, crucial to link this Integration to the Fivetran connector",
-    )
-    schema = models.TextField(
-        null=True,
-        help_text="The schema name under which Fivetran saves the data in BigQuery. It also is the name of the schema maintained by Fivetran in their systems.",
-    )
-    fivetran_authorized = models.BooleanField(default=False)
-    fivetran_poll_historical_sync_task_id = models.UUIDField(null=True)
-    historical_sync_complete = models.BooleanField(default=False)
 
     created_by = models.ForeignKey(CustomUser, null=True, on_delete=models.SET_NULL)
 
@@ -65,18 +35,22 @@ class Integration(BaseModel):
         from apps.sheets.tasks import run_sheets_sync
 
         result = run_sheets_sync.delay(self.id)
-        self.external_table_sync_task_id = result.task_id
+        self.sheet.external_table_sync_task_id = result.task_id
 
-        self.save()
+        self.sheet.save()
+
+    @property
+    def last_synced(self):
+        return getattr(self, self.kind).last_synced
 
     @property
     def is_syncing(self):
-        if self.external_table_sync_task_id is None:
+        if self.sheet.external_table_sync_task_id is None:
             return False
 
         # TODO: Possibly fails for out of date task ids
         # https://stackoverflow.com/a/38267978/15425660
-        result = celery.result.AsyncResult(str(self.external_table_sync_task_id))
+        result = celery.result.AsyncResult(str(self.sheet.external_table_sync_task_id))
         return result.status == "PENDING"
 
     @property
@@ -105,8 +79,8 @@ class Integration(BaseModel):
     def display_kind(self):
         return (
             self.get_kind_display()
-            if self.kind != self.Kind.FIVETRAN
-            else get_services()[self.service]["name"]
+            if self.kind != self.Kind.CONNECTOR
+            else get_services()[self.connector.service]["name"]
         )
 
     def get_table_name(self):
@@ -116,6 +90,6 @@ class Integration(BaseModel):
         return reverse("project_integrations:detail", args=(self.project.id, self.id))
 
     def icon(self):
-        if self.kind == Integration.Kind.FIVETRAN:
-            return f"images/integrations/fivetran/{self.service}.svg"
+        if self.kind == Integration.Kind.CONNECTOR:
+            return f"images/integrations/fivetran/{self.connector.service}.svg"
         return f"images/integrations/{self.kind}.svg"

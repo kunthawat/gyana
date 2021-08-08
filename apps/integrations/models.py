@@ -19,9 +19,6 @@ class Integration(BaseModel):
     project = models.ForeignKey(Project, on_delete=models.CASCADE)
     kind = models.CharField(max_length=32, choices=Kind.choices)
 
-    # Sync toggle
-    enable_sync_emails = models.BooleanField(default=True)
-
     created_by = models.ForeignKey(CustomUser, null=True, on_delete=models.SET_NULL)
 
     def __str__(self):
@@ -31,27 +28,9 @@ class Integration(BaseModel):
     def num_rows(self):
         return self.table_set.all().aggregate(models.Sum("num_rows"))["num_rows__sum"]
 
-    def start_sheets_sync(self):
-        from apps.sheets.tasks import run_sheets_sync
-
-        result = run_sheets_sync.delay(self.id)
-        self.sheet.external_table_sync_task_id = result.task_id
-
-        self.sheet.save()
-
     @property
     def last_synced(self):
         return getattr(self, self.kind).last_synced
-
-    @property
-    def is_syncing(self):
-        if self.sheet.external_table_sync_task_id is None:
-            return False
-
-        # TODO: Possibly fails for out of date task ids
-        # https://stackoverflow.com/a/38267978/15425660
-        result = celery.result.AsyncResult(str(self.sheet.external_table_sync_task_id))
-        return result.status == "PENDING"
 
     @property
     def used_in_workflows(self):

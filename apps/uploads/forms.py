@@ -10,7 +10,7 @@ from .models import Upload
 class CSVForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = ["name", "kind", "project", "enable_sync_emails"]
+        fields = ["name", "kind", "project"]
         widgets = {
             "kind": HiddenInput(),
             "project": HiddenInput(),
@@ -20,12 +20,7 @@ class CSVForm(forms.ModelForm):
 class CSVCreateForm(forms.ModelForm):
     class Meta:
         model = Integration
-        fields = [
-            "name",
-            "kind",
-            "project",
-            "enable_sync_emails",
-        ]
+        fields = ["name", "kind", "project"]
         widgets = {
             "kind": HiddenInput(),
             "project": HiddenInput(),
@@ -52,9 +47,7 @@ class CSVCreateForm(forms.ModelForm):
         return name.split(".").pop(0)
 
     def save(self, commit=True):
-        instance = super().save(commit)
+        # saved automatically by parent
+        Upload(integration=self.instance)
 
-        upload = Upload(integration=instance)
-        upload.save()
-
-        return instance
+        return super().save(commit)

@@ -1,5 +1,5 @@
 from apps.base.models import BaseModel
-from apps.connectors.utils import get_services
+from apps.connectors.config import get_services
 from apps.dashboards.models import Dashboard
 from apps.projects.models import Project
 from apps.users.models import CustomUser
@@ -10,11 +10,12 @@ from django.urls import reverse
 
 class Integration(BaseModel):
     class Kind(models.TextChoices):
-        SHEET = "sheet", "Google Sheets"
+        SHEET = "sheet", "Sheet"
         UPLOAD = "upload", "Upload"
         CONNECTOR = "connector", "Connector"
 
     class State(models.TextChoices):
+        UPDATE = "update", "Update"
         LOAD = "load", "Load"
         ERROR = "error", "Error"
         DONE = "done", "Done"
@@ -25,7 +26,7 @@ class Integration(BaseModel):
     # user editable name, auto-populated in the initial sync
     name = models.CharField(max_length=255)
 
-    state = models.CharField(max_length=16, choices=State.choices, default=State.LOAD)
+    state = models.CharField(max_length=16, choices=State.choices, default=State.UPDATE)
     # only "ready" are available for analytics and count towards user rows
     ready = models.BooleanField(default=False)
     created_ready = models.DateTimeField(null=True)

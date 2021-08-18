@@ -24,6 +24,7 @@ DEBUG = os.environ.get("DEBUG", False) == "True"
 ALLOWED_HOSTS = [
     ".gyana.com",
     "gyana-mvp.herokuapp.com",
+    "gyana-release.herokuapp.com",
     "gyana-beta.herokuapp.com",
 ]
 

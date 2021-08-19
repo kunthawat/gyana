@@ -18,19 +18,9 @@ login_and_sheet_required = login_and_permission_to_access(sheet_of_team)
 app_name = "sheets"
 urlpatterns = [
     path(
-        "<hashid:pk>/progress",
-        login_and_sheet_required(frames.SheetProgress.as_view()),
-        name="progress",
-    ),
-    path(
         "<hashid:pk>/status",
         login_and_sheet_required(frames.SheetStatus.as_view()),
         name="status",
-    ),
-    path(
-        "<hashid:pk>/update",
-        login_and_sheet_required(frames.SheetUpdate.as_view()),
-        name="update",
     ),
 ]
 

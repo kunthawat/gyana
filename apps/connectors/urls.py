@@ -19,16 +19,6 @@ login_and_connector_required = login_and_permission_to_access(connector_of_team)
 app_name = "connectors"
 urlpatterns = [
     path(
-        "<hashid:pk>/update",
-        login_and_connector_required(frames.ConnectorUpdate.as_view()),
-        name="update",
-    ),
-    path(
-        "<hashid:pk>/progress",
-        login_and_connector_required(frames.ConnectorProgress.as_view()),
-        name="progress",
-    ),
-    path(
         "<hashid:pk>/status",
         login_and_connector_required(frames.ConnectorStatus.as_view()),
         name="status",

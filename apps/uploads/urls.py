@@ -5,7 +5,7 @@ from apps.uploads.models import Upload
 from django.shortcuts import get_object_or_404
 from django.urls import path
 
-from . import frames, rest, views
+from . import rest, views
 
 
 def upload_of_team(user, pk, *args, **kwargs):
@@ -17,17 +17,6 @@ login_and_upload_required = login_and_permission_to_access(upload_of_team)
 
 app_name = "uploads"
 urlpatterns = [
-    path(
-        "<hashid:pk>/update",
-        login_and_upload_required(frames.UploadUpdate.as_view()),
-        name="update",
-    ),
-    path(
-        "<hashid:pk>/progress",
-        login_and_upload_required(frames.UploadProgress.as_view()),
-        name="progress",
-    ),
-    # Doesnt require access control
     path("file/generate-signed-url", rest.generate_signed_url),
 ]
 
@@ -37,7 +26,7 @@ integration_urlpatterns = (
             "new",
             login_and_project_required(views.UploadCreate.as_view()),
             name="create",
-        ),
+        )
     ],
     "project_integrations_uploads",
 )

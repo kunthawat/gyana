@@ -78,6 +78,7 @@ class FivetranClientError(Exception):
 
 class FivetranClient:
     def create(self, service, team_id) -> Dict:
+        from apps.base.clients import SLUG
 
         # https://fivetran.com/docs/rest-api/connectors#createaconnector
 
@@ -88,7 +89,9 @@ class FivetranClient:
         # https://fivetran.com/docs/rest-api/connectors/config
         # database connectors require schema_prefix, rather than schema
 
-        schema = f"team_{team_id}_{service}_{uuid.uuid4().hex}"
+        schema = f"team_{team_id:06}_{service}_{uuid.uuid4().hex}"
+        if SLUG:
+            schema = f"{SLUG}_{schema}"
 
         config[
             "schema_prefix"

@@ -1,8 +1,9 @@
-from apps.base.models import BaseModel
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
 from django.utils.translation import ugettext_lazy as _
+
+from apps.base.models import BaseModel
 
 from . import roles
 
@@ -42,6 +43,15 @@ class Team(BaseModel):
     @property
     def enabled(self):
         return self.row_count <= self.row_limit * (1 + WARNING_BUFFER)
+
+    @property
+    def tables_dataset_id(self):
+        from apps.base.clients import SLUG
+
+        dataset_id = f"team_{self.id:06}_tables"
+        if SLUG:
+            dataset_id = f"{SLUG}_{dataset_id}"
+        return dataset_id
 
     def __str__(self):
         return self.name

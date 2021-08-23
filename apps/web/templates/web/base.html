@@ -64,7 +64,9 @@
         <hr>
       </li>
 
-      {% block sidebar_footer %}{% endblock %}
+      {% if user.is_superuser %}
+        {% include 'web/components/admin.html' %}
+      {% endif %}
 
       <li>
         <a id="sidebar-profile" class="sidebar__link {% if request.resolver_match.app_name == "users" %}sidebar__link--active{% endif %}"

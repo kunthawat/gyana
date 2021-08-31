@@ -3,10 +3,7 @@
   "editor.formatOnSave": true,
   "editor.tabSize": 2,
   "editor.linkedEditing": true,
-  "editor.rulers": [
-    80,
-    120,
-  ],
+  "editor.rulers": [80, 120],
   "[python]": {
     "editor.codeActionsOnSave": {
       "source.organizeImports": true

@@ -92,6 +92,7 @@ PROJECT_APPS = [
     "apps.sheets",
     "apps.connectors.apps.ConnectorsConfig",
     "apps.appsumo",
+    "apps.templates",
 ]
 
 INSTALLED_APPS = ADMIN_TOOLS_APPS + DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
@@ -362,3 +363,5 @@ CYPRESS_URLS = False
 
 ADMIN_TOOLS_MENU = "apps.base.menu.CustomMenu"
 ADMIN_TOOLS_INDEX_DASHBOARD = "apps.base.dashboard.CustomIndexDashboard"
+
+MOCK_REMOTE_OBJECT_DELETION = False

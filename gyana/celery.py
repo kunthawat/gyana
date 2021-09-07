@@ -21,17 +21,17 @@ app.autodiscover_tasks()
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     sender.add_periodic_task(
-        # run at midnight UTC every day
-        crontab(),
+        # every 6 hours from midnight
+        crontab(minute=0, hour="*/6"),
         signature("apps.integrations.tasks.delete_outdated_pending_integrations"),
     )
     sender.add_periodic_task(
-        # run at midnight UTC every day
-        crontab(),
+        # every 6 hours from midnight
+        crontab(minute=0, hour="*/6"),
         signature("apps.teams.tasks.update_team_row_limits"),
     )
     sender.add_periodic_task(
-        # run every hour
-        crontab(),
+        # every ten minutes
+        crontab(minute="*/10"),
         signature("apps.connectors.tasks.update_connectors_from_fivetran"),
     )

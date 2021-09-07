@@ -154,23 +154,27 @@ def update_fivetran_succeeded_at(connector: Connector):
     client = fivetran_client()
     try:
         data = client.get(connector)
-        # timezone (UTC) information is parsed automatically
-        succeeded_at = datetime.strptime(data["succeeded_at"], "%Y-%m-%dT%H:%M:%S.%f%z")
 
-        if (
-            connector.fivetran_succeeded_at is None
-            or succeeded_at > connector.fivetran_succeeded_at
-        ):
-            connector.fivetran_succeeded_at = succeeded_at
-            connector.save()
+        if data["succeeded_at"] is not None:
+            # timezone (UTC) information is parsed automatically
+            succeeded_at = datetime.strptime(
+                data["succeeded_at"], "%Y-%m-%dT%H:%M:%S.%f%z"
+            )
 
-            # update all tables too
-            tables = connector.integration.table_set.all()
-            for table in tables:
-                table.data_updated = succeeded_at
-                table.num_rows = table.bq_obj.num_rows
+            if (
+                connector.fivetran_succeeded_at is None
+                or succeeded_at > connector.fivetran_succeeded_at
+            ):
+                connector.fivetran_succeeded_at = succeeded_at
+                connector.save()
 
-            Table.objects.bulk_update(tables, ["data_updated", "num_rows"])
+                # update all tables too
+                tables = connector.integration.table_set.all()
+                for table in tables:
+                    table.data_updated = succeeded_at
+                    table.num_rows = table.bq_obj.num_rows
+
+                Table.objects.bulk_update(tables, ["data_updated", "num_rows"])
 
     except FivetranClientError:
         pass

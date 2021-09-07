@@ -152,9 +152,7 @@ class FivetranClient:
         )
         connect_card_token = card.json()["token"]
 
-        return redirect(
-            f"https://fivetran.com/connect-card/setup?redirect_uri={redirect_uri}&auth={connect_card_token}"
-        )
+        return f"https://fivetran.com/connect-card/setup?redirect_uri={redirect_uri}&auth={connect_card_token}"
 
     def start_initial_sync(self, connector: Connector) -> Dict:
 
@@ -316,7 +314,10 @@ class MockFivetranClient:
         return {"fivetran_id": connector.fivetran_id, "schema": connector.schema}
 
     def get(self, connector):
-        return {"succeeded_at": "2021-01-01T00:00:00.000000Z"}
+        return {
+            "succeeded_at": "2021-01-01T00:00:00.000000Z",
+            "status": {"setup_state": "broken"},
+        }
 
     def start_initial_sync(self, connector):
         self._started[connector.id] = timezone.now()
@@ -325,7 +326,7 @@ class MockFivetranClient:
         self._started[connector.id] = timezone.now()
 
     def authorize(self, connector, redirect_uri):
-        return redirect(f"{reverse('connectors:mock')}?redirect_uri={redirect_uri}")
+        return f"{reverse('connectors:mock')}?redirect_uri={redirect_uri}"
 
     def has_completed_sync(self, connector):
         return (

@@ -1,12 +1,13 @@
 import logging
 
 import analytics
+from apps.base.analytics import WIDGET_CONFIGURED_EVENT
 from apps.base.frames import (
     TurboFrameDetailView,
     TurboFrameFormsetUpdateView,
     TurboFrameListView,
+    TurboFrameUpdateView,
 )
-from apps.base.analytics import WIDGET_CONFIGURED_EVENT
 from apps.dashboards.mixins import DashboardMixin
 from apps.tables.models import Table
 from apps.widgets.visuals import chart_to_output, table_to_output
@@ -17,6 +18,7 @@ from django_tables2.config import RequestConfig
 from django_tables2.tables import Table as DjangoTable
 from django_tables2.views import SingleTableMixin
 from turbo_response import TurboStream
+from turbo_response.response import TurboStreamResponse
 
 from .forms import FORMS
 from .models import WIDGET_CHOICES_ARRAY, Widget
@@ -52,6 +54,19 @@ class WidgetList(DashboardMixin, TurboFrameListView):
 
     def get_queryset(self) -> QuerySet:
         return Widget.objects.filter(dashboard=self.dashboard)
+
+
+class WidgetName(TurboFrameUpdateView):
+    model = Widget
+    fields = ("name",)
+    template_name = "widgets/name.html"
+    turbo_frame_dom_id = "widget-editable-name"
+
+    def get_success_url(self) -> str:
+        return reverse(
+            "widgets:name",
+            args=(self.object.id,),
+        )
 
 
 class WidgetUpdate(DashboardMixin, TurboFrameFormsetUpdateView):
@@ -114,10 +129,17 @@ class WidgetUpdate(DashboardMixin, TurboFrameFormsetUpdateView):
             "dashboard": self.dashboard,
         }
         add_output_context(context, self.object, self.request)
-        return (
-            TurboStream(f"widgets-output-{self.object.id}-stream")
-            .replace.template("widgets/output.html", context)
-            .response(request=self.request)
+        return TurboStreamResponse(
+            [
+                TurboStream(f"widgets-output-{self.object.id}-stream")
+                .replace.template("widgets/output.html", context)
+                .render(request=self.request),
+                TurboStream(f"widget-name-{self.object.id}-stream")
+                .replace.template(
+                    "widgets/_widget_title.html", {"object": self.get_object}
+                )
+                .render(),
+            ]
         )
 
     def form_invalid(self, form):
@@ -129,10 +151,17 @@ class WidgetUpdate(DashboardMixin, TurboFrameFormsetUpdateView):
                 "dashboard": self.dashboard,
             }
             add_output_context(context, self.object, self.request)
-            return (
-                TurboStream(f"widgets-output-{self.object.id}-stream")
-                .replace.template("widgets/output.html", context)
-                .response(request=self.request)
+            return TurboStreamResponse(
+                [
+                    TurboStream(f"widgets-output-{self.object.id}-stream")
+                    .replace.template("widgets/output.html", context)
+                    .render(request=self.request),
+                    TurboStream(f"widget-name-{self.object.id}-stream")
+                    .replace.template(
+                        "widgets/_widget_title.html", {"object": self.get_object}
+                    )
+                    .render(),
+                ]
             )
         return r
 

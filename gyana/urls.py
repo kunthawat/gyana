@@ -108,5 +108,5 @@ if settings.CYPRESS_URLS:
         path("cypress/", include("apps.base.cypress_urls")),
     ]
 
-if settings.SILKY_PYTHON_PROFILER:
+if settings.DEBUG:
     urlpatterns += [path("silk/", include("silk.urls", namespace="silk"))]

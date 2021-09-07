@@ -1,6 +1,5 @@
 from apps.projects.access import login_and_project_required
 from django.urls import path
-from silk.profiling.profiler import silk_profile
 
 from . import cache, frames, views
 from .access import login_and_integration_required

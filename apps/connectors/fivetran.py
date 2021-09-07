@@ -128,6 +128,20 @@ class FivetranClient:
         #  }
         return {"fivetran_id": res["data"]["id"], "schema": schema}
 
+    def get(self, connector: Connector):
+
+        # https://fivetran.com/docs/rest-api/connectors/connect-card#connectcard
+
+        res = requests.get(
+            f"{settings.FIVETRAN_URL}/connectors/{connector.fivetran_id}",
+            headers=settings.FIVETRAN_HEADERS,
+        ).json()
+
+        if res["code"] != "Success":
+            raise FivetranClientError(res["message"])
+
+        return res["data"]
+
     def authorize(self, connector: Connector, redirect_uri: str) -> HttpResponse:
 
         # https://fivetran.com/docs/rest-api/connectors/connect-card#connectcard
@@ -300,6 +314,9 @@ class MockFivetranClient:
             or Connector.objects.filter(service=self.DEFAULT_SERVICE).first()
         )
         return {"fivetran_id": connector.fivetran_id, "schema": connector.schema}
+
+    def get(self, connector):
+        return {"succeeded_at": "2021-01-01T00:00:00.000000Z"}
 
     def start_initial_sync(self, connector):
         self._started[connector.id] = timezone.now()

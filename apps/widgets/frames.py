@@ -8,13 +8,12 @@ from apps.base.frames import (
     TurboFrameListView,
     TurboFrameUpdateView,
 )
+from apps.base.table_data import RequestConfig
 from apps.dashboards.mixins import DashboardMixin
 from apps.tables.models import Table
 from apps.widgets.visuals import chart_to_output, table_to_output
 from django.db.models.query import QuerySet
 from django.urls import reverse
-from django.views.decorators.http import condition
-from django_tables2.config import RequestConfig
 from django_tables2.tables import Table as DjangoTable
 from django_tables2.views import SingleTableMixin
 from turbo_response import TurboStream
@@ -29,10 +28,12 @@ def add_output_context(context, widget, request):
         if widget.kind == Widget.Kind.TEXT:
             pass
         elif widget.kind == Widget.Kind.TABLE:
-            table = table_to_output(widget)
-            context["table"] = RequestConfig(
-                request,
-            ).configure(table)
+            # avoid duplicating work for widget output
+            if "table" not in context:
+                table = table_to_output(widget)
+                context["table"] = RequestConfig(
+                    request,
+                ).configure(table)
         else:
             chart, chart_id = chart_to_output(widget)
             context.update(chart)
@@ -193,31 +194,3 @@ class WidgetOutput(DashboardMixin, SingleTableMixin, TurboFrameDetailView):
                 self.request, paginate=self.get_table_pagination(table)
             ).configure(table)
         return type("DynamicTable", (DjangoTable,), {})(data=[])
-
-
-# ====== Not used right now =======
-# TODO: decide whether we want to cache the output of the chart or
-# Remove this. You will also need to add back the caching logic in urls.py.
-# We removed this for now because with the modal we are rendering the same FusionChart
-# Twice which leads to an id conflict
-
-
-def last_modified_widget_output(request, pk):
-    widget = Widget.objects.get(pk=pk)
-    return (
-        max(widget.updated, widget.table.data_updated)
-        if widget.table
-        else widget.updated
-    )
-
-
-def etag_widget_output(request, pk):
-    last_modified = last_modified_widget_output(request, pk)
-    return str(int(last_modified.timestamp() * 1_000_000))
-
-
-widget_output_condition = condition(
-    etag_func=etag_widget_output, last_modified_func=last_modified_widget_output
-)
-
-# ==================================================

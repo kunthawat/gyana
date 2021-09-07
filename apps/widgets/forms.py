@@ -1,8 +1,8 @@
 from apps.base.aggregations import AGGREGATION_TYPE_MAP
 from apps.base.formsets import RequiredInlineFormset
 from apps.base.live_update_form import LiveUpdateForm
-from apps.columns.forms import AggreggationColumnForm
-from apps.columns.models import AggreggationColumn
+from apps.columns.forms import AggregationColumnForm
+from apps.columns.models import AggregationColumn
 from apps.filters.forms import FilterForm
 from apps.filters.models import Filter
 from apps.tables.models import Table
@@ -51,8 +51,14 @@ class GenericWidgetForm(LiveUpdateForm):
             return []
 
         formsets = [FilterFormset]
-        if self.instance.kind not in [Widget.Kind.TABLE]:
-            formsets += [AggreggationColumnFormset]
+        if self.instance.kind in [
+            Widget.Kind.PIE,
+            Widget.Kind.STACKED_BAR,
+            Widget.Kind.STACKED_COLUMN,
+        ]:
+            formsets += [SingleValueFormset]
+        elif self.instance.kind not in [Widget.Kind.TABLE]:
+            formsets += [AggregationColumnFormset]
         return formsets
 
 
@@ -167,12 +173,22 @@ FilterFormset = forms.inlineformset_factory(
     formset=RequiredInlineFormset,
 )
 
-AggreggationColumnFormset = forms.inlineformset_factory(
+AggregationColumnFormset = forms.inlineformset_factory(
     Widget,
-    AggreggationColumn,
-    form=AggreggationColumnForm,
+    AggregationColumn,
+    form=AggregationColumnForm,
     can_delete=True,
     extra=0,
+    formset=RequiredInlineFormset,
+)
+
+SingleValueFormset = forms.inlineformset_factory(
+    Widget,
+    AggregationColumn,
+    form=AggregationColumnForm,
+    can_delete=True,
+    extra=0,
+    max_num=1,
     formset=RequiredInlineFormset,
 )
 

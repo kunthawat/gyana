@@ -1,8 +1,11 @@
 from functools import cached_property
 
 import analytics
-from apps.base.analytics import (TEMPLATE_COMPLETED_EVENT,
-                                 TEMPLATE_CREATED_EVENT, TEMPLATE_VIEWED_EVENT)
+from apps.base.analytics import (
+    TEMPLATE_COMPLETED_EVENT,
+    TEMPLATE_CREATED_EVENT,
+    TEMPLATE_VIEWED_EVENT,
+)
 from apps.base.frames import TurboFrameListView
 from apps.base.turbo import TurboCreateView, TurboUpdateView
 from apps.projects.mixins import ProjectMixin
@@ -13,11 +16,9 @@ from django.urls.base import reverse
 from django_tables2 import SingleTableView
 from django_tables2.views import SingleTableMixin
 
-from .forms import (TemplateInstanceCreateExistingForm,
-                    TemplateInstanceCreateNewForm)
+from .forms import TemplateInstanceCreateExistingForm, TemplateInstanceCreateNewForm
 from .models import Template, TemplateInstance
-from .tables import (TemplateInstanceTable, TemplateIntegrationTable,
-                     TemplateTable)
+from .tables import TemplateInstanceTable, TemplateIntegrationTable, TemplateTable
 
 
 class TemplateList(TeamMixin, SingleTableView, TurboFrameListView):
@@ -73,7 +74,10 @@ class TemplateInstanceCreate(TeamMixin, TurboCreateView):
         return redirect
 
     def get_success_url(self) -> str:
-        return reverse("projects:detail", args=(self.object.project.id,))
+        return reverse(
+            "project_templateinstances:update",
+            args=(self.object.project.id, self.object.id),
+        )
 
 
 class TemplateInstanceList(ProjectMixin, SingleTableView):
@@ -83,9 +87,9 @@ class TemplateInstanceList(ProjectMixin, SingleTableView):
     paginate_by = 20
 
     def get(self, request, *args, **kwargs):
-        if self.project.templateinstance_set.count() <= 1:
+        if not self.project.ready:
             return redirect(
-                "project_templateinstances:detail",
+                "project_templateinstances:update",
                 self.project.id,
                 self.project.templateinstance_set.first().id,
             )

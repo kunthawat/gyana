@@ -19,9 +19,7 @@
         Preview
       </a>
     </nav>
-
-    <div class="flex-1 overflow-y-auto">
-      {% if widget.is_valid %}
+    {% if widget.is_valid %}
       <turbo-frame id="widgets-output-{{ widget.id }}"
                     src="{% url 'dashboard_widgets:output' project.id dashboard.id object.id %}">
         <div class='placeholder-scr placeholder-scr--fillscreen'>
@@ -29,12 +27,13 @@
           <p class='placeholder-scr__title'>Loading widget...</p>
         </div>
       </turbo-frame>
-      {% else %}
+    {% else %}
+    <div class="flex-1 text-center whitespace-normal pad">
       <div class='flex flex-col items-center justify-center' style="min-height:16rem;">
         <i class="far fa-lightbulb-exclamation mb-1 fa-2x"></i>
         <p>This widget needs to be configured</p>
       </div>
-      {% endif %}
     </div>
+    {% endif %}
   </div>
 </div>

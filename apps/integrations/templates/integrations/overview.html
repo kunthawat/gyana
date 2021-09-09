@@ -14,8 +14,8 @@
     {% endif %}
   </div>
 
-  <div class="card card--sm">
-    {% if integrations.ready > 0 %}
+  {% if integrations.ready > 0 %}
+    <div class="card card--sm">
       <div class='flex flex-row items-center gap-3 flex-wrap'>
         {% for integration in integrations.connectors %}
           <span>
@@ -43,52 +43,46 @@
           </span>
         {% endif %}
       </div>
-    {% else %}
+    </div>
+  {% endif %}
+
+  <div class="card card--sm">
+    {% if integrations.total == 0 %}
       <div class="table__empty">
         <i class="fas fa-fw fa-4x fa-sparkles mb-7"></i>
         <h3>You have no integrations.</h3>
         <p class="text-black-50">Start your project by 
-          <a class="link" href="{% url 'project_integrations:list' project.id %}">creating one</a> data-turbo-frame="_top".
+          <a class="link" href="{% url 'project_integrations:list' project.id %}" data-turbo-frame="_top">creating one</a>.
         </p>
       </div>
-    {% endif %}
-  </div>
-
-  {% if integrations.attention > 0 %}
-    <div class="card card--sm">
+    {% elif not integrations.operational %}
+      {% if integrations.attention > 0 %}
         <p class="text-black-50">
           <i class="fa fa-info-circle"></i>
           You have {{ integrations.attention|intcomma }} pending integration{{ integrations.attention|pluralize }} that need{{ integrations.attention|pluralize:"s," }}
-            your <a class="link" href="{% url 'project_integrations:pending' project.id %}" data-turbo-frame="_top">attention</a> .
+            your <a class="link" href="{% url 'project_integrations:pending' project.id %}" data-turbo-frame="_top">attention</a>.
         </p>
-    </div>
-  {% endif %} 
+      {% endif %} 
 
-  {% if integrations.loading > 0 %}
-    <div class="card card--sm">
+      {% if integrations.loading > 0 %}
         <p class="text-black-50">
           <i class="fa fa-info-circle"></i>
           You have {{ integrations.loading|intcomma }} pending integration{{ integrations.loading|pluralize }} doing
             the initial import.
         </p>
-    </div>
-  {% endif %}
+      {% endif %}
 
-  {% if integrations.ready > 0 %}
-    <div class="card card--sm">
-      {% if not integrations.operational %}
-        {% if integrations.broken > 0 %}
-          <p class="text-black-50">
-            <i class="fa fa-exclamation-circle text-red"></i>
-            You have {{ integrations.broken|intcomma }} broken integration{{ integrations.broken|pluralize }}.
-          </p>
-        {% endif %}
-      {% else %}
+      {% if integrations.broken > 0 %}
         <p class="text-black-50">
-          <i class="fa fa-check-circle text-green"></i>
-          You have no integrations that need attention.
+          <i class="fa fa-exclamation-circle text-red"></i>
+          You have {{ integrations.broken|intcomma }} broken integration{{ integrations.broken|pluralize }}.
         </p>
       {% endif %}
-    </div>
-  {% endif %}
+    {% else %}
+      <p class="text-black-50">
+        <i class="fa fa-check-circle text-green"></i>
+        All your integrations are ready.
+      </p>
+    {% endif %}
+  </div>
 </div>

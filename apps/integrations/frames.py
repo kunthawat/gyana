@@ -1,13 +1,11 @@
 from apps.base.bigquery import get_humanize_from_bigquery_type
-from apps.base.frames import (
-    TurboFrameDetailView,
-    TurboFrameListView,
-    TurboFrameTemplateView,
-)
+from apps.base.frames import (TurboFrameDetailView, TurboFrameListView,
+                              TurboFrameTemplateView)
 from apps.base.table_data import RequestConfig, get_table
 from apps.integrations.tables import StructureTable
 from apps.projects.mixins import ProjectMixin
-from apps.tables.bigquery import get_bq_table_schema_from_table, get_query_from_table
+from apps.tables.bigquery import (get_bq_table_schema_from_table,
+                                  get_query_from_table)
 from apps.tables.models import Table
 from apps.tables.tables import TableTable
 from django.utils import timezone
@@ -23,8 +21,9 @@ class IntegrationOverview(ProjectMixin, TurboFrameTemplateView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        ready = self.project.integration_set.filter(ready=True)
-        pending = self.project.integration_set.filter(ready=False)
+        total = self.project.integration_set
+        ready = total.filter(ready=True)
+        pending = total.filter(ready=False)
         broken = ready.filter(
             kind=Integration.Kind.CONNECTOR,
             connector__fivetran_succeeded_at__lt=timezone.now()
@@ -32,11 +31,12 @@ class IntegrationOverview(ProjectMixin, TurboFrameTemplateView):
         ).count()
 
         context_data["integrations"] = {
+            "total": total.count(),
             "ready": ready.count(),
             "attention": pending.exclude(state=Integration.State.LOAD).count(),
             "loading": pending.filter(state=Integration.State.LOAD).count(),
             "broken": broken,
-            "operational": broken == 0,
+            "operational": broken == 0 and pending.count() == 0,
             "connectors": ready.filter(kind=Integration.Kind.CONNECTOR).all(),
             "sheet_count": ready.filter(kind=Integration.Kind.SHEET).count(),
             "upload_count": ready.filter(kind=Integration.Kind.UPLOAD).count(),

@@ -33,6 +33,11 @@ project_urlpatterns = (
             name="pending",
         ),
         path(
+            "overview",
+            login_and_project_required(frames.IntegrationOverview.as_view()),
+            name="overview",
+        ),
+        path(
             "<hashid:pk>/configure",
             login_and_project_required(views.IntegrationConfigure.as_view()),
             name="configure",
@@ -73,11 +78,6 @@ project_urlpatterns = (
             name="settings",
         ),
         # frames
-        path(
-            "overview",
-            login_and_project_required(frames.IntegrationOverview.as_view()),
-            name="overview",
-        ),
         path(
             "<hashid:pk>/tables",
             login_and_project_required(frames.IntegrationTablesList.as_view()),

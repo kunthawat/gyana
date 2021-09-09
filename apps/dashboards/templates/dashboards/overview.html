@@ -6,7 +6,7 @@
     <h3>Dashboards</h3>
     {% if dashboards.total > 0 %}
       <p class="text-black-50">
-        - <a class="link" href="{% url 'project_dashboards:list' project.id %}">
+        - <a class="link" href="{% url 'project_dashboards:list' project.id %}" data-turbo-frame="_top">
             {{ dashboards.total }} dashboard{{ dashboards.total|pluralize }}
           </a>
         - {{ dashboards.widgets|intcomma }} widget{{ dashboards.widgets|pluralize }}
@@ -22,7 +22,7 @@
         <i class="fas fa-fw fa-4x fa-sparkles mb-7"></i>
         <h3>You have no dashboards.</h3>
         <p class="text-black-50">Why not 
-          <a class="link" href="{% url 'project_dashboards:list' project.id %}">create one</a>?
+          <a class="link" href="{% url 'project_dashboards:list' project.id %}" data-turbo-frame="_top">create one</a>?
         </p>
       </div>
     {% elif not dashboards.operational %}

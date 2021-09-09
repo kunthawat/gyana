@@ -6,7 +6,7 @@
     <h3>Integrations</h3>
     {% if integrations.ready > 0 %}
       <p class="text-black-50">
-        - <a class="link" href="{% url 'project_integrations:list' project.id %}">
+        - <a class="link" href="{% url 'project_integrations:list' project.id %}" data-turbo-frame="_top">
             {{ integrations.ready|intcomma }} integration{{ integrations.ready|pluralize }}
           </a>
         - {{ project.num_rows|intcomma }} row{{ project.num_rows|pluralize }}
@@ -19,7 +19,7 @@
       <div class='flex flex-row items-center gap-3 flex-wrap'>
         {% for integration in integrations.connectors %}
           <span>
-            <a href="{% url 'project_integrations:detail' project.id integration.id %}">
+            <a href="{% url 'project_integrations:detail' project.id integration.id %}" data-turbo-frame="_top">
               <img class="h-8 w-8" src="{% static integration.icon %}"/>
             </a>
           </span>
@@ -27,7 +27,7 @@
         {% if integrations.sheet_count > 0 %}
           <span>
             <p class="text-black-50">
-              <a class="link" href="{% url 'project_integrations:list' project.id %}?kind=sheet">
+              <a class="link" href="{% url 'project_integrations:list' project.id %}?kind=sheet" data-turbo-frame="_top">
                 {{ integrations.sheet_count|intcomma }} sheet{{ integrations.sheet_count|pluralize }}
               </a>
             </p>
@@ -36,7 +36,7 @@
         {% if integrations.upload_count > 0 %}
           <span>
             <p class="text-black-50">
-              <a class="link" href="{% url 'project_integrations:list' project.id %}?kind=upload">
+              <a class="link" href="{% url 'project_integrations:list' project.id %}?kind=upload" data-turbo-frame="_top">
                 {{ integrations.upload_count|intcomma }} upload{{ integrations.upload_count|pluralize }}
               </a>
             </p>
@@ -48,7 +48,7 @@
         <i class="fas fa-fw fa-4x fa-sparkles mb-7"></i>
         <h3>You have no integrations.</h3>
         <p class="text-black-50">Start your project by 
-          <a class="link" href="{% url 'project_integrations:list' project.id %}">creating one</a>.
+          <a class="link" href="{% url 'project_integrations:list' project.id %}">creating one</a> data-turbo-frame="_top".
         </p>
       </div>
     {% endif %}
@@ -59,7 +59,7 @@
         <p class="text-black-50">
           <i class="fa fa-info-circle"></i>
           You have {{ integrations.attention|intcomma }} pending integration{{ integrations.attention|pluralize }} that need{{ integrations.attention|pluralize:"s," }}
-            your <a class="link" href="{% url 'project_integrations:pending' project.id %}">attention</a>.
+            your <a class="link" href="{% url 'project_integrations:pending' project.id %}" data-turbo-frame="_top">attention</a> .
         </p>
     </div>
   {% endif %} 
@@ -86,7 +86,7 @@
       {% else %}
         <p class="text-black-50">
           <i class="fa fa-check-circle text-green"></i>
-          You have no integrations that need attention
+          You have no integrations that need attention.
         </p>
       {% endif %}
     </div>

@@ -6,7 +6,7 @@
     <h3>Workflows</h3>
     {% if workflows.total > 0 %}
       <p class="text-black-50">
-        - <a class="link" href="{% url 'project_workflows:list' project.id %}">
+        - <a class="link" href="{% url 'project_workflows:list' project.id %}" data-turbo-frame="_top">
             {{ workflows.total }} workflow{{ workflows.total|pluralize }}
           </a>
         - {{ workflows.nodes|intcomma }} node{{ workflows.nodes|pluralize }}
@@ -23,7 +23,7 @@
         <i class="fas fa-fw fa-4x fa-sparkles mb-7"></i>
         <h3>You have no workflows.</h3>
         <p class="text-black-50">Why not 
-          <a class="link" href="{% url 'project_workflows:list' project.id %}">create one</a>?
+          <a class="link" href="{% url 'project_workflows:list' project.id %}" data-turbo-frame="_top">create one</a>?
         </p>
       </div>
     {% elif not workflows.operational %}

@@ -1,15 +1,19 @@
 import analytics
 from apps.base.analytics import PROJECT_CREATED_EVENT
 from apps.base.turbo import TurboCreateView, TurboUpdateView
+from apps.integrations.models import Integration
+from apps.nodes.models import Node
 from apps.teams.mixins import TeamMixin
+from apps.widgets.models import Widget
+from django.db.models import F, Q
 from django.shortcuts import redirect
 from django.urls.base import reverse
+from django.utils import timezone
 from django.views.generic import DetailView
 from django.views.generic.edit import DeleteView
 
 from .forms import ProjectForm
 from .models import Project
-from .tables import ProjectDashboardTable, ProjectIntegrationTable, ProjectWorkflowTable
 
 
 class ProjectCreate(TeamMixin, TurboCreateView):
@@ -50,15 +54,63 @@ class ProjectDetail(DetailView):
         context_data = super().get_context_data(**kwargs)
         object = self.get_object()
 
-        context_data["integrations"] = ProjectIntegrationTable(
-            object.integration_set.filter(ready=True).all()[:3]
-        )
+        # integrations
+        ready = object.integration_set.filter(ready=True)
+        pending = object.integration_set.filter(ready=False)
+        broken = ready.filter(
+            kind=Integration.Kind.CONNECTOR,
+            connector__fivetran_succeeded_at__lt=timezone.now()
+            - timezone.timedelta(hours=24),
+        ).count()
 
-        context_data["workflows"] = ProjectWorkflowTable(object.workflow_set.all()[:3])
+        context_data["integrations"] = {
+            "ready": ready.count(),
+            "attention": pending.exclude(state=Integration.State.LOAD).count(),
+            "loading": pending.filter(state=Integration.State.LOAD).count(),
+            "broken": broken,
+            "operational": broken == 0,
+            "connectors": ready.filter(kind=Integration.Kind.CONNECTOR).all(),
+            "sheet_count": ready.filter(kind=Integration.Kind.SHEET).count(),
+            "upload_count": ready.filter(kind=Integration.Kind.UPLOAD).count(),
+        }
 
-        context_data["dashboards"] = ProjectDashboardTable(
-            object.dashboard_set.all()[:3]
+        # workflows
+        workflows = object.workflow_set
+        results = (
+            Node.objects.filter(workflow__project=object, kind=Node.Kind.OUTPUT)
+            .exclude(table=None)
+            .count()
         )
+        nodes = Node.objects.filter(workflow__project=object)
+        incomplete = workflows.filter(last_run=None).count()
+        outdated = workflows.filter(last_run__lte=F("data_updated")).count()
+        failed = nodes.exclude(error=None).values_list("workflow").distinct().count()
+
+        context_data["workflows"] = {
+            "total": workflows.count(),
+            "results": results,
+            "nodes": nodes.count(),
+            "incomplete": incomplete,
+            "outdated": outdated,
+            "failed": failed,
+            "operational": incomplete + outdated + failed == 0,
+        }
+
+        # dashboards
+        widgets = Widget.objects.filter(dashboard__project=object)
+        # equivalent to is_valid, but efficient query
+        incomplete = widgets.exclude(
+            Q(kind=Widget.Kind.TEXT)
+            | (Q(kind=Widget.Kind.TABLE) & ~Q(table=None))
+            | (~Q(table=None) & ~Q(label=None) & ~Q(aggregations__column=None))
+        )
+        dashboards_incomplete = incomplete.values_list("dashboard").distinct().count()
+        context_data["dashboards"] = {
+            "total": object.dashboard_set.count(),
+            "widgets": widgets.count(),
+            "incomplete": dashboards_incomplete,
+            "operational": dashboards_incomplete == 0,
+        }
 
         return context_data
 
@@ -80,9 +132,3 @@ class ProjectDelete(DeleteView):
 
     def get_success_url(self) -> str:
         return reverse("teams:detail", args=(self.object.team.id,))
-
-
-class ProjectSettings(DetailView):
-    template_name = "projects/settings.html"
-    model = Project
-    pk_url_kwarg = "project_id"

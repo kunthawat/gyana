@@ -4,7 +4,7 @@
   <div id="dashboard-widget-container"
        class="widgets__canvas {% if request.GET.mode != 'view' %}widgets__grid{%endif%}"
        data-controller="widget-list"
-       style="width:{{dashboard.width}}px;height:{{dashboard.height}}px;">
+       style="width:{{ dashboard.width }}px;height:{{ dashboard.height }}px;">
     {% for object in object_list %}
     {% include 'widgets/widget_component.html' %}
     {% empty %}
@@ -37,7 +37,7 @@
         {% endif %}
       >
         <div class='placeholder-scr placeholder-scr--fillscreen'>
-          <i class="placeholder-scr__icon fad fa-spinner-third fa-spin fa-3x"></i>
+          <i class="placeholder-scr__icon fad fa-spinner-third fa-spin fa-2x"></i>
         </div>
       </turbo-frame>
     </div>

@@ -1,51 +1,61 @@
 {% extends "web/app/project_base.html" %}
 {% load static %}
+
 {% block app %}
 <div class="workflow-detail__header">
-  <turbo-frame id="dashboard-name">
-    <form method="post" action="{% url 'project_dashboards:detail' project.id object.id %}"
-          class="form--no-layout w-full">
+  <turbo-frame id="dashboard-name" class="flex-1 mr-auto">
+    <form
+      method="post"
+      action="{% url 'project_dashboards:detail' project.id object.id %}"
+      class="form--no-layout w-full"
+    >
       {% csrf_token %}
       <input class='input__inline mr-auto' id="name" type="text" name="name" value="{{ object.name }}"></input>
     </form>
   </turbo-frame>
-    <div class="button button--circle button--tertiary ml-auto">
-      {% include 'components/_duplicate.html' with object_name="dashboard" %}
+
+  <div class="button button--circle button--tertiary">
+    {% include 'components/_duplicate.html' with object_name="dashboard" %}
+  </div>
+
+  <div data-controller='tooltip popover'>
+    <span
+      data-popover-target="trigger"
+      data-action="click->popover#trigger"
+      class="button button--circle button--tertiary"
+    > 
+      <i class="far fa-fw fa-trash"></i>
+    </span>
+
+    <span data-tooltip-target="body">Delete</span>
+
+    <div data-popover-target="body" hidden class="popover-body">
+      {% include 'dashboards/_delete.html' %}
     </div>
+  </div>
 
-    <div data-controller='tooltip popover'>
-      <span
-        data-popover-target="trigger"
-        data-action="click->popover#trigger"
-        class="button button--circle button--tertiary"
-      > 
-        <i class="far fa-fw fa-trash"></i>
-      </span>
+  <vr></vr>
 
-      <span data-tooltip-target="body">Delete</span>
+  {% if request.GET.mode != 'view' %}
+  <div data-controller="tooltip popover">
+    <button
+      type="button"
+      data-popover-target="trigger"
+      class="button button--circle button--tertiary"
+      data-action="popover#trigger"
+    >
+      <i class="far fa-fw fa-expand-arrows-alt"></i>
+    </button>
 
-      <div data-popover-target="body" hidden class="popover-body">
-        {% include 'dashboards/_delete.html' %}
-      </div>
-    </div>
+    <span data-tooltip-target="body">Canvas size</span>
 
-    <vr></vr>
-    <form method="post" action="{% url 'project_dashboards:detail' project.id object.id %}"
-        class="form--no-layout">
-      {% csrf_token %}
-    <div data-controller="tooltip popover">
-      <button 
-        type="button" 
-        data-popover-target="trigger" 
-        class="button button--circle button--tertiary"
-        data-action="popover#trigger"
+    <div data-popover-target="body" class="popover-body max-w-lg card card--sm">
+      <form
+        method="post"
+        action="{% url 'project_dashboards:detail' project.id object.id %}"
+        class="form--no-layout"
       >
-        <i class="far fa-expand-arrows-alt fa-fw"></i>
-      </button>
-
-      <span data-tooltip-target="body">Canvas size</span>
-
-      <div data-popover-target="body" class="popover-body max-w-lg card card--sm">
+        {% csrf_token %}
         <div class="flex gap-7">
           <label>
             <p>Width</p>
@@ -59,9 +69,10 @@
         </div>
 
         <button class="button button--sm button--success mt-7 w-full" type='submit'>Update</button>
-      </div>
+      </form>
     </div>
-  </form>
+  </div>
+  {% endif %}
 
   <turbo-frame id="dashboard-share">
     {% include 'dashboards/share.html' %}
@@ -73,7 +84,7 @@
 
   <div data-controller='popover'>
     <button class="button button--sm" data-controller="tooltip">
-      {% if request.GET.mode == 'edit' %}
+      {% if not request.GET.mode or request.GET.mode == 'edit' %}
       <a href="?mode=view">
         <i class="fas fa-eye mr-3"></i> Preview
       </a>
@@ -85,26 +96,6 @@
 
       <span data-tooltip-target="body">Click to change view mode</span>
     </button>
-
-    <ul data-popover-target="body" class="list list--bordered" hidden style="margin-top:6px;width:20rem;">
-      {% expr [("view", "eye", "Preview dashboard"), ("edit", "pen", "Modify dashboard")] as modes %}
-      {% for mode in modes %}
-      <li class="list__item list__item--interactive">
-        <a href="?mode={{ mode.0 }}">
-          <div class="flex flex-row items-center p-4">
-            <div class="w-8 mr-6">
-              <i class="fas fa-{{ mode.1 }} {% if request.GET.mode|default:'edit' == mode.0 %}text-blue{% endif %}"></i>
-            </div>
-
-            <div class="flex flex-col">
-              <h4>{{ mode.0|title }}</h4>
-              <p>{{ mode.2 }}</p>
-            </div>
-          </div>
-        </a>
-      </li>
-      {% endfor %}
-    </ul>
   </div>
 </div>
 

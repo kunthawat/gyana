@@ -15,13 +15,13 @@ from model_clone import CloneMixin
 class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
     class Kind(models.TextChoices):
         ADD = "add", "Add"
-        AGGREGATION = "aggregation", "Aggregation"
+        AGGREGATION = "aggregation", "Group and Aggregate"
         DISTINCT = "distinct", "Distinct"
         EDIT = "edit", "Edit"
         FILTER = "filter", "Filter"
         INPUT = "input", "Get data"
         FORMULA = "formula", "Formula"
-        INTERSECT = "intersect", "Intersection"
+        INTERSECT = "intersect", "Intersect "
         JOIN = "join", "Join"
         LIMIT = "limit", "Limit"
         PIVOT = "pivot", "Pivot"
@@ -32,7 +32,7 @@ class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
         UNION = "union", "Union"
         UNPIVOT = "unpivot", "Unpivot"
         TEXT = "text", "Text"
-        WINDOW = "window", "Window"
+        WINDOW = "window", "Window and Calculate"
         SENTIMENT = "sentiment", "Sentiment"
 
     # You have to add new many-to-one relations here
@@ -71,13 +71,6 @@ class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
     # Input
     input_table = models.ForeignKey(
         Table, on_delete=models.CASCADE, null=True, help_text="Select a data source"
-    )
-
-    # Output
-    output_name = models.CharField(
-        max_length=100,
-        null=True,
-        help_text="Name your output, this name will be refered to in other workflows or dashboards.",
     )
 
     # Select also uses columns
@@ -234,7 +227,7 @@ class Node(DirtyFieldsMixin, CloneMixin, BaseModel):
         return self.parents.count() >= min_arity
 
     def get_table_name(self):
-        return f"Workflow:{self.workflow.name}:{self.output_name}"
+        return f"Workflow:{self.workflow.name}:{self.name}"
 
     @property
     def bq_output_table_id(self):

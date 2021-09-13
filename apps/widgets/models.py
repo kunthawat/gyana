@@ -50,14 +50,15 @@ class Widget(CloneMixin, BaseModel):
     kind = models.CharField(max_length=32, choices=Kind.choices, default=Kind.COLUMN)
     aggregator = models.CharField(max_length=32, choices=Aggregator.choices)
     # maximum length of bigquery column name
-    label = models.CharField(
+    dimension = models.CharField(
         max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True, blank=True
     )
-    value = models.CharField(max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, null=True)
 
     name = models.CharField(max_length=255, null=True, blank=True)
     sort_by = models.CharField(
-        max_length=12, choices=(("label", "Label"), ("value", "Value")), default="label"
+        max_length=12,
+        choices=(("dimension", "Dimension"), ("metric", "Metric")),
+        default="dimension",
     )
     sort_ascending = models.BooleanField(default=True)
 
@@ -106,7 +107,7 @@ class Widget(CloneMixin, BaseModel):
         if self.kind == self.Kind.TABLE:
             return True
         elif self.kind is not None:
-            return self.kind and self.label and self.aggregations.exists()
+            return self.kind and self.dimension and self.aggregations.exists()
 
         return False
 
@@ -130,6 +131,15 @@ WIDGET_KIND_TO_WEB = {
     Widget.Kind.HEATMAP.value: ("fa-map",),
 }
 
+# Exclude charts from being picked
+EXCLUDED = (
+    ["radar", "funnel", "pyramid", "bubble", "scatter", "heatmap"]
+    if not settings.FF_ALPHA
+    else []
+)
+
 WIDGET_CHOICES_ARRAY = [
-    (choices + WIDGET_KIND_TO_WEB[choices[0]]) for choices in Widget.Kind.choices
+    (choices + WIDGET_KIND_TO_WEB[choices[0]])
+    for choices in Widget.Kind.choices
+    if choices[0] not in EXCLUDED
 ]

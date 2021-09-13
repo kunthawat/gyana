@@ -200,6 +200,14 @@ class UnpivotNodeForm(NodeForm):
         model = Node
         fields = ["unpivot_value", "unpivot_column"]
         required = ["unpivot_value", "unpivot_column"]
+        labels = {
+            "unpivot_value": "Value column name",
+            "unpivot_column": "Category column name",
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.form_description = "Transform multiple columns into a single column."
 
 
 class SentimenttNodeForm(NodeForm):
@@ -223,7 +231,7 @@ class SentimenttNodeForm(NodeForm):
 class ExceptNodeForm(DefaultNodeForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.description = "Remove rows that exist in a second table."
+        self.form_description = "Remove rows that exist in a second table."
 
 
 KIND_TO_FORM = {

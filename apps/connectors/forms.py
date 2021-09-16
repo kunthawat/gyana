@@ -1,8 +1,8 @@
-import honeybadger
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.forms.widgets import CheckboxInput, HiddenInput
+from honeybadger import honeybadger
 
 from apps.base.clients import fivetran_client
 from apps.connectors.config import get_services

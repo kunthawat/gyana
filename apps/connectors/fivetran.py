@@ -11,7 +11,6 @@ import backoff
 import requests
 from django.conf import settings
 from django.http import HttpResponse
-from django.shortcuts import redirect
 from django.urls.base import reverse
 from django.utils import timezone
 
@@ -73,7 +72,9 @@ def _schemas_to_dict(schemas):
 
 
 class FivetranClientError(Exception):
-    pass
+    def __init__(self, res) -> None:
+        message = f'[Fivetran API Exception] {res["code"]}: {res["message"]}'
+        super().__init__(message)
 
 
 class FivetranClient:
@@ -113,7 +114,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError(res["message"])
+            raise FivetranClientError(res)
 
         # response schema https://fivetran.com/docs/rest-api/connectors#response_1
         #  {
@@ -138,7 +139,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError(res["message"])
+            raise FivetranClientError(res)
 
         return res["data"]
 
@@ -165,7 +166,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
         return res
 
@@ -179,7 +180,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
         return res
 
@@ -191,7 +192,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
         status = res["data"]["status"]
 
@@ -213,7 +214,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
         return _schemas_to_obj(res["data"].get("schemas", {}))
 
@@ -231,7 +232,7 @@ class FivetranClient:
             return self.reload_schemas(connector)
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
         # schema not included for Google Sheets connector
         return _schemas_to_obj(res["data"].get("schemas", {}))
@@ -247,7 +248,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
     def delete(self, connector: Connector):
 
@@ -261,7 +262,7 @@ class FivetranClient:
         ).json()
 
         if res["code"] != "Success":
-            raise FivetranClientError()
+            raise FivetranClientError(res)
 
 
 MOCK_SCHEMA_DIR = os.path.abspath(".mock/.schema")

@@ -1,3 +1,4 @@
+import honeybadger
 from django import forms
 from django.core.exceptions import ValidationError
 from django.db import transaction
@@ -8,7 +9,6 @@ from apps.connectors.config import get_services
 from apps.connectors.fivetran import FivetranClientError
 from apps.integrations.models import Integration
 from apps.nodes.widgets import MultiSelect
-from apps.templates.models import TemplateIntegration
 
 from .models import Connector
 
@@ -121,7 +121,8 @@ class ConnectorUpdateForm(forms.ModelForm):
         # try to update the fivetran schema
         try:
             fivetran_client().update_schemas(self.instance, schemas)
-        except FivetranClientError:
+        except FivetranClientError as e:
+            honeybadger.notify(e)
             raise ValidationError(
                 "Failed to update, please try again or reach out to support."
             )

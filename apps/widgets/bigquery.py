@@ -34,7 +34,15 @@ def get_query_from_widget(widget: Widget):
     groups = [widget.dimension]
     if widget.kind in [Widget.Kind.BUBBLE, Widget.Kind.HEATMAP]:
         values += [getattr(query[widget.z], widget.z_aggregator)().name(widget.z)]
-    elif widget.kind in [Widget.Kind.STACKED_BAR, Widget.Kind.STACKED_COLUMN]:
+    elif (
+        widget.kind
+        in [
+            Widget.Kind.STACKED_BAR,
+            Widget.Kind.STACKED_COLUMN,
+            Widget.Kind.STACKED_LINE,
+        ]
+        and widget.z
+    ):
         groups += [widget.z]
 
     return _sort(

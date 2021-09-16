@@ -17,18 +17,29 @@ def short_hash():
 DEFAULT_WIDTH = "100%"
 DEFAULT_HEIGHT = "100%"
 
+TO_FUSION_CHART = {Widget.Kind.STACKED_LINE: "msline"}
+
 
 def to_chart(df: pd.DataFrame, widget: Widget) -> FusionCharts:
     """Render a chart from a table."""
 
     data = CHART_DATA[widget.kind](widget, df)
-
+    if widget.kind != Widget.Kind.SCATTER:
+        axisNames = {
+            "xAxisName": widget.dimension,
+            "yAxisName": widget.aggregations.first().column,
+        }
+    else:
+        metrics = widget.aggregations.all()
+        axisNames = {
+            "xAxisName": metrics[0].column,
+            "yAxisName": metrics[1].column,
+        }
     dataSource = {
         "chart": {
             "stack100Percent": "1" if widget.stack_100_percent else "0",
             "theme": "fusion",
-            "xAxisName": widget.dimension,
-            "yAxisName": widget.aggregations.first().column,
+            **axisNames,
         },
         **data,
     }
@@ -36,7 +47,7 @@ def to_chart(df: pd.DataFrame, widget: Widget) -> FusionCharts:
     chart_id = f"{widget.pk}-{short_hash()}"
     return (
         FusionCharts(
-            widget.kind,
+            TO_FUSION_CHART.get(widget.kind) or widget.kind,
             f"chart-{chart_id}",
             DEFAULT_WIDTH,
             DEFAULT_HEIGHT,
@@ -70,18 +81,14 @@ def to_multi_value_data(widget, df):
 
 
 def to_scatter(widget, df):
-    values = [value.column for value in widget.aggregations.all()]
-    df = df.rename(columns={widget.dimension: "x"})
+    x, y = [value.column for value in widget.aggregations.all()]
+    df = df.rename(columns={x: "x", y: "y", widget.dimension: "id"})
     return {
         "categories": [{"category": [{"label": str(x)} for x in df.x.to_list()]}],
         "dataset": [
             {
-                **({"seriesname": value} if len(values) > 1 else dict()),
-                "data": df.rename(columns={value: "y"})[["x", "y"]].to_dict(
-                    orient="records"
-                ),
+                "data": df[["x", "y", "id"]].to_dict(orient="records"),
             }
-            for value in values
         ],
     }
 
@@ -204,4 +211,5 @@ CHART_DATA = {
     Widget.Kind.STACKED_BAR: to_stack,
     Widget.Kind.AREA: to_multi_value_data,
     Widget.Kind.LINE: to_multi_value_data,
+    Widget.Kind.STACKED_LINE: to_stack,
 }

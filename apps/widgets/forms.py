@@ -8,14 +8,13 @@ from apps.filters.models import Filter
 from apps.tables.models import Table
 from django import forms
 
-from .models import EXCLUDED, Widget
+from .models import Widget
 from .widgets import SourceSelect, VisualSelect
 
 
 class GenericWidgetForm(LiveUpdateForm):
     dimension = forms.ChoiceField(choices=())
-    value = forms.ChoiceField(choices=())
-    z = forms.ChoiceField(choices=())
+    second_dimension = forms.ChoiceField(choices=())
 
     class Meta:
         model = Widget
@@ -23,8 +22,7 @@ class GenericWidgetForm(LiveUpdateForm):
             "table",
             "kind",
             "dimension",
-            "z",
-            "z_aggregator",
+            "second_dimension",
             "sort_by",
             "sort_ascending",
             "stack_100_percent",
@@ -36,11 +34,7 @@ class GenericWidgetForm(LiveUpdateForm):
         project = kwargs.pop("project", None)
 
         super().__init__(*args, **kwargs)
-        self.fields["kind"].choices = [
-            choices
-            for choices in self.fields["kind"].choices
-            if choices[0] not in EXCLUDED
-        ]
+
         if project:
             self.fields["table"].queryset = Table.available.filter(
                 project=project
@@ -54,20 +48,14 @@ class GenericWidgetForm(LiveUpdateForm):
             return []
 
         formsets = [FilterFormset]
-        if self.instance.kind in [
-            Widget.Kind.PIE,
-            Widget.Kind.STACKED_BAR,
-            Widget.Kind.STACKED_COLUMN,
-        ]:
-            formsets += [SingleMetricFormset]
-        elif self.instance.kind == Widget.Kind.SCATTER:
-            formsets += [XYMetricFormset]
+        if chart_formsets := FORMSETS.get(self.instance.kind):
+            formsets += chart_formsets
         elif self.instance.kind not in [Widget.Kind.TABLE]:
             formsets += [AggregationColumnFormset]
         return formsets
 
 
-class TwoDimensionForm(GenericWidgetForm):
+class OneDimensionForm(GenericWidgetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -90,7 +78,7 @@ class TwoDimensionForm(GenericWidgetForm):
         return fields
 
 
-class ThreeDimensionForm(GenericWidgetForm):
+class TwoDimensionForm(GenericWidgetForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -100,23 +88,16 @@ class ThreeDimensionForm(GenericWidgetForm):
         if schema:
             columns = [(column, column) for column in schema]
             self.fields["dimension"].choices = columns
-            self.fields["z"].choices = columns
-
-            kind = self.get_live_field("kind")
-            if kind in [Widget.Kind.BUBBLE, Widget.Kind.HEATMAP] and (
-                z := self.get_live_field("z")
-            ):
-                self.fields["z_aggregator"].choices = [
-                    (choice.value, choice.name)
-                    for choice in AGGREGATION_TYPE_MAP[schema[z].name]
-                ]
+            self.fields["dimension"].label = "X"
+            self.fields["second_dimension"].choices = columns
+            self.fields["second_dimension"].label = "Y"
 
     def get_live_fields(self):
         fields = super().get_live_fields()
         table = self.get_live_field("table")
 
         if table:
-            fields += ["sort_by", "sort_ascending", "dimension", "z", "z_aggregator"]
+            fields += ["sort_by", "sort_ascending", "dimension", "second_dimension"]
         return fields
 
 
@@ -133,10 +114,10 @@ class StackedChartForm(GenericWidgetForm):
                 *[(column, column) for column in schema],
             ]
             self.fields["dimension"].choices = choices
-            self.fields["z"].choices = choices
+            self.fields["second_dimension"].choices = choices
             # Can't overwrite label in Meta because we would have to overwrite the whole thing
-            self.fields["z"].label = "Stack dimension"
-            self.fields["z"].required = False
+            self.fields["second_dimension"].label = "Stack dimension"
+            self.fields["second_dimension"].required = False
 
     def get_live_fields(self):
         fields = super().get_live_fields()
@@ -147,7 +128,7 @@ class StackedChartForm(GenericWidgetForm):
                 "sort_by",
                 "sort_ascending",
                 "dimension",
-                "z",
+                "second_dimension",
             ]
             if self.fields["kind"] == Widget.Kind.STACKED_LINE:
                 fields += [
@@ -158,21 +139,21 @@ class StackedChartForm(GenericWidgetForm):
 
 FORMS = {
     Widget.Kind.TABLE: GenericWidgetForm,
-    Widget.Kind.BAR: TwoDimensionForm,
+    Widget.Kind.BAR: OneDimensionForm,
     Widget.Kind.STACKED_COLUMN: StackedChartForm,
-    Widget.Kind.COLUMN: TwoDimensionForm,
+    Widget.Kind.COLUMN: OneDimensionForm,
     Widget.Kind.STACKED_BAR: StackedChartForm,
-    Widget.Kind.LINE: TwoDimensionForm,
+    Widget.Kind.LINE: OneDimensionForm,
     Widget.Kind.STACKED_LINE: StackedChartForm,
-    Widget.Kind.PIE: TwoDimensionForm,
-    Widget.Kind.AREA: TwoDimensionForm,
-    Widget.Kind.DONUT: TwoDimensionForm,
-    Widget.Kind.SCATTER: TwoDimensionForm,
-    Widget.Kind.FUNNEL: TwoDimensionForm,
-    Widget.Kind.PYRAMID: TwoDimensionForm,
-    Widget.Kind.RADAR: TwoDimensionForm,
-    Widget.Kind.HEATMAP: ThreeDimensionForm,
-    Widget.Kind.BUBBLE: ThreeDimensionForm,
+    Widget.Kind.PIE: OneDimensionForm,
+    Widget.Kind.AREA: OneDimensionForm,
+    Widget.Kind.DONUT: OneDimensionForm,
+    Widget.Kind.SCATTER: OneDimensionForm,
+    Widget.Kind.FUNNEL: GenericWidgetForm,
+    Widget.Kind.PYRAMID: GenericWidgetForm,
+    Widget.Kind.RADAR: GenericWidgetForm,
+    Widget.Kind.HEATMAP: TwoDimensionForm,
+    Widget.Kind.BUBBLE: OneDimensionForm,
 }
 
 
@@ -194,6 +175,19 @@ AggregationColumnFormset = forms.inlineformset_factory(
     formset=RequiredInlineFormset,
 )
 
+
+def create_min_formset(min_num):
+    return forms.inlineformset_factory(
+        Widget,
+        AggregationColumn,
+        form=AggregationColumnForm,
+        can_delete=True,
+        min_num=min_num,
+        extra=0,
+        formset=RequiredInlineFormset,
+    )
+
+
 SingleMetricFormset = forms.inlineformset_factory(
     Widget,
     AggregationColumn,
@@ -214,6 +208,30 @@ XYMetricFormset = forms.inlineformset_factory(
     max_num=2,
     formset=RequiredInlineFormset,
 )
+
+XYZMetricFormset = forms.inlineformset_factory(
+    Widget,
+    AggregationColumn,
+    form=AggregationColumnForm,
+    can_delete=False,
+    extra=0,
+    min_num=3,
+    max_num=3,
+    formset=RequiredInlineFormset,
+)
+
+
+FORMSETS = {
+    Widget.Kind.PIE: [SingleMetricFormset],
+    Widget.Kind.STACKED_BAR: [SingleMetricFormset],
+    Widget.Kind.STACKED_COLUMN: [SingleMetricFormset],
+    Widget.Kind.SCATTER: [XYMetricFormset],
+    Widget.Kind.BUBBLE: [XYZMetricFormset],
+    Widget.Kind.HEATMAP: [SingleMetricFormset],
+    Widget.Kind.RADAR: [create_min_formset(3)],
+    Widget.Kind.PYRAMID: [create_min_formset(2)],
+    Widget.Kind.FUNNEL: [create_min_formset(2)],
+}
 
 
 class WidgetDuplicateForm(forms.ModelForm):

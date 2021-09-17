@@ -1,12 +1,12 @@
 import ibis
 from apps.filters.bigquery import get_query_from_filters
 from apps.tables.bigquery import get_query_from_table
-from apps.widgets.models import Widget
+from apps.widgets.models import NO_DIMENSION_WIDGETS, Widget
 
 
 def _sort(query, widget):
     """Sort widget data by label or value"""
-    if widget.sort_by == "dimension":
+    if widget.sort_by == "dimension" and widget.dimension:
         column = query[widget.dimension]
     else:
         column = query[widget.aggregations.first().column]
@@ -31,19 +31,18 @@ def get_query_from_widget(widget: Widget):
         )
         for aggregation in widget.aggregations.all()
     ]
-    groups = [widget.dimension]
-    if widget.kind in [Widget.Kind.BUBBLE, Widget.Kind.HEATMAP]:
-        values += [getattr(query[widget.z], widget.z_aggregator)().name(widget.z)]
-    elif (
+    groups = [widget.dimension] if widget.kind not in NO_DIMENSION_WIDGETS else []
+    if (
         widget.kind
         in [
+            Widget.Kind.HEATMAP,
             Widget.Kind.STACKED_BAR,
             Widget.Kind.STACKED_COLUMN,
             Widget.Kind.STACKED_LINE,
         ]
-        and widget.z
+        and widget.second_dimension
     ):
-        groups += [widget.z]
+        groups += [widget.second_dimension]
 
     return _sort(
         query.group_by(groups).aggregate(values),

@@ -3,7 +3,7 @@ import string
 
 import numpy as np
 import pandas as pd
-from apps.widgets.models import Widget
+from apps.widgets.models import NO_DIMENSION_WIDGETS, Widget
 
 from .fusioncharts import FusionCharts
 
@@ -20,26 +20,36 @@ DEFAULT_HEIGHT = "100%"
 TO_FUSION_CHART = {Widget.Kind.STACKED_LINE: "msline"}
 
 
+def _create_axis_names(widget):
+    if widget.kind in [Widget.Kind.SCATTER, Widget.Kind.BUBBLE]:
+        metrics = widget.aggregations.all()
+        return {
+            "xAxisName": metrics[0].column,
+            "yAxisName": metrics[1].column,
+        }
+    if widget.kind == Widget.Kind.HEATMAP:
+        return {
+            "xAxisName": widget.dimension,
+            "yAxisName": widget.second_dimension,
+        }
+    if widget.kind in NO_DIMENSION_WIDGETS:
+        {}
+    return {
+        "xAxisName": widget.dimension,
+        "yAxisName": widget.aggregations.first().column,
+    }
+
+
 def to_chart(df: pd.DataFrame, widget: Widget) -> FusionCharts:
     """Render a chart from a table."""
 
     data = CHART_DATA[widget.kind](widget, df)
-    if widget.kind != Widget.Kind.SCATTER:
-        axisNames = {
-            "xAxisName": widget.dimension,
-            "yAxisName": widget.aggregations.first().column,
-        }
-    else:
-        metrics = widget.aggregations.all()
-        axisNames = {
-            "xAxisName": metrics[0].column,
-            "yAxisName": metrics[1].column,
-        }
+    axis_names = _create_axis_names(widget)
     dataSource = {
         "chart": {
             "stack100Percent": "1" if widget.stack_100_percent else "0",
             "theme": "fusion",
-            **axisNames,
+            **axis_names,
         },
         **data,
     }
@@ -94,20 +104,14 @@ def to_scatter(widget, df):
 
 
 def to_radar(widget, df):
+    df = df.melt(value_vars=[col.column for col in widget.aggregations.all()])
     return {
         "categories": [
-            {
-                "category": [
-                    {"label": dimension} for dimension in df[widget.dimension].to_list()
-                ]
-            }
+            {"category": [{"label": label} for label in df.variable.to_list()]}
         ],
         "dataset": [
             {
-                "data": [
-                    {"value": value}
-                    for value in df[widget.aggregations.first().column].to_list()
-                ],
+                "data": [{"value": value} for value in df.value.to_list()],
             }
         ],
     }
@@ -124,17 +128,30 @@ def to_single_value(widget, df):
     }
 
 
-def to_bubble(widget, df):
+def to_segment(widget, df):
+    df = df.melt(
+        value_vars=[
+            col.column
+            for col in widget.aggregations.order_by(
+                "created" if widget.kind == Widget.Kind.FUNNEL else "-created"
+            ).all()
+        ]
+    )
     return {
+        "data": [
+            {"label": row.variable, "value": row.value} for _, row in df.iterrows()
+        ]
+    }
+
+
+def to_bubble(widget, df):
+    x, y, z = [value.column for value in widget.aggregations.all()]
+    df = df.rename(columns={x: "x", y: "y", z: "z", widget.dimension: "id"})
+    return {
+        "categories": [{"category": [{"label": str(x)} for x in df.x.to_list()]}],
         "dataset": [
             {
-                "data": df.rename(
-                    columns={
-                        widget.dimension: "x",
-                        widget.aggregations.first().column: "y",
-                        widget.z: "z",
-                    }
-                ).to_dict(orient="records")
+                "data": df[["x", "y", "z", "id"]].to_dict(orient="records"),
             }
         ],
     }
@@ -147,8 +164,8 @@ def to_heatmap(widget, df):
     df = df.rename(
         columns={
             widget.dimension: "rowid",
-            widget.aggregations.first().column: "columnid",
-            widget.z: "value",
+            widget.second_dimension: "columnid",
+            widget.aggregations.first().column: "value",
         }
     ).sort_values(["rowid", "columnid"])
 
@@ -176,7 +193,7 @@ def to_heatmap(widget, df):
 def to_stack(widget, df):
     pivoted = df.pivot(
         index=widget.dimension,
-        columns=widget.z,
+        columns=widget.second_dimension,
         values=widget.aggregations.first().column,
     )
 
@@ -201,8 +218,8 @@ CHART_DATA = {
     Widget.Kind.HEATMAP: to_heatmap,
     Widget.Kind.SCATTER: to_scatter,
     Widget.Kind.RADAR: to_radar,
-    Widget.Kind.FUNNEL: to_single_value,
-    Widget.Kind.PYRAMID: to_single_value,
+    Widget.Kind.FUNNEL: to_segment,
+    Widget.Kind.PYRAMID: to_segment,
     Widget.Kind.PIE: to_single_value,
     Widget.Kind.DONUT: to_single_value,
     Widget.Kind.COLUMN: to_multi_value_data,

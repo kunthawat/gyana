@@ -8,9 +8,9 @@ from apps.base.clients import fivetran_client
 from apps.connectors.config import get_services
 from apps.connectors.fivetran import FivetranClientError
 from apps.integrations.models import Integration
-from apps.nodes.widgets import MultiSelect
 
 from .models import Connector
+from .widgets import ConnectorSchemaMultiSelect
 
 
 class ConnectorCreateForm(forms.ModelForm):
@@ -84,6 +84,7 @@ class ConnectorUpdateForm(forms.ModelForm):
                 label=schema.name_in_destination.replace("_", " ").title(),
                 widget=CheckboxInput() if is_database else HiddenInput(),
                 help_text="Include or exclude this schema",
+                required=False,
             )
             self.fields[
                 f"{schema.name_in_destination}_tables"
@@ -95,14 +96,17 @@ class ConnectorUpdateForm(forms.ModelForm):
                     )
                     for t in schema.tables
                 ],
-                widget=MultiSelect,
+                widget=ConnectorSchemaMultiSelect,
                 initial=[t.name_in_destination for t in schema.tables if t.enabled],
                 label="Tables",
-                help_text="Include or exclude tables to import" + " for this schema"
-                if is_database
-                else "",
+                help_text="Select specific tables (you can change this later)",
                 required=False,  # you can uncheck all options
             )
+
+            # disabled fields that cannot be patched
+            self.fields[f"{schema.name_in_destination}_tables"].widget._schema_dict = {
+                t.name_in_destination: t for t in schema.tables
+            }
 
     def clean(self):
         cleaned_data = super().clean()
@@ -112,11 +116,18 @@ class ConnectorUpdateForm(forms.ModelForm):
 
         for schema in schemas:
             schema.enabled = f"{schema.name_in_destination}_schema" in cleaned_data
+            # only patch tables that are allowed
+            schema.tables = [
+                t for t in schema.tables if t.enabled_patch_settings["allowed"]
+            ]
             for table in schema.tables:
                 # field does not exist if all unchecked
                 table.enabled = table.name_in_destination in cleaned_data.get(
                     f"{schema.name_in_destination}_tables", []
                 )
+                # no need to patch the columns information and it can break
+                # if access issues, e.g. per column access in Postgres
+                table.columns = {}
 
         # try to update the fivetran schema
         try:

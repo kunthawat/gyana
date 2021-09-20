@@ -8,7 +8,8 @@ from apps.base.models import BaseModel
 
 from . import roles
 
-DEFAULT_ROW_LIMIT = 10_000
+DEFAULT_ROW_LIMIT = 50_000
+DEFAULT_CREDIT_LIMIT = 100
 WARNING_BUFFER = 0.2
 
 
@@ -69,6 +70,10 @@ class Team(BaseModel):
         return reverse("teams:detail", args=(self.id,))
 
     @property
+    def plan(self):
+        return "Lifetime Deal for Gyana" if self.appsumocode_set.count() > 0 else "Free"
+
+    @property
     def row_limit(self):
         from apps.appsumo.account import get_deal
 
@@ -94,7 +99,7 @@ class Team(BaseModel):
     def credits(self):
         from apps.appsumo.account import get_deal
 
-        return get_deal(self.appsumocode_set)["credits"]
+        return max(DEFAULT_CREDIT_LIMIT, get_deal(self.appsumocode_set)["credits"])
 
     @property
     def admins(self):

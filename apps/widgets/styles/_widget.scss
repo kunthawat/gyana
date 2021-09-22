@@ -2,6 +2,7 @@
 
 .widgets {
   display: flex;
+  flex-direction: column;
   margin: 0 auto;
 
   &__canvas {
@@ -23,7 +24,7 @@
   }
 
   &__grid {
-    background-image: radial-gradient(circle at 1px 6px, var(--c-gray) 1px, transparent 0);
+    background-image: radial-gradient(circle at 1px 1px, var(--c-gray) 1px, transparent 0);
     background-size: var(--grid-size) var(--grid-size);
   }
 }

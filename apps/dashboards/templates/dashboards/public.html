@@ -1,14 +1,15 @@
 {% load static %}
 <!DOCTYPE html>
 <html class="h-full">
-
 <head>
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   {% include 'web/components/meta.html' %}
-  {% include 'web/components/favicon.html' %}
+  {% if project.team.plan == "Free" %}
+    {% include 'web/components/favicon.html' %}
+  {% endif %}
 
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
@@ -25,9 +26,19 @@
   <script src="{% static 'rest_framework/js/coreapi-0.1.1.js' %}"></script>
   <script src="{% url 'api_schemajs' %}"></script>
 </head>
-
 <body class="flex flex-col pad">
-  <div class='widgets flex items-center justify-center'>
+  <div class="widgets flex items-center justify-center">
+    <header class="flex w-full justify-between mb-7">
+      <div class="flex flex-col justify-center self-start">
+        <p>{{ project.team.name }}</p>
+        <h1>{{ dashboard.name }}</h1>
+      </div>
+
+      {% if project.team.plan == "Free" %}
+      <p class="self-end">Powered by <a href="/" class="link">Gyana</a></p>
+      {% endif %}
+    </header>
+
     <div id="dashboard-widget-container"
          class="widgets__canvas"
          data-controller="widget-list"
@@ -57,11 +68,6 @@
     </div>
   </div>
 
-  <footer class="flex justify-center">
-    <p>Powered by <a href="/" class="link">Gyana</a></p>
-  </footer>
-
   {% include 'components/fusionchart_scripts.html' %}
 </body>
-
 </html>

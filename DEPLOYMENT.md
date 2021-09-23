@@ -113,6 +113,7 @@ GOOGLE_APPLICATION_CREDENTIALS = google-credentials.json
 GOOGLE_CREDENTIALS = {{ credential_json_from_svc_account }}
 GS_BUCKET_NAME = gyana-app
 HASHIDS_SALT = {{ django.utils.crypto.get_random_string(32) }}
+HELLONEXT_SSO_TOKEN = {{ hellonext_sso_token }}
 HONEYBADGER_API_KEY = {{ honeybadger_api_key }}
 HONEYCOMB_API_KEY = {{ honeycomb_api_key }}
 SECRET_KEY = {{ secret_key }} # generate online
@@ -122,6 +123,7 @@ SENDGRID_API_KEY = {{ sendgrid_api_secret }}
 ```
 
 The database and redis config variable are generated automatically by the add-ons.
+For redis, you'll need to add `?ssl_cert_reqs=none`.
 
 Remember to add [Honeybadger support](https://docs.honeybadger.io/guides/heroku/)
 for Heroku errors and deployments.

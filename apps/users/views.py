@@ -1,22 +1,25 @@
 import analytics
+import jwt
 from allauth.account.utils import send_email_confirmation
 from allauth.socialaccount.providers.google.views import oauth2_login
+from django.conf import settings
 from django.http import HttpResponse
-from django.urls import reverse_lazy, reverse
+from django.shortcuts import redirect
+from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
+from django.views.generic.base import View
 
-from apps.base.mixins import PageTitleMixin
 from apps.base.analytics import ONBOARDING_COMPLETED_EVENT
+from apps.base.mixins import PageTitleMixin
 from apps.base.turbo import TurboUpdateView
 
 from .forms import (
     CustomUserChangeForm,
     UploadAvatarForm,
+    UserNameForm,
     UserOnboardingForm,
-    UserNameForm
 )
-from .helpers import (require_email_confirmation,
-                      user_has_confirmed_email_address)
+from .helpers import require_email_confirmation, user_has_confirmed_email_address
 from .models import CustomUser
 
 
@@ -92,3 +95,21 @@ def upload_profile_image(request):
         user.avatar = request.FILES["avatar"]
         user.save()
     return HttpResponse("Success!")
+
+
+class UserFeedback(View):
+    def get(self, request, *args, **kwargs):
+        # https://hellonext.co/help/sso-redirects
+
+        encoded_jwt = jwt.encode(
+            {
+                "email": request.user.email,
+                "name": request.user.get_full_name() or request.user.username,
+            },
+            settings.HELLONEXT_SSO_TOKEN,
+            algorithm="HS256",
+        )
+
+        url = f"https://app.hellonext.co/redirects/sso?domain={request.GET['domain']}&ssoToken={encoded_jwt}&redirect={request.GET['redirect']}"
+
+        return redirect(url)

@@ -382,3 +382,5 @@ HONEYBADGER = {
     # enables us to use "development" and send data
     "FORCE_REPORT_DATA": True,
 }
+
+HELLONEXT_SSO_TOKEN = os.environ.get("HELLONEXT_SSO_TOKEN")

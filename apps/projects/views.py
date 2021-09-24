@@ -2,13 +2,14 @@ import analytics
 from apps.base.analytics import PROJECT_CREATED_EVENT
 from apps.base.turbo import TurboCreateView, TurboUpdateView
 from apps.teams.mixins import TeamMixin
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect
 from django.urls.base import reverse
+from django.views.decorators.http import require_POST
 from django.views.generic import DetailView
 from django.views.generic.edit import DeleteView
 
 from .forms import ProjectForm
-from .models import Project
+from .models import Project, ProjectMembership
 
 
 class ProjectCreate(TeamMixin, TurboCreateView):
@@ -16,10 +17,11 @@ class ProjectCreate(TeamMixin, TurboCreateView):
     model = Project
     form_class = ProjectForm
 
-    def get_initial(self):
-        initial = super().get_initial()
-        initial["team"] = self.team
-        return initial
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs["current_user"] = self.request.user
+        form_kwargs["team"] = self.team
+        return form_kwargs
 
     def get_success_url(self) -> str:
         return reverse("projects:detail", args=(self.object.id,))
@@ -29,6 +31,7 @@ class ProjectCreate(TeamMixin, TurboCreateView):
         analytics.track(
             self.request.user.id, PROJECT_CREATED_EVENT, {"id": form.instance.id}
         )
+
         return redirect
 
 
@@ -51,6 +54,12 @@ class ProjectUpdate(TurboUpdateView):
     model = Project
     form_class = ProjectForm
     pk_url_kwarg = "project_id"
+
+    def get_form_kwargs(self):
+        form_kwargs = super().get_form_kwargs()
+        form_kwargs["current_user"] = self.request.user
+        form_kwargs["team"] = self.object.team
+        return form_kwargs
 
     def get_success_url(self) -> str:
         return reverse("projects:detail", args=(self.object.id,))

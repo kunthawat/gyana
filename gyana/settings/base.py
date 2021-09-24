@@ -28,7 +28,9 @@ SECRET_KEY = "BITuHkgTLhSfOHAewSSxNKRZfvYuzjPhdbIhaztE"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
+# custom allowed hosts middleware for cnames
+CNAME_ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -93,11 +95,13 @@ PROJECT_APPS = [
     "apps.connectors.apps.ConnectorsConfig",
     "apps.appsumo",
     "apps.templates",
+    "apps.cnames",
 ]
 
 INSTALLED_APPS = ADMIN_TOOLS_APPS + DJANGO_APPS + PROJECT_APPS + THIRD_PARTY_APPS
 
 MIDDLEWARE = [
+    "apps.cnames.middleware.HostMiddleware",
     "honeybadger.contrib.DjangoHoneybadgerMiddleware",
     "beeline.middleware.django.HoneyMiddleware",
     "django.middleware.security.SecurityMiddleware",

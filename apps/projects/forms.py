@@ -1,5 +1,4 @@
 from apps.base.live_update_form import LiveUpdateForm
-from django.db import transaction
 
 from .models import Project
 from .widgets import MemberSelect
@@ -8,7 +7,7 @@ from .widgets import MemberSelect
 class ProjectForm(LiveUpdateForm):
     class Meta:
         model = Project
-        fields = ["name", "description", "team", "access", "members"]
+        fields = ["name", "description", "access", "members"]
         widgets = {"members": MemberSelect()}
 
     def __init__(self, current_user, *args, **kwargs):
@@ -28,13 +27,5 @@ class ProjectForm(LiveUpdateForm):
             fields += ["members"]
         return fields
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
+    def on_save(self, instance):
         instance.team = self._team
-
-        if commit:
-            with transaction.atomic():
-                instance.save()
-                self.save_m2m()
-
-        return instance

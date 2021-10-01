@@ -27,6 +27,22 @@ body {
   }
 }
 
+// Common HTML states
+
+.hidden, [hidden], [class*="--hidden"] {
+  // It's considered dangerous to use !important but this needs to override any
+  // displays set on the element later in the flow.
+  display: none !important;
+}
+
+.disabled, [disabled], :disabled {
+  cursor: not-allowed;
+}
+
+[data-action*="click"] {
+  cursor: pointer;
+}
+
 // Common HTML elements
 
 button {

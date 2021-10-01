@@ -8,8 +8,6 @@ from apps.base.models import BaseModel
 
 from . import roles
 
-DEFAULT_ROW_LIMIT = 50_000
-DEFAULT_CREDIT_LIMIT = 100
 WARNING_BUFFER = 0.2
 
 
@@ -71,36 +69,44 @@ class Team(BaseModel):
         return reverse("teams:detail", args=(self.id,))
 
     @property
+    def redeemed_codes(self):
+        return self.appsumocode_set.count()
+
+    @property
+    def active_codes(self):
+        return self.appsumocode_set.filter(refunded_before__isnull=True).count()
+
+    @property
+    def refunded_codes(self):
+        return self.appsumocode_set.filter(refunded_before__isnull=False).count()
+
+    @property
+    def ltd_disabled(self):
+        return self.active_codes == 0
+
+    @property
+    def exceeds_stacking_limit(self):
+        return self.active_codes > 5
+
+    @property
+    def has_extra_rows(self):
+        return self.appsumoextra_set.count() > 0
+
+    @property
     def plan(self):
-        return "Lifetime Deal for Gyana" if self.appsumocode_set.count() > 0 else "Free"
+        return "Lifetime Deal for Gyana" if self.active_codes > 0 else "Free"
 
     @property
     def row_limit(self):
-        from apps.appsumo.account import get_deal
+        from .account import get_row_limit
 
-        if self.override_row_limit is not None:
-            return self.override_row_limit
-
-        rows = max(
-            DEFAULT_ROW_LIMIT,
-            get_deal(
-                self.appsumocode_set,  # extra 1M for writing a review
-            )["rows"],
-        )
-
-        # extra 1M for writing a review
-        if hasattr(self, "appsumoreview"):
-            rows += 1_000_000
-
-        rows += self.appsumoextra_set.aggregate(models.Sum("rows"))["rows__sum"] or 0
-
-        return rows
+        return get_row_limit(self)
 
     @property
     def credits(self):
-        from apps.appsumo.account import get_deal
+        from .account import get_credits
 
-        return max(DEFAULT_CREDIT_LIMIT, get_deal(self.appsumocode_set)["credits"])
+        return get_credits(self)
 
     @property
     def admins(self):

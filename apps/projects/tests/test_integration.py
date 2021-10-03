@@ -1,5 +1,12 @@
 import pytest
+from apps.base.tests.asserts import (
+    assertFormRenders,
+    assertLink,
+    assertOK,
+    assertSelectorLength,
+)
 from apps.users.models import CustomUser
+from pytest_django.asserts import assertContains, assertRedirects
 
 pytestmark = pytest.mark.django_db
 
@@ -8,7 +15,12 @@ def test_project_crudl(client, logged_in_user):
     team = logged_in_user.teams.first()
 
     # create
-    assert client.get(f"/teams/{team.id}/projects/new").status_code == 200
+    r = client.get_turbo_frame(f"/teams/{team.id}", f"/teams/{team.id}/templates/")
+    assertLink(r, f"/teams/{team.id}/projects/new", "New Project")
+
+    r = client.get(f"/teams/{team.id}/projects/new")
+    assertOK(r)
+    assertFormRenders(r, ["name", "description", "access"])
 
     r = client.post(
         f"/teams/{team.id}/projects/new",
@@ -19,19 +31,29 @@ def test_project_crudl(client, logged_in_user):
             "submit": True,
         },
     )
-    assert r.status_code == 303
     project = team.project_set.first()
     assert project is not None
-    assert r.url == f"/projects/{project.id}"
+    assertRedirects(r, f"/projects/{project.id}", status_code=303)
 
     # read
-    assert client.get(f"/projects/{project.id}").status_code == 200
+    r = client.get(f"/projects/{project.id}")
+    assertOK(r)
+    assertContains(r, "Metrics")
+    assertContains(r, "All the company metrics")
+    assertLink(r, f"/projects/{project.id}/update", "Settings")
 
     # list
-    assert client.get(f"/teams/{team.id}").status_code == 200
+    r = client.get(f"/teams/{team.id}")
+    assertOK(r)
+    assertSelectorLength(r, "table tbody tr", 1)
+    assertLink(r, f"/projects/{project.id}", "Metrics")
 
     # update
-    assert client.get(f"/projects/{project.id}/update").status_code == 200
+    r = client.get(f"/projects/{project.id}/update")
+    assertOK(r)
+    assertFormRenders(r, ["name", "description", "access"])
+    assertLink(r, f"/projects/{project.id}/delete", "Delete")
+
     r = client.post(
         f"/projects/{project.id}/update",
         data={
@@ -41,15 +63,18 @@ def test_project_crudl(client, logged_in_user):
             "submit": True,
         },
     )
-    assert r.status_code == 303
-    assert r.url == f"/projects/{project.id}"
+    assertRedirects(r, f"/projects/{project.id}", status_code=303)
+
+    project.refresh_from_db()
+    assert project.name == "KPIs"
 
     # delete
-    assert client.get(f"/projects/{project.id}/delete").status_code == 200
+    r = client.get(f"/projects/{project.id}/delete")
+    assertOK(r)
+    assertFormRenders(r)
 
     r = client.delete(f"/projects/{project.id}/delete")
-    assert r.status_code == 302
-    assert r.url == f"/teams/{team.id}"
+    assertRedirects(r, f"/teams/{team.id}")
 
     assert team.project_set.first() is None
 
@@ -69,7 +94,7 @@ def test_private_projects(client, logged_in_user):
             "access": "invite",
         },
     )
-    assert "members" in r.context["form"].fields
+    assertFormRenders(r, ["name", "description", "access", "members"])
 
     # create private project
     r = client.post(
@@ -83,11 +108,14 @@ def test_private_projects(client, logged_in_user):
         },
     )
 
-    # validate access
     project = team.project_set.first()
     assert project is not None
-    assert client.get(f"/projects/{project.id}").status_code == 200
+
+    # validate access
+    assertSelectorLength(client.get(f"/teams/{team.id}"), "table tbody tr", 1)
+    assertOK(client.get(f"/projects/{project.id}"))
 
     # validate forbidden
     client.force_login(other_user)
+    assertSelectorLength(client.get(f"/teams/{team.id}"), "table tbody tr", 0)
     assert client.get(f"/projects/{project.id}").status_code == 404

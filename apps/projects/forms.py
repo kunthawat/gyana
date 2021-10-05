@@ -25,7 +25,7 @@ class ProjectForm(LiveUpdateForm):
             cname_field.queryset = self._team.cname_set.all()
 
     def get_live_fields(self):
-        if not (self._is_beta and self._team.plan["name"] != "Free"):
+        if not self._is_beta:
             return ["name", "description"]
         fields = ["name", "description", "access", "cname"]
         if self.get_live_field("access") == Project.Access.INVITE_ONLY:

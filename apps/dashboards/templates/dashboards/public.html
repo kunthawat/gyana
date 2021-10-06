@@ -8,18 +8,17 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  {% flag 'beta' %}
-  {% else %}
+  {% if not is_beta %}
     {% include 'web/components/meta.html' %}
-  {% endflag %}
+  {% endif %}
 
-  {% flag 'beta' %}
+  {% if is_beta %}
     {% if project.team.icon %}
       <link rel="icon" type="image/png" sizes="16x16" href="{{ project.team.icon.url }}">
     {% endif %}
   {% else %}
     {% include 'web/components/favicon.html' %}
-  {% endflag %}
+  {% endif %}
 
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
@@ -37,7 +36,7 @@
   <script src="{% url 'api_schemajs' %}"></script>
 
   {% block head %}
-    <title>{{ dashboard.name }}{% flag 'beta' %}{% else %} | Gyana {% endflag %}</title>
+    <title>{{ dashboard.name }}{% if not is_beta %} | Gyana {% endif %}</title>
   {% endblock %}
 </head>
 <body class="pad">
@@ -45,11 +44,9 @@
   <div class="widgets flex items-center justify-center">
     <header class="flex w-full justify-between mb-7">
       <div class="flex justify-center items-center self-start">
-        {% flag 'beta' %}
-          {% if project.team.icon %}
-            <img src="{{ project.team.icon.url }}" class="h-24 w-24 mr-5" alt="">
-          {% endif %}
-        {% endflag %}
+        {% if is_beta and project.team.icon %}
+          <img src="{{ project.team.icon.url }}" class="h-24 w-24 mr-5" alt="">
+        {% endif %}
 
         <div class="flex flex-col">
           <p>{{ project.team.name }}</p>
@@ -57,10 +54,9 @@
         </div>
       </div>
 
-      {% flag 'beta' %}
-      {% else %}
+      {% if not is_beta %}
         <p class="self-end">Powered by <a href="/" class="link">Gyana</a></p>
-      {% endflag %}
+      {% endif %}
     </header>
 
     <div id="dashboard-widget-container"

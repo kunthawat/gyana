@@ -12,7 +12,7 @@
     <i class="fas fa-fw fa-4x fa-sparkles mb-7"></i>
     <h3>You have no custom domains</h3>
       <p>
-        Why not <a href="{% url 'team_cnames:create' team.id %}" class="link">create one</a>?
+        Why not <a href="{% url 'team_cnames:create' team.id %}" class="link" data-turbo-frame="_top">create one</a>?
       </p>
   </div>
   {% else %}

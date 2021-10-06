@@ -1,19 +1,19 @@
+import copy
+
 import analytics
-from apps.base.analytics import DASHBOARD_CREATED_EVENT, DASHBOARD_DUPLICATED_EVENT
+from apps.base.analytics import (DASHBOARD_CREATED_EVENT,
+                                 DASHBOARD_DUPLICATED_EVENT)
 from apps.base.turbo import TurboCreateView, TurboUpdateView
 from apps.dashboards.tables import DashboardTable
 from apps.projects.mixins import ProjectMixin
 from apps.widgets.models import WIDGET_CHOICES_ARRAY
 from django.db.models.query import QuerySet
-from django.http import HttpResponse
-from django.shortcuts import redirect
-from django.template import loader
 from django.urls.base import reverse
 from django.utils import timezone
-from django.views.decorators.http import require_POST
 from django.views.generic.detail import DetailView
 from django.views.generic.edit import DeleteView, FormView
 from django_tables2 import SingleTableView
+from waffle import flag_is_active
 
 from .forms import DashboardCreateForm, DashboardForm, DashboardLoginForm
 from .models import Dashboard
@@ -133,6 +133,16 @@ class DashboardPublic(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["project"] = self.object.project
+        # beta status is determined by the owners of the dashboard, not the
+        # user viewing the dashboard
+        user = self.request.user
+        context["is_beta"] = False
+        for member in self.object.project.team.members.all():
+            self.request.user = member
+            context["is_beta"] = context['is_beta'] or flag_is_active(
+                self.request, "beta"
+            )
+        self.request.user = user
         return context
 
 

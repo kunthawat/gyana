@@ -1,22 +1,16 @@
-import textwrap
-
 import googleapiclient
-from apps.base.clients import sheets_client
-from apps.integrations.models import Integration
+from apps.base.forms import BaseModelForm
 from django import forms
 from django.core.exceptions import ValidationError
-from django.db import transaction
 
-from .bigquery import get_sheets_id_from_url
 from .models import Sheet
+from .sheets import get_sheets_id_from_url
 
 
-class SheetCreateForm(forms.ModelForm):
+class SheetCreateForm(BaseModelForm):
     class Meta:
         model = Sheet
-        fields = [
-            "url",
-        ]
+        fields = ["url"]
         help_texts = {}
         labels = {"url": "Google Sheets URL"}
 
@@ -33,6 +27,8 @@ class SheetCreateForm(forms.ModelForm):
         if sheet_id == "":
             raise ValidationError("The URL to the sheet seems to be invalid.")
 
+        from apps.base.clients import sheets_client
+
         client = sheets_client()
         try:
             self._sheet = client.spreadsheets().get(spreadsheetId=sheet_id).execute()
@@ -43,27 +39,10 @@ class SheetCreateForm(forms.ModelForm):
 
         return url
 
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-
-        title = self._sheet["properties"]["title"]
-        # maximum Google Drive name length is 32767
-        name = textwrap.shorten(title, width=255, placeholder="...")
-        integration = Integration(
-            project=self._project,
-            kind=Integration.Kind.SHEET,
-            name=name,
-            created_by=self._created_by,
+    def pre_save(self, instance):
+        instance.create_integration(
+            self._sheet["properties"]["title"], self._created_by, self._project
         )
-        instance.integration = integration
-
-        if commit:
-            with transaction.atomic():
-                integration.save()
-                instance.save()
-                self.save_m2m()
-
-        return instance
 
 
 class SheetUpdateForm(forms.ModelForm):
@@ -74,12 +53,9 @@ class SheetUpdateForm(forms.ModelForm):
     def clean_cell_range(self):
         cell_range = self.cleaned_data["cell_range"]
 
-        # If validation on the url field fails url, cleaned_data won't
-        # have the url populated.
-        if not (url := self.instance.url):
-            return cell_range
+        sheet_id = get_sheets_id_from_url(self.instance.url)
 
-        sheet_id = get_sheets_id_from_url(url)
+        from apps.base.clients import sheets_client
 
         client = sheets_client()
         try:
@@ -87,7 +63,6 @@ class SheetUpdateForm(forms.ModelForm):
                 spreadsheetId=sheet_id, ranges=cell_range
             ).execute()
         except googleapiclient.errors.HttpError as e:
-            # This will display the parse error
             raise ValidationError(e.reason.strip())
 
         return cell_range

@@ -15,7 +15,7 @@ def patches(*_):
             yield
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True)
 def bigquery_client(*_):
     client = MagicMock()
     with patch("apps.base.clients.bigquery_client", return_value=client):
@@ -23,14 +23,14 @@ def bigquery_client(*_):
         yield client
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True)
 def sheets_client(*_):
     client = MagicMock()
     with patch("apps.base.clients.sheets_client", return_value=client):
         yield client
 
 
-@pytest.fixture(autouse=True, scope="session")
+@pytest.fixture(autouse=True)
 def drive_v2_client(*_):
     client = MagicMock()
     with patch("apps.base.clients.drive_v2_client", return_value=client):
@@ -44,6 +44,12 @@ def logged_in_user(client):
     team.members.add(user, through_defaults={"role": "admin"})
     client.force_login(user)
     return user
+
+
+@pytest.fixture(autouse=True)
+def celery_eager(settings):
+    settings.CELERY_TASK_ALWAYS_EAGER = True
+    settings.CELERY_TASK_EAGER_PROPAGATES = True
 
 
 class BlankMiddleware:

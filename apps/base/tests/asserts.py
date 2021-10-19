@@ -18,7 +18,8 @@ def assertLink(response, url, text=None, title=None):
 
 def assertSelectorLength(response, selector, length):
     soup = BeautifulSoup(response.content)
-    assert len(soup.select(selector)) == length
+    actual_length = len(soup.select(selector))
+    assert actual_length == length, f"{actual_length} != {length}"
 
 
 def assertSelectorText(response, selector, text):
@@ -27,11 +28,11 @@ def assertSelectorText(response, selector, text):
 
 
 def assertOK(response):
-    assert response.status_code == 200
+    assert response.status_code == 200, f"{response.status_code} != 200"
 
 
 def assertNotFound(response):
-    assert response.status_code == 404
+    assert response.status_code == 404, f"{response.status_code} != 404"
 
 
 def assertFormRenders(response, expected_fields=[]):
@@ -40,6 +41,8 @@ def assertFormRenders(response, expected_fields=[]):
     matches = soup.select("form input,select,textarea")
     IGNORE_LIST = ["csrfmiddlewaretoken", "hidden_live"]
     fields = [m["name"] for m in matches if m["name"] not in IGNORE_LIST]
-    assert set(fields) == set(expected_fields)
+    assert set(fields) == set(
+        expected_fields
+    ), f"{set(fields)} != {set(expected_fields)}"
 
     assert len(soup.select("form button[type=submit]")) >= 1

@@ -22,14 +22,10 @@
   {% include 'web/components/honeybadger.html' %}
   {% endif %} {% endcomment %}
 
-  <script src="https://unpkg.com/@popperjs/core@2"></script>
-  <script src="https://unpkg.com/tippy.js@6"></script>
-  <script src="https://kit.fontawesome.com/b03f4cc8cd.js" crossorigin="anonymous"></script>
   <script type="module">
-    import * as hotwiredTurbo from "https://cdn.skypack.dev/@hotwired/turbo";
+    import * as hotwiredTurbo from '{% static 'js/turbo-bundle.js' %}';
   </script>
   <script src="{% static 'js/stimulus-bundle.js' %}"></script>
-
   <script src="{% static 'rest_framework/js/coreapi-0.1.1.js' %}"></script>
   <script src="{% url 'api_schemajs' %}"></script>
 

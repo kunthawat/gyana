@@ -1,8 +1,10 @@
 from apps.connectors.models import Connector
 from apps.integrations.models import Integration
 from apps.projects.models import Project
+from apps.sheets.models import Sheet
 from apps.tables.models import Table
 from apps.teams.models import Team
+from apps.uploads.models import Upload
 from pytest_factoryboy import register
 
 import factory
@@ -48,12 +50,34 @@ class ConnectorFactory(factory.django.DjangoModelFactory):
 
 
 @register
+class SheetFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Sheet
+
+    url = "http://sheet.url"
+    cell_range = "store_info!A1:D10"
+    integration = factory.SubFactory(
+        IntegrationFactory, kind=Integration.Kind.SHEET, name="Store info"
+    )
+
+
+@register
+class UploadFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Upload
+
+    file_gcs_path = "/path/to/gcs"
+    integration = factory.SubFactory(
+        IntegrationFactory, kind=Integration.Kind.UPLOAD, name="Store info"
+    )
+
+
+@register
 class IntegrationTableFactory(factory.django.DjangoModelFactory):
     class Meta:
         model = Table
 
-    project = factory.Iterator(Project.objects.all())
-    integration = factory.Iterator(Integration.objects.all())
     source = Table.Source.INTEGRATION
     bq_table = "table"
     bq_dataset = "dataset"
+    num_rows = 10

@@ -48,9 +48,12 @@
 
 
   <div class="flex flex-col mb-7">
-    <div class="mb-7">
-      <h2>Referenced</h2>
-      <p>All the places this integration is used in</p>
+    <div class="flex flex-row p-7">
+      <div class="mr-auto">
+        <h2>Referenced</h2>
+        <p>All the places this integration is used in</p>
+      </div>
+      {% include 'workflows/create_from_integration.html' %}
     </div>
 
     <div class="card card--none flex-1">

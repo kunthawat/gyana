@@ -53,7 +53,10 @@
         <h2>Referenced</h2>
         <p>All the places this integration is used in</p>
       </div>
-      {% include 'workflows/create_from_integration.html' %}
+      <div class='flex flex-row gap-2'>
+        {% include 'workflows/create_from_integration.html' %}
+        {% include 'dashboards/create_from_integration.html' %}
+      </div>
     </div>
 
     <div class="card card--none flex-1">

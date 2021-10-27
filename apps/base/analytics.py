@@ -42,6 +42,7 @@ WORFKLOW_RUN_EVENT: Final = "Workflow run"
 
 # dashboards
 DASHBOARD_CREATED_EVENT: Final = "Dashboard created"
+DASHBOARD_CREATED_EVENT_FROM_INTEGRATION: Final = "Dashboard created from integration"
 DASHBOARD_DUPLICATED_EVENT: Final = "Dashboard duplicated"
 WIDGET_CREATED_EVENT: Final = "Widget created"
 WIDGET_DUPLICATED_EVENT: Final = "Widget duplicated"

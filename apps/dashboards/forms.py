@@ -17,13 +17,12 @@ class DashboardCreateForm(forms.ModelForm):
 
 
 class DashboardForm(forms.ModelForm):
-    name = forms.CharField(required=False)
     width = forms.IntegerField(required=False)
     height = forms.IntegerField(required=False)
 
     class Meta:
         model = Dashboard
-        fields = ["name", "width", "height"]
+        fields = ["width", "height"]
 
 
 class DashboardShareForm(LiveUpdateForm):
@@ -31,14 +30,6 @@ class DashboardShareForm(LiveUpdateForm):
         model = Dashboard
         fields = ["shared_status", "password"]
         widgets = {"password": PasswordInput(attrs={"autocomplete": "one-time-code"})}
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields["shared_status"].choices = [
-            choice
-            for choice in self.fields["shared_status"].choices
-            if (choice[0] != Dashboard.SharedStatus.PASSWORD_PROTECTED)
-        ]
 
     def get_live_fields(self):
         fields = ["shared_status"]

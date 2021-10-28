@@ -1,3 +1,5 @@
+from functools import cached_property
+
 from django.conf import settings
 from django.db import models
 from django.urls import reverse
@@ -112,12 +114,6 @@ class Team(BaseModel, SafeDeleteModel):
         return self.appsumoextra_set.count() > 0
 
     @property
-    def has_select_code(self):
-        from apps.appsumo.models import AppsumoCode
-
-        return self.appsumocode_set.filter(deal=AppsumoCode.Deal.SELECT).exists()
-
-    @property
     def plan(self):
         from apps.appsumo.account import get_deal
 
@@ -125,6 +121,11 @@ class Team(BaseModel, SafeDeleteModel):
             return {**PLANS["appsumo"], **get_deal(self.appsumocode_set.all())}
 
         return PLANS["free"]
+
+    @cached_property
+    def can_create_cname(self):
+        cname_limit = self.plan.get("cnames", 0)
+        return cname_limit == -1 or self.cname_set.count() < cname_limit
 
     @property
     def row_limit(self):

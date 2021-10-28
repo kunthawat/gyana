@@ -14,7 +14,6 @@ from apps.base.mixins import PageTitleMixin
 from apps.base.turbo import TurboUpdateView
 
 from .forms import CustomUserChangeForm, UserNameForm, UserOnboardingForm
-from .helpers import require_email_confirmation, user_has_confirmed_email_address
 from .models import CustomUser
 
 

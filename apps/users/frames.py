@@ -1,9 +1,11 @@
+from allauth.account.utils import send_email_confirmation
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 
 from apps.base.mixins import PageTitleMixin
 from apps.base.turbo import TurboUpdateView
 from apps.base.frames import TurboFrameUpdateView
+from apps.users.helpers import require_email_confirmation, user_has_confirmed_email_address
 
 from .forms import CustomUserChangeForm
 from .models import CustomUser

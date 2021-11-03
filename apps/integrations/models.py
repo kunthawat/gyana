@@ -3,7 +3,6 @@ from itertools import chain
 
 from apps.base.models import BaseModel
 from apps.base.table import ICONS
-from apps.connectors.fivetran.config import get_services
 from apps.dashboards.models import Dashboard
 from apps.projects.models import Project
 from apps.users.models import CustomUser
@@ -158,7 +157,7 @@ class Integration(CloneMixin, BaseModel):
         return (
             self.get_kind_display()
             if self.kind != self.Kind.CONNECTOR
-            else get_services()[self.connector.service]["name"]
+            else self.connector.conf.name
         )
 
     def get_table_name(self):
@@ -169,7 +168,7 @@ class Integration(CloneMixin, BaseModel):
 
     def icon(self):
         if self.kind == Integration.Kind.CONNECTOR:
-            return f"images/integrations/fivetran/{get_services()[self.connector.service]['icon_path']}"
+            return f"images/integrations/fivetran/{self.connector.conf.icon_path}"
         return f"images/integrations/{self.kind}.svg"
 
     def get_table_by_pk_safe(self, table_pk):
@@ -181,3 +180,7 @@ class Integration(CloneMixin, BaseModel):
             return self.table_set.get(pk=table_pk)
         except (Table.DoesNotExist, ValueError):
             return self.table_set.first()
+
+    @property
+    def bq_ids(self):
+        return {table.bq_id for table in self.table_set.all()}

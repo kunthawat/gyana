@@ -1,13 +1,13 @@
-from datetime import datetime
-
 from django.conf import settings
 from django.db import models
+from django.urls import reverse
 from django.utils import timezone
 
+from apps.base import clients
 from apps.base.models import BaseModel
 from apps.integrations.models import Integration
 
-from .fivetran.config import get_services
+from .fivetran.config import get_services_obj
 
 FIVETRAN_CHECK_SYNC_TIMEOUT_HOURS = 24
 FIVETRAN_SYNC_FREQUENCY_HOURS = 6
@@ -77,15 +77,10 @@ class Connector(BaseModel):
         self.integration = integration
 
     @property
-    def is_database(self):
-        service_conf = get_services()[self.service]
-        return service_conf.get("requires_schema_prefix") == "t"
+    def conf(self):
+        return get_services_obj()[self.service]
 
     def update_fivetran_succeeded_at(self, succeeded_at: str):
-
-        # fivetran timestamp string from get response
-        # timezone (UTC) information is parsed automatically
-        succeeded_at = datetime.strptime(succeeded_at, "%Y-%m-%dT%H:%M:%S.%f%z")
 
         # ignore outdated information
         if (
@@ -100,3 +95,18 @@ class Connector(BaseModel):
         # update all tables too
         for table in self.integration.table_set.all():
             table.update_data_updated(succeeded_at)
+
+    @property
+    def fivetran_authorization_url(self):
+        internal_redirect = reverse(
+            "project_integrations_connectors:authorize",
+            args=(
+                self.integration.project.id,
+                self.id,
+            ),
+        )
+
+        return clients.fivetran().get_authorize_url(
+            self,
+            f"{settings.EXTERNAL_URL}{internal_redirect}",
+        )

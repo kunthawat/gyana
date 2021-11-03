@@ -5,7 +5,7 @@ from apps.base import clients
 from apps.base.frames import TurboFrameDetailView
 
 from .models import Connector
-from .tasks import complete_connector_sync
+from .sync import handle_syncing_connector
 
 
 class ConnectorIcon(TurboFrameDetailView):
@@ -17,8 +17,7 @@ class ConnectorIcon(TurboFrameDetailView):
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
 
-        if clients.fivetran().has_completed_sync(self.object):
-            complete_connector_sync(self.object)
+        handle_syncing_connector(self.object)
 
         context_data["icon"] = self.object.integration.state_icon
         context_data["text"] = self.object.integration.state_text
@@ -35,29 +34,10 @@ class ConnectorStatus(TurboFrameDetailView):
     def get_context_data(self, **kwargs):
 
         context_data = super().get_context_data(**kwargs)
-        data = clients.fivetran().get(self.object)
-        succeeded_at = data.get("succeeded_at")
-        if succeeded_at is not None:
-            self.object.update_fivetran_succeeded_at(data["succeeded_at"])
+        fivetran_connector = clients.fivetran().get(self.object)
 
-        # {
-        #     "setup_state": "broken" | "incomplete" | "connected",
-        #     "tasks": [{"code": ..., "message": ...}],
-        #     "warnings": [{"code": ..., "message": ...}]
-        # }
-        broken = data["status"]["setup_state"] != "connected"
-        if broken:
-            internal_redirect = reverse(
-                "project_integrations_connectors:authorize",
-                args=(
-                    self.object.integration.project.id,
-                    self.object.id,
-                ),
-            )
+        if fivetran_connector.succeeded_at is not None:
+            self.object.update_fivetran_succeeded_at(fivetran_connector.succeeded_at)
 
-            context_data["fivetran_url"] = clients.fivetran().get_authorize_url(
-                self.object,
-                f"{settings.EXTERNAL_URL}{internal_redirect}",
-            )
-        context_data["broken"] = broken
+        context_data["broken"] = fivetran_connector.status.setup_state != "connected"
         return context_data

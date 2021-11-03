@@ -1,13 +1,13 @@
 import uuid
-from typing import Dict, List
+from typing import Dict
 
-import backoff
 import requests
 from django.conf import settings
 
 from ..models import Connector
-from .config import get_services
-from .schema import FivetranSchema, schemas_to_dict, schemas_to_obj
+from .config import ServiceTypeEnum, get_services_obj
+from .connector import FivetranConnector
+from .schema import FivetranSchemaObj
 
 # wrapper for the Fivetran connectors REST API, documented here
 # https://fivetran.com/docs/rest-api/connectors
@@ -27,9 +27,9 @@ class FivetranClient:
 
         # https://fivetran.com/docs/rest-api/connectors#createaconnector
 
-        service_conf = get_services()[service]
+        service_conf = get_services_obj()[service]
 
-        config = service_conf.get("static_config", {})
+        config = service_conf.static_config
 
         # https://fivetran.com/docs/rest-api/connectors/config
         # database connectors require schema_prefix, rather than schema
@@ -40,7 +40,7 @@ class FivetranClient:
 
         config[
             "schema_prefix"
-            if service_conf.get("requires_schema_prefix") == "t"
+            if service_conf.service_type == ServiceTypeEnum.DATABASE
             else "schema"
         ] = schema
 
@@ -85,7 +85,7 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        return res["data"]
+        return FivetranConnector(**res["data"])
 
     def get_authorize_url(self, connector: Connector, redirect_uri: str) -> str:
 
@@ -128,21 +128,7 @@ class FivetranClient:
 
         return res
 
-    def has_completed_sync(self, connector: Connector) -> bool:
-
-        res = requests.get(
-            f"{settings.FIVETRAN_URL}/connectors/{connector.fivetran_id}",
-            headers=settings.FIVETRAN_HEADERS,
-        ).json()
-
-        if res["code"] != "Success":
-            raise FivetranClientError(res)
-
-        status = res["data"]["status"]
-
-        return not (status["is_historical_sync"] or status["sync_state"] == "syncing")
-
-    def reload_schemas(self, connector: Connector) -> List[FivetranSchema]:
+    def reload_schemas(self, connector: Connector) -> FivetranSchemaObj:
 
         # https://fivetran.com/docs/rest-api/connectors#reloadaconnectorschemaconfig
 
@@ -154,7 +140,9 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        return schemas_to_obj(res["data"].get("schemas", {}))
+        return FivetranSchemaObj(
+            res["data"].get("schemas", {}), connector.conf, connector.schema
+        )
 
     def get_schemas(self, connector: Connector):
 
@@ -173,15 +161,17 @@ class FivetranClient:
             raise FivetranClientError(res)
 
         # schema not included for Google Sheets connector
-        return schemas_to_obj(res["data"].get("schemas", {}))
+        return FivetranSchemaObj(
+            res["data"].get("schemas", {}), connector.conf, connector.schema
+        )
 
-    def update_schemas(self, connector: Connector, schemas: List[FivetranSchema]):
+    def update_schemas(self, connector: Connector, schemas: FivetranSchemaObj):
 
         # https://fivetran.com/docs/rest-api/connectors#modifyaconnectorschemaconfig
 
         res = requests.patch(
             f"{settings.FIVETRAN_URL}/connectors/{connector.fivetran_id}/schemas",
-            json={"schemas": schemas_to_dict(schemas)},
+            json={"schemas": schemas.to_dict()},
             headers=settings.FIVETRAN_HEADERS,
         ).json()
 

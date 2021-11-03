@@ -5,7 +5,7 @@ from apps.base.tasks import honeybadger_check_in
 
 from .fivetran.client import FivetranClientError
 from .models import Connector
-from .tasks import complete_connector_sync
+from .sync import handle_syncing_connector
 
 
 @shared_task
@@ -15,9 +15,11 @@ def update_connectors_from_fivetran():
 
     for connector in connectors_to_check:
         try:
-            succeeded_at = clients.fivetran().get(connector).get("succeeded_at")
+            succeeded_at = clients.fivetran().get(connector).succeeded_at
             if succeeded_at is not None:
                 connector.update_fivetran_succeeded_at(succeeded_at)
+                # update any newly created tables
+                handle_syncing_connector(connector)
 
         except FivetranClientError:
             pass
@@ -31,7 +33,6 @@ def check_syncing_connectors_from_fivetran():
     connectors_to_check = Connector.objects.needs_initial_sync_check()
 
     for connector in connectors_to_check:
-        if clients.fivetran().has_completed_sync(connector):
-            complete_connector_sync(connector)
+        handle_syncing_connector(connector)
 
     honeybadger_check_in("VBInlo")

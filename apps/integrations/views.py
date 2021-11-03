@@ -2,7 +2,7 @@ import analytics
 from apps.base import clients
 from apps.base.analytics import INTEGRATION_SYNC_STARTED_EVENT
 from apps.base.turbo import TurboUpdateView
-from apps.connectors.tasks import complete_connector_sync
+from apps.connectors.sync import handle_syncing_connector
 from apps.integrations.filters import IntegrationFilter
 from apps.integrations.tasks import KIND_TO_SYNC_TASK
 from apps.projects.mixins import ProjectMixin
@@ -187,6 +187,11 @@ class IntegrationLoad(ProjectMixin, TurboUpdateView):
     def get(self, request, *args, **kwargs):
 
         self.object = self.get_object()
+
+        if self.object.kind == Integration.Kind.CONNECTOR:
+            handle_syncing_connector(self.object.source_obj)
+            self.object.refresh_from_db()
+
         if self.object.state not in [
             Integration.State.LOAD,
             Integration.State.ERROR,
@@ -195,18 +200,20 @@ class IntegrationLoad(ProjectMixin, TurboUpdateView):
                 "project_integrations:done", self.project.id, self.object.id
             )
 
-        if self.object.kind == Integration.Kind.CONNECTOR:
-            if clients.fivetran().has_completed_sync(self.object.source_obj):
-                complete_connector_sync(self.object.source_obj)
-                return redirect(
-                    "project_integrations:done", self.project.id, self.object.id
-                )
-
         return super().get(request, *args, **kwargs)
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
         context_data["sync_task_id"] = self.object.source_obj.sync_task_id
+
+        if (
+            self.object.kind == Integration.Kind.CONNECTOR
+            and self.object.state == Integration.State.ERROR
+        ):
+            fivetran_obj = clients.fivetran().get(self.object.source_obj)
+            if fivetran_obj.status.setup_state != "connected":
+                context_data["broken"] = True
+
         return context_data
 
     def form_valid(self, form):

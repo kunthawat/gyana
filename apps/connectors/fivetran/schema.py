@@ -3,8 +3,9 @@ from itertools import chain
 from typing import Dict, List, Optional
 
 from apps.base import clients
+from apps.connectors.bigquery import check_bq_id_exists, get_bq_ids_from_dataset_safe
 
-from ..models import Connector
+from .config import ServiceTypeEnum
 
 # wrapper for fivetran schema information
 # https://fivetran.com/docs/rest-api/connectors#retrieveaconnectorschemaconfig
@@ -35,6 +36,9 @@ class FivetranTable:
 @dataclass
 class FivetranSchema:
     key: str
+    service_type: ServiceTypeEnum
+    schema_prefix: str
+
     name_in_destination: str
     enabled: bool
     tables: List[FivetranTable]
@@ -45,68 +49,140 @@ class FivetranSchema:
     def asdict(self):
         res = {**asdict(self), "tables": {t.key: t.asdict() for t in self.tables}}
         res.pop("key")
+        res.pop("service_type")
+        res.pop("schema_prefix")
         return res
 
     @property
+    def dataset_id(self):
+        # database connectors have multiple bigquery datasets
+        if self.service_type == ServiceTypeEnum.DATABASE:
+            return f"{self.schema_prefix}_{self.name_in_destination}"
+        return self.schema_prefix
+
+    @property
     def enabled_bq_ids(self):
+        # the bigquery ids that fivetran intends to create based on the schema
+        # the user can has the option to disable individual tables
         return {
-            f"{self.name_in_destination}.{table.name_in_destination}"
+            f"{self.dataset_id}.{table.name_in_destination}"
             for table in self.tables
-            if table.enabled and self.enabled
+            if table.enabled
         }
+
+    @property
+    def actual_bq_ids(self):
+        # the actual bigquery ids we see in bigquery
+        return get_bq_ids_from_dataset_safe(self.dataset_id)
+
+    def get_bq_ids(self):
+        # determine the bigquery ids we want to map into our database for this
+        # schema. we take the intersection of what fivetran says it will create
+        # vs what bigquery reports was actually created, this:
+        #
+        # - filters out tables that are incorrectly included in bigquery - e.g.
+        #   failed deletions or fivetran system tables
+        # - filters out tables that fivetran expected, but weren't created in
+        #   bigquery - e.g. if the source app does not contain any of that entity
+        #
+        # nb: api_cloud and database only - webhooks_reports and event_tracking
+        # do not have any fivetran schema information
+
+        return self.actual_bq_ids & self.enabled_bq_ids
 
     @property
     def display_name(self):
         return self.name_in_destination.replace("_", " ").title()
 
 
-def schemas_to_obj(schemas_dict):
-    return [FivetranSchema(key=k, **s) for k, s in schemas_dict.items()]
+class FivetranSchemaObj:
+    def __init__(self, schemas_dict, service_conf, schema_prefix):
+        self.conf = service_conf
+        self.schema_prefix = schema_prefix
+        self.schemas = [
+            FivetranSchema(
+                key=k,
+                service_type=self.conf.service_type,
+                schema_prefix=self.schema_prefix,
+                **s,
+            )
+            for k, s in schemas_dict.items()
+        ]
 
+    def to_dict(self):
+        return {s.key: s.asdict() for s in self.schemas}
 
-def schemas_to_dict(schemas):
-    return {s.key: s.asdict() for s in schemas}
+    @property
+    def enabled_schemas(self):
+        # the user can has the option to disable individual schemas
+        return [s for s in self.schemas if s.enabled]
 
+    def get_bq_datasets(self):
 
-def get_bq_datasets_from_schemas(connector):
+        # determine all the bigquery datasets associated with a connector,
+        # used for deletions
 
-    datasets = {
-        s.name_in_destination for s in clients.fivetran().get_schemas(connector)
-    }
+        # a database connector used multiple bigquery datasets
+        if self.conf.service_type == ServiceTypeEnum.DATABASE:
+            return {s.dataset_id for s in self.enabled_schemas}
 
-    # fivetran schema config does not include schema prefix for databases
-    if connector.is_database:
-        datasets = {f"{connector.schema}_{id_}" for id_ in datasets}
+        return {self.schema_prefix}
 
-    return datasets
+    @property
+    def enabled_bq_ids(self):
 
+        # only defined for api_cloud and database
 
-def get_bq_ids_from_schemas(connector: Connector):
+        service_type = self.conf.service_type
 
-    # get the list of bigquery ids (dataset.table) from the fivetran schema information
+        # api_cloud
+        # cross reference fivetran schema and bigquery dataset
+        if service_type == ServiceTypeEnum.API_CLOUD:
+            # only databases have multiple schemas
+            return self.schemas[0].enabled_bq_ids
 
-    schema_bq_ids = set(
-        chain(*(s.enabled_bq_ids for s in clients.fivetran().get_schemas(connector)))
-    )
+        # database
+        # ditto api_cloud but for multiple schemas/datasets
+        return set(chain(*(schema.enabled_bq_ids for schema in self.enabled_schemas)))
 
-    # fivetran schema config does not include schema prefix for databases
-    if connector.is_database:
-        schema_bq_ids = {f"{connector.schema}_{id_}" for id_ in schema_bq_ids}
+    def get_bq_ids(self):
 
-    # special case for google sheets
-    if len(schema_bq_ids) == 0:
-        return [f"{connector.schema}.sheets_table"]
+        # definitive function to map from a fivetran schema object to one or more
+        # bigquery schemas with one or more tables
+        #
+        # an empty return indicates that there is no data in bigquery yet
 
-    return schema_bq_ids
+        service_type = self.conf.service_type
+
+        # event_tracking
+        # tables are generated dynamically, bigquery is the source of truth
+        if service_type == ServiceTypeEnum.EVENT_TRACKING:
+            return get_bq_ids_from_dataset_safe(self.schema_prefix)
+
+        # webhooks or reporting_api
+        # only one table, validate it exists
+        if service_type in [ServiceTypeEnum.WEBHOOKS, ServiceTypeEnum.REPORTING_API]:
+            bq_id = f'{self.schema_prefix}.{self.conf.static_config["table"]}'
+            return {bq_id} if check_bq_id_exists(bq_id) else set()
+
+        # api_cloud
+        # cross reference fivetran schema and bigquery dataset
+        if service_type == ServiceTypeEnum.API_CLOUD:
+            # only databases have multiple schemas
+            return self.schemas[0].get_bq_ids()
+
+        # database
+        # ditto api_cloud but for multiple schemas/datasets
+        return set(chain(*(schema.get_bq_ids() for schema in self.enabled_schemas)))
 
 
 def update_schema_from_cleaned_data(connector, cleaned_data):
     # construct the payload from cleaned data
 
     # mutate the schema information based on user input
-    schemas = clients.fivetran().get_schemas(connector)
+    schema_obj = clients.fivetran().get_schemas(connector)
 
-    for schema in schemas:
+    for schema in schema_obj.schemas:
         schema.enabled = f"{schema.name_in_destination}_schema" in cleaned_data
         # only patch tables that are allowed
         schema.tables = [
@@ -121,4 +197,4 @@ def update_schema_from_cleaned_data(connector, cleaned_data):
             # if access issues, e.g. per column access in Postgres
             table.columns = {}
 
-    clients.fivetran().update_schemas(connector, schemas)
+    clients.fivetran().update_schemas(connector, schema_obj)

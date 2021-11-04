@@ -6,8 +6,6 @@ from django.conf import settings
 
 from ..models import Connector
 from .config import ServiceTypeEnum, get_services_obj
-from .connector import FivetranConnector
-from .schema import FivetranSchemaObj
 
 # wrapper for the Fivetran connectors REST API, documented here
 # https://fivetran.com/docs/rest-api/connectors
@@ -60,18 +58,7 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        # response schema https://fivetran.com/docs/rest-api/connectors#response_1
-        #  {
-        #   "code": "Success",
-        #   "message": "Connector has been created",
-        #   "data": {
-        #       "id": "{{ fivetran_id }}",
-        #       # returns odd results for Google Sheets
-        #       "schema": "{{ schema }}",
-        #       ...
-        #    }
-        #  }
-        return {"fivetran_id": res["data"]["id"], "schema": schema}
+        return res["data"]
 
     def get(self, connector: Connector):
 
@@ -85,7 +72,7 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        return FivetranConnector(**res["data"])
+        return res["data"]
 
     def get_authorize_url(self, connector: Connector, redirect_uri: str) -> str:
 
@@ -128,7 +115,7 @@ class FivetranClient:
 
         return res
 
-    def reload_schemas(self, connector: Connector) -> FivetranSchemaObj:
+    def reload_schemas(self, connector: Connector):
 
         # https://fivetran.com/docs/rest-api/connectors#reloadaconnectorschemaconfig
 
@@ -140,9 +127,7 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        return FivetranSchemaObj(
-            res["data"].get("schemas", {}), connector.conf, connector.schema
-        )
+        return res["data"].get("schemas", {})
 
     def get_schemas(self, connector: Connector):
 
@@ -160,18 +145,16 @@ class FivetranClient:
         if res["code"] != "Success":
             raise FivetranClientError(res)
 
-        # schema not included for Google Sheets connector
-        return FivetranSchemaObj(
-            res["data"].get("schemas", {}), connector.conf, connector.schema
-        )
+        # schema not included for certain connector (e.g. sheets)
+        return res["data"].get("schemas", {})
 
-    def update_schemas(self, connector: Connector, schemas: FivetranSchemaObj):
+    def update_schemas(self, connector: Connector, schemas):
 
         # https://fivetran.com/docs/rest-api/connectors#modifyaconnectorschemaconfig
 
         res = requests.patch(
             f"{settings.FIVETRAN_URL}/connectors/{connector.fivetran_id}/schemas",
-            json={"schemas": schemas.to_dict()},
+            json={"schemas": schemas},
             headers=settings.FIVETRAN_HEADERS,
         ).json()
 

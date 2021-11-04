@@ -3,7 +3,10 @@ from datetime import datetime
 import analytics
 from apps.base.analytics import INTEGRATION_SYNC_SUCCESS_EVENT
 from apps.base.time import catchtime
-from apps.integrations.emails import integration_ready_email
+from apps.integrations.emails import (
+    integration_ready_email,
+    send_integration_ready_email,
+)
 from apps.integrations.models import Integration
 from apps.tables.models import Table
 from celery import shared_task
@@ -42,9 +45,7 @@ def run_sheet_sync_task(self, sheet_id):
             with catchtime() as get_time_to_sync:
                 import_table_from_sheet(table=table, sheet=sheet)
 
-            table.num_rows = table.bq_obj.num_rows
-            table.data_updated = datetime.now()
-            table.save()
+            table.sync_updates_from_bigquery()
 
             sheet.last_synced = datetime.now()
             sheet.save()
@@ -57,23 +58,8 @@ def run_sheet_sync_task(self, sheet_id):
         integration.save()
         raise e
 
-    # the initial sync completed successfully and a new integration is created
-
-    if integration.created_by and created:
-
-        email = integration_ready_email(integration, integration.created_by)
-        email.send()
-
-        analytics.track(
-            integration.created_by.id,
-            INTEGRATION_SYNC_SUCCESS_EVENT,
-            {
-                "id": integration.id,
-                "kind": integration.kind,
-                "row_count": integration.num_rows,
-                "time_to_sync": int(get_time_to_sync()),
-            },
-        )
+    if created:
+        send_integration_ready_email(integration, get_time_to_sync())
 
     return integration.id
 

@@ -56,7 +56,7 @@ def run_sheet_sync_task(self, sheet_id):
         raise e
 
     if created:
-        send_integration_ready_email(integration, get_time_to_sync())
+        send_integration_ready_email(integration, int(get_time_to_sync()))
 
     return integration.id
 

@@ -14,7 +14,10 @@ FusionCharts.register('theme', {
   theme: {
     base: {
       chart: {
+        bgColor: "#ffffff",
+        {% if palette_colors|length > 0 %}
         paletteColors: "{% autoescape off %}{{ palette_colors|join:"," }}{% endautoescape %}",
+        {% endif %}
       },
     }
   }

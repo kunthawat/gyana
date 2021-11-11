@@ -3,6 +3,7 @@ from allauth.account.forms import SignupForm
 from django import forms
 from django.conf import settings
 from django.utils.html import mark_safe
+from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
 
 from apps.base.analytics import (
@@ -12,7 +13,9 @@ from apps.base.analytics import (
     identify_user_group,
 )
 from apps.base.live_update_form import LiveUpdateForm
+from apps.invites.models import Invite
 from apps.teams import roles
+from apps.users.models import ApprovedWaitlistEmail
 
 from .models import Membership, Team
 from .paddle import update_plan_for_team
@@ -28,9 +31,23 @@ class TeamSignupForm(SignupForm):
         self.fields["email"].help_text = "e.g. maryjackson@nasa.gov"
         self.fields["password1"].help_text = "Must have at least 6 characters"
 
+    def clean(self):
+        cleaned_data = super().clean()
+        email = cleaned_data["email"].lower()
+
+        waitlist_approved = ApprovedWaitlistEmail.check_approved(email)
+        accepted_invite = Invite.check_email_accepted(email)
+
+        if not waitlist_approved and not accepted_invite:
+            raise forms.ValidationError(
+                mark_safe(
+                    'Gyana is currently invite only. <a href="https://www.gyana.com" class="link">Join our waitlist.</a>'
+                )
+            )
+
     def save(self, request):
         user = super().save(request)
-        identify_user(user)
+        identify_user(user, signup_source="waitlist")
 
         analytics.track(user.id, SIGNED_UP_EVENT)
 

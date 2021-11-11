@@ -24,6 +24,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
 
+  <link rel="stylesheet" href="{% static 'css/fontawesome.css' %}" />
   <link rel="stylesheet" href="{% static 'css/tailwind.css' %}">
   <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
@@ -54,10 +55,14 @@
       {% endif %}
     </header>
 
-    <div class="widgets__canvas">
-      <div id="dashboard-widget-container"
-          data-controller="widget-list"
-          style="width:{{ object.width }}px;height:{{object.height}}px;">
+    <div
+      class="widgets__canvas"
+      style="--background-color:{{ object.background_color }};"
+    >
+      <div
+        id="dashboard-widget-container"
+        data-controller="widget-list"
+        style="width:{{ object.width }}px;height:{{object.height}}px;">
         {% for widget in object.widget_set.all %}
         <gy-widget id="widget-{{ widget.id }}">
           <div

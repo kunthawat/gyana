@@ -1,8 +1,9 @@
 
 {% include 'nodes/modal_nav_bar.html' %}
 
-<div class="formula">
-  <h1>Formula Docs</h2>
+<div class="formula" data-controller='formula-drawer'>
+  <div class="formula__content">
+    <h1>Formula Docs</h2>
     <p>
       The formula node supports arbitrary arithmetic operations between numeric
       columns and column transformations through function library (see below).
@@ -41,7 +42,7 @@
           class="textarea"
           name="{{ widget.name }}"
           readonly
-        >join(strip(first_name), " ", strip(last_name))</textarea>
+        >join("", strip(first_name), " ", strip(last_name))</textarea>
       </div>
     </p>
     
@@ -67,14 +68,33 @@
     </form>
 
     <div class="functions">
+
       {% for function in functions %}
-      <div class='function-pill'>
+
+      <div class='function-pill' data-action="click->formula-drawer#open" data-src="{{function.id}}">
         <h4>
-        <i class="fa {{ function.icon }}"></i> {{function.name}}(<em>
-          {{ function.arguments|join:", " }}
-        </em>)</h4>
-        <span>{{ function.description }}</span>
+          <i class="fa {{ function.icon }} text-blue"></i> {{function.name}}(<em>
+            {{ function.arguments|join:", " }}
+          </em>)
+        </h4>
       </div>
+
       {% endfor %}
+
     </div>
+  </div>
+  <div class="formula__drawer closed" data-formula-drawer-target='drawer'>
+    <button
+        class="absolute top-4 right-4"
+        data-action="click->formula-drawer#close"
+        data-loading-false
+      >
+        <i class="fal fa-times fa-sm"></i>
+    </button>
+    <turbo-frame id="nodes:function-info" 
+      data-formula-drawer-target='turboFrame'
+      src="{% url "nodes:function-info" node.id %}"
+    >
+    </turbo-frame>
+  </div>
 </div>

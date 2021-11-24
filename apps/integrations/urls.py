@@ -59,11 +59,6 @@ project_urlpatterns = (
             name="detail",
         ),
         path(
-            "<hashid:pk>/update",
-            login_and_project_required(views.IntegrationUpdate.as_view()),
-            name="update",
-        ),
-        path(
             "<hashid:pk>/delete",
             login_and_project_required(views.IntegrationDelete.as_view()),
             name="delete",

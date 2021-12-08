@@ -77,6 +77,7 @@ THIRD_PARTY_APPS = [
     "djpaddle",
     "timezone_field",
     "django_celery_beat",
+    "django_celery_results",
 ]
 
 # Put your project-specific apps here
@@ -103,6 +104,7 @@ PROJECT_APPS = [
     "apps.cnames.apps.CNamesConfig",
     "apps.exports",
     "apps.controls",
+    "apps.runs.apps.RunsConfig",
 ]
 
 INSTALLED_APPS = (
@@ -318,6 +320,7 @@ CELERY_TASK_ROUTES = {
     "apps.*.tasks.*": {"queue": "priority"},
     "apps.*.periodic.*": {"queue": "celery"},
 }
+CELERY_RESULT_BACKEND = 'django-db'
 
 # Pegasus config
 

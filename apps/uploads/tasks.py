@@ -1,17 +1,15 @@
-import analytics
-from apps.base.analytics import INTEGRATION_SYNC_SUCCESS_EVENT
-from apps.base.time import catchtime
-from apps.integrations.emails import (
-    integration_ready_email,
-    send_integration_ready_email,
-)
-from apps.integrations.models import Integration
-from apps.tables.models import Table
-from apps.uploads.bigquery import import_table_from_upload
+from uuid import uuid4
+
 from celery import shared_task
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from django.utils import timezone
+
+from apps.base.time import catchtime
+from apps.integrations.emails import send_integration_ready_email
+from apps.runs.models import JobRun
+from apps.tables.models import Table
+from apps.uploads.bigquery import import_table_from_upload
 
 from .models import Upload
 
@@ -26,33 +24,20 @@ def run_upload_sync_task(self, upload_id: int):
     # database will rollback automatically if there is an error with the bigquery
     # table creation, avoids orphaned table entities
 
-    try:
+    with transaction.atomic():
 
-        with transaction.atomic():
+        table, created = Table.objects.get_or_create(
+            integration=integration,
+            source=Table.Source.INTEGRATION,
+            bq_table=upload.table_id,
+            bq_dataset=integration.project.team.tables_dataset_id,
+            project=integration.project,
+        )
 
-            table, created = Table.objects.get_or_create(
-                integration=integration,
-                source=Table.Source.INTEGRATION,
-                bq_table=upload.table_id,
-                bq_dataset=integration.project.team.tables_dataset_id,
-                project=integration.project,
-            )
+        with catchtime() as get_time_to_sync:
+            import_table_from_upload(table=table, upload=upload)
 
-            with catchtime() as get_time_to_sync:
-                import_table_from_upload(table=table, upload=upload)
-
-            table.sync_updates_from_bigquery()
-
-            upload.last_synced = timezone.now()
-            upload.save()
-
-            integration.state = Integration.State.DONE
-            integration.save()
-
-    except Exception as e:
-        integration.state = Integration.State.ERROR
-        integration.save()
-        raise e
+        table.sync_updates_from_bigquery()
 
     if created:
         send_integration_ready_email(integration, int(get_time_to_sync()))
@@ -61,11 +46,11 @@ def run_upload_sync_task(self, upload_id: int):
 
 
 def run_upload_sync(upload: Upload):
-
-    upload.integration.state = Integration.State.LOAD
-    upload.integration.save()
-
-    result = run_upload_sync_task.delay(upload.id)
-    upload.sync_task_id = result.task_id
-    upload.sync_started = timezone.now()
-    upload.save()
+    run = JobRun.objects.create(
+        source=JobRun.Source.INTEGRATION,
+        integration=upload.integration,
+        task_id=uuid4(),
+        state=JobRun.State.RUNNING,
+        started_at=timezone.now(),
+    )
+    run_upload_sync_task.apply_async((upload.id,), task_id=run.task_id)

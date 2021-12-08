@@ -13,6 +13,7 @@ from apps.base.turbo import TurboUpdateView
 from apps.integrations.filters import IntegrationFilter
 from apps.integrations.tasks import KIND_TO_SYNC_TASK
 from apps.projects.mixins import ProjectMixin
+from apps.runs.tables import JobRunTable
 
 from .forms import KIND_TO_FORM_CLASS, KIND_TO_SETTINGS_FORM_CLASS, IntegrationForm
 from .mixins import STATE_TO_URL_REDIRECT, ReadyMixin
@@ -84,6 +85,16 @@ class IntegrationReferences(ReadyMixin, DetailView):
         context = super().get_context_data(**kwargs)
         context["table"] = ReferencesTable(self.object.used_in)
         return context
+
+
+class IntegrationRuns(ReadyMixin, SingleTableMixin, DetailView):
+    template_name = "integrations/runs.html"
+    model = Integration
+    table_class = JobRunTable
+    paginate_by = 15
+
+    def get_table_data(self):
+        return self.object.runs.all()
 
 
 class IntegrationSettings(ProjectMixin, TurboUpdateView):
@@ -190,11 +201,6 @@ class IntegrationLoad(ProjectMixin, TurboUpdateView):
             )
 
         return super().get(request, *args, **kwargs)
-
-    def get_context_data(self, **kwargs):
-        context_data = super().get_context_data(**kwargs)
-        context_data["sync_task_id"] = self.object.source_obj.sync_task_id
-        return context_data
 
     def form_valid(self, form):
         KIND_TO_SYNC_TASK[self.object.kind](self.object.source_obj)

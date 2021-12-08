@@ -491,7 +491,8 @@
       "x": 0,
       "y": 0,
       "stack_100_percent": false,
-      "error": null
+      "error": null,
+      "date_column": null
     }
   },
   {
@@ -515,7 +516,8 @@
       "x": 0,
       "y": 435,
       "stack_100_percent": false,
-      "error": null
+      "error": null,
+      "date_column": null
     }
   },
   {
@@ -2539,9 +2541,7 @@
       "updated": "2021-07-27T13:17:27.987Z",
       "integration": 1,
       "file_gcs_path": "cypress/integrations/store_info-1627391842010578.csv",
-      "field_delimiter": "comma",
-      "sync_task_id": null,
-      "sync_started": null
+      "field_delimiter": "comma"
     }
   },
   {
@@ -2552,9 +2552,7 @@
       "updated": "2021-08-10T07:30:05.253Z",
       "integration": 3,
       "file_gcs_path": "cypress/integrations/store_info-1628580600032663.csv",
-      "field_delimiter": "comma",
-      "sync_task_id": "1a2e3e76-3a94-4284-8d7d-48f604690ffc",
-      "sync_started": "2021-08-10T07:30:01.347Z"
+      "field_delimiter": "comma"
     }
   },
   {
@@ -2565,9 +2563,7 @@
       "updated": "2021-08-10T07:32:09.105Z",
       "integration": 4,
       "file_gcs_path": "cypress/integrations/revenue-1628580724160651.csv",
-      "field_delimiter": "comma",
-      "sync_task_id": "d0e6091d-7343-4cfb-9d38-92a59cad92b3",
-      "sync_started": "2021-08-10T07:32:04.919Z"
+      "field_delimiter": "comma"
     }
   },
   {
@@ -2578,9 +2574,7 @@
       "updated": "2021-08-11T14:07:44.921Z",
       "integration": 5,
       "file_gcs_path": "cypress/integrations/pivot-1628690860210745.csv",
-      "field_delimiter": "comma",
-      "sync_task_id": "232cd31d-a6e6-4e67-95ff-5afd45560277",
-      "sync_started": "2021-08-11T14:07:41.043Z"
+      "field_delimiter": "comma"
     }
   },
   {
@@ -2591,9 +2585,7 @@
       "updated": "2021-08-31T00:58:23.827Z",
       "integration": 14,
       "file_gcs_path": "cypress/integrations/store_info-16303714979454799.csv",
-      "field_delimiter": "comma",
-      "sync_task_id": "b157cb85-ba71-4a56-983e-7cf7a6b09e73",
-      "sync_started": "2021-08-31T00:58:20.370Z"
+      "field_delimiter": "comma"
     }
   },
   {
@@ -2607,10 +2599,9 @@
       "failed_at": null,
       "integration": 2,
       "url": "https://docs.google.com/spreadsheets/d/1mfauospJlft0B304j7em1vcyE1QKKVMhZjyLfIAnvmU/edit",
+      "sheet_name": null,
       "cell_range": "store_info!A1:D11",
       "drive_file_last_modified_at_sync": "2021-08-08T16:46:04.194Z",
-      "sync_task_id": "aa5c3086-1f87-434f-9d5b-48bd69786b33",
-      "sync_started": "2021-08-08T20:28:24.090Z",
       "drive_modified_date": "2021-10-21T20:18:31.669Z"
     }
   },
@@ -3094,6 +3085,118 @@
     }
   },
   {
+    "model": "runs.jobrun",
+    "pk": 1,
+    "fields": {
+      "created": "2021-12-08T15:16:24.045Z",
+      "updated": "2021-12-08T15:16:24.045Z",
+      "state": "success",
+      "started_at": "2021-08-31T00:58:20.370Z",
+      "completed_at": "2021-08-31T00:58:25.370Z",
+      "task_id": "b157cb85-ba71-4a56-983e-7cf7a6b09e73",
+      "result": null,
+      "source": "integration",
+      "integration": 14,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 2,
+    "fields": {
+      "created": "2021-12-08T15:16:24.049Z",
+      "updated": "2021-12-08T15:16:24.049Z",
+      "state": "success",
+      "started_at": "2021-08-30T19:05:46.412Z",
+      "completed_at": "2021-08-30T19:05:51.412Z",
+      "task_id": "046b5f1f-d1c7-4546-af58-b9ba9fd961b2",
+      "result": null,
+      "source": "integration",
+      "integration": 13,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 3,
+    "fields": {
+      "created": "2021-12-08T15:16:24.050Z",
+      "updated": "2021-12-08T15:16:24.050Z",
+      "state": "success",
+      "started_at": "2021-08-11T14:07:41.043Z",
+      "completed_at": "2021-08-11T14:07:46.043Z",
+      "task_id": "232cd31d-a6e6-4e67-95ff-5afd45560277",
+      "result": null,
+      "source": "integration",
+      "integration": 5,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 4,
+    "fields": {
+      "created": "2021-12-08T15:16:24.051Z",
+      "updated": "2021-12-08T15:16:24.051Z",
+      "state": "success",
+      "started_at": "2021-08-10T07:32:04.919Z",
+      "completed_at": "2021-08-10T07:32:09.919Z",
+      "task_id": "d0e6091d-7343-4cfb-9d38-92a59cad92b3",
+      "result": null,
+      "source": "integration",
+      "integration": 4,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 5,
+    "fields": {
+      "created": "2021-12-08T15:16:24.052Z",
+      "updated": "2021-12-08T15:16:24.052Z",
+      "state": "success",
+      "started_at": "2021-08-10T07:30:01.347Z",
+      "completed_at": "2021-08-10T07:30:06.347Z",
+      "task_id": "1a2e3e76-3a94-4284-8d7d-48f604690ffc",
+      "result": null,
+      "source": "integration",
+      "integration": 3,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 6,
+    "fields": {
+      "created": "2021-12-08T15:16:24.054Z",
+      "updated": "2021-12-08T15:16:24.054Z",
+      "state": "success",
+      "started_at": "2021-08-08T20:28:24.090Z",
+      "completed_at": "2021-08-08T20:28:29.090Z",
+      "task_id": "aa5c3086-1f87-434f-9d5b-48bd69786b33",
+      "result": null,
+      "source": "integration",
+      "integration": 2,
+      "workflow": null
+    }
+  },
+  {
+    "model": "runs.jobrun",
+    "pk": 7,
+    "fields": {
+      "created": "2021-12-08T15:16:24.055Z",
+      "updated": "2021-12-08T15:16:24.055Z",
+      "state": "success",
+      "started_at": "2021-07-27T13:17:27.984Z",
+      "completed_at": "2021-07-27T13:17:32.984Z",
+      "task_id": "df9e7627-b19a-4400-b0e8-894ca1ff9124",
+      "result": null,
+      "source": "integration",
+      "integration": 1,
+      "workflow": null
+    }
+  },
+  {
     "model": "account.emailaddress",
     "pk": 1,
     "fields": { "user": 1, "email": "test@gyana.com", "verified": true, "primary": true }
@@ -3290,7 +3393,7 @@
   {
     "model": "django_celery_beat.periodictasks",
     "pk": 1,
-    "fields": { "last_update": "2021-12-03T23:55:23.820Z" }
+    "fields": { "last_update": "2021-12-08T15:16:11.949Z" }
   },
   {
     "model": "django_celery_beat.periodictask",

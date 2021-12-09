@@ -133,7 +133,7 @@ def get_union_query(node, query, *queries):
         if set(parent.schema()) == set(colnames):
             # Project to make sure columns are in the same order
             query = query.union(
-                parent.projection(colnames), distinct=node.union_distinct
+                parent.projection(list(colnames)), distinct=node.union_distinct
             )
         else:
             raise ibis.common.exceptions.RelationError

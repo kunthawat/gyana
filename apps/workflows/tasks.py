@@ -71,5 +71,5 @@ def run_workflow(workflow: Workflow, user: CustomUser):
         started_at=timezone.now(),
         user=user,
     )
-    run_workflow_task.apply_async((run.id,), task_id=run.task_id)
+    run_workflow_task.apply_async((run.id,), task_id=str(run.task_id))
     return run

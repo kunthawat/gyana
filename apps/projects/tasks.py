@@ -144,5 +144,5 @@ def run_project(project: Project, user: CustomUser):
         started_at=timezone.now(),
         user=user,
     )
-    run_project_task.apply_async((graph_run.id,), task_id=graph_run.task_id)
+    run_project_task.apply_async((graph_run.id,), task_id=str(graph_run.task_id))
     return graph_run

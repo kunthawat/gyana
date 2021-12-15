@@ -79,3 +79,17 @@ class ProjectDelete(ProjectTeamMixin, DeleteView):
 
     def get_success_url(self) -> str:
         return reverse("teams:detail", args=(self.object.team.id,))
+
+
+class ProjectAutomate(ProjectTeamMixin, DetailView):
+    template_name = "projects/automate.html"
+    model = Project
+    pk_url_kwarg = "project_id"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        self.object.update_schedule()
+        return context
+
+    def get_success_url(self):
+        return reverse("projects:automate", args=(self.object.id,))

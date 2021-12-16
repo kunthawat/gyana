@@ -1,6 +1,15 @@
 {% extends "web/app/project_base.html" %}
 {% load waffle_tags %}
 
+{% block page_head %}
+  {% if dashboard.font_family %}
+  <link
+    href="https://fonts.googleapis.com/css2?family={{ dashboard.font_family.split|join:'+' }}:wght@400&display=swap"
+    rel="stylesheet"
+  />
+  {% endif %}
+{% endblock page_head %}
+
 {% block app %}
 <div class="dashboard__header">
   <turbo-frame id="dashboard-name" class="flex-1 mr-auto">
@@ -151,7 +160,7 @@
     <span data-tooltip-target="body">Customize dimensions, grid spacing and color palette</span>
 
     <div data-tf-modal-target="modal" class="tf-modal tf-modal--auto hidden">
-      <div class="card card--none card--modal flex-col flex-1 overflow-auto">
+      <div class="card card--none card--modal flex-col flex-1 h-full">
         <turbo-frame
           id="dashboard:settings"
           data-tf-modal-target="turboFrame"

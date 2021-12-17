@@ -1,0 +1,53 @@
+
+<gy-control-widget id="control-widget-{{ object.id }}">
+  <div
+    class="h-full w-full"
+    data-id="{{ object.id }}"
+    data-x="{{ object.x }}"
+    data-y="{{ object.y }}"
+    data-grid-size="{{ dashboard.grid_size }}"
+    data-controller='popover'
+    data-placement='top-left'
+    data-theme='popover-control'
+  >
+    <div class="widget-card h-full">
+      <div class='widget-card__visual p-2'>
+        
+          <span><i class="fa fa-calendar mr-2"></i>{{ object.control.get_date_range_display }}</span>
+          {% if object.control.date_range == "custom" %}
+
+            {% if object.control.start %}Start <strong>{{object.control.start}}</strong>{% endif %}
+            {% if object.control.end %}End <strong>{{object.control.end}}</strong>{% endif %}
+
+          {% endif %}
+        
+      </div>
+      <div class='widget-card__commands'>
+        <button  data-controller="tooltip" data-popover-target="trigger">
+          <i class="fas fa-fw fa-edit"></i>
+          <span data-tooltip-target="body">Edit</span>
+        </button>
+
+        <form
+          data-controller="tooltip"
+          method="post"
+          action="{% url 'dashboard_controls:delete' project.id dashboard.id object.id %}">
+          {% csrf_token %}
+    
+          <button id="control-widget-delete-{{ object.id }}" type='submit'>
+            <i class="fas fa-fw fa-trash cursor-pointer"></i>
+          </button>
+          <span data-tooltip-target="body">Delete</span>
+        </form>
+        
+      </div>
+    </div>
+    
+    <div class='control-popover' data-popover-target="body">
+      <turbo-frame id="controls:update"
+        src="{% url 'dashboard_controls:update' project.id dashboard.id object.control.id %}"
+      ></turbo-frame>
+    </div>
+  </div>
+  
+</gy-control-widget>

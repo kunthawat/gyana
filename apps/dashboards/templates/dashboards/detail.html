@@ -158,7 +158,7 @@
 
     <span data-tooltip-target="body">Customize dimensions, grid spacing and color palette</span>
 
-    <div data-tf-modal-target="modal" class="tf-modal tf-modal--auto hidden">
+    <div data-tf-modal-target="modal" class="tf-modal tf-modal--auto tf-modal--wide hidden">
       <div class="card card--none card--modal flex-col flex-1 h-full">
         <turbo-frame
           id="dashboard:settings"
@@ -190,7 +190,7 @@
       data-controller="tooltip"
       data-src="{% url "dashboards:share" object.id %}"
     >
-      <i class="far fa-fw fa-share"></i>
+      <i class="fas fa-fw fa-share"></i>
       Share
       <span data-tooltip-target="body">Share a public or password-protected link</span>
     </button>

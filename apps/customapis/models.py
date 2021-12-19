@@ -1,6 +1,5 @@
 from django.conf import settings
 from django.db import models
-from django.db.models.fields import related
 
 from apps.base.clients import SLUG
 from apps.base.models import BaseModel
@@ -25,6 +24,7 @@ class CustomApi(BaseModel):
         BEARER_TOKEN = "bearer_token", "Bearer Token"
         BASIC_AUTH = "basic_auth", "Basic Auth"
         DIGEST_AUTH = "digest_auth", "Digest Auth"
+        OAUTH2 = "oauth2", "OAuth2"
 
     class ApiKeyAddTo(models.TextChoices):
         HTTP_HEADER = "http_header", "HTTP Header"
@@ -60,6 +60,9 @@ class CustomApi(BaseModel):
     # basic auth or digest auth
     username = models.CharField(max_length=1024, null=True)
     password = models.CharField(max_length=1024, null=True)
+
+    # oauth2
+    oauth2 = models.ForeignKey("oauth2.OAuth2", null=True, on_delete=models.SET_NULL)
 
     @property
     def table_id(self):

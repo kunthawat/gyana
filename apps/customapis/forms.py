@@ -132,12 +132,14 @@ BODY_TO_FORMSETS = {
 
 
 class CustomApiCreateForm(BaseModelForm):
-    name = forms.CharField(max_length=255)
+    name = forms.CharField(
+        max_length=255,
+        help_text="E.g. the domain or website, to help you find it later",
+    )
 
     class Meta:
         model = CustomApi
-        fields = ["url"]
-        labels = {"url": "URL"}
+        fields = []
 
     def __init__(self, *args, **kwargs):
         self._project = kwargs.pop("project")
@@ -172,6 +174,11 @@ class CustomApiUpdateForm(LiveUpdateForm):
             "body_raw",
             "body_binary",
         ]
+        widgets = {
+            "api_key_value": forms.PasswordInput(),
+            "bearer_token": forms.PasswordInput(),
+            "password": forms.PasswordInput(),
+        }
         labels = {
             "url": "URL",
             "json_path": "JSON Path",
@@ -183,9 +190,16 @@ class CustomApiUpdateForm(LiveUpdateForm):
             "body_raw": "Raw",
             "body_binary": "Binary",
         }
+        help_texts = {
+            "json_path": mark_safe(
+                'Extract part of the JSON result, e.g. under a specific key <a href="https://github.com/json-path/JSONPath#operators" class="link">learn more</a>'
+            )
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.fields["url"].required = True
 
         if self.get_live_field("authorization") == CustomApi.Authorization.OAUTH2:
             field = self.fields["oauth2"]

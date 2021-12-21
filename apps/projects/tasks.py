@@ -8,6 +8,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.integrations.models import Integration
+from apps.integrations.tasks import run_integration_task
 from apps.nodes.models import Node
 from apps.runs.models import GraphRun, JobRun
 from apps.sheets import tasks as sheet_tasks
@@ -29,12 +30,6 @@ def _get_entity_from_input_table(table: Table):
         return table.workflow_node.workflow
     else:
         return table.integration
-
-
-def _is_scheduled(entity):
-    if isinstance(entity, Integration):
-        return entity.sheet.is_scheduled
-    return entity.is_scheduled
 
 
 @shared_task(bind=True)
@@ -71,16 +66,16 @@ def run_project_task(self, graph_run_id: int, scheduled_only=False):
         {
             integration: []
             for integration in project.integration_set.filter(
-                kind=Integration.Kind.SHEET
+                kind__in=[Integration.Kind.SHEET, Integration.Kind.CUSTOMAPI]
             ).all()
         }
     )
 
     if scheduled_only:
         graph = {
-            entity: [parent for parent in parents if _is_scheduled(parent)]
+            entity: [parent for parent in parents if parent.is_scheduled]
             for entity, parents in graph.items()
-            if _is_scheduled(entity)
+            if entity.is_scheduled
         }
 
     job_runs = {
@@ -114,7 +109,7 @@ def run_project_task(self, graph_run_id: int, scheduled_only=False):
 
             try:
                 if isinstance(entity, Integration):
-                    sheet_tasks.run_sheet_sync_task(job_run.id, skip_up_to_date=True)
+                    run_integration_task(entity.kind, job_run.id)
                 elif isinstance(entity, Workflow):
                     workflow_tasks.run_workflow_task(job_run.id)
                 job_run.state = JobRun.State.SUCCESS

@@ -1,4 +1,5 @@
 import copy
+import re
 
 from django import forms
 from ibis.expr.datatypes import Date, Time, Timestamp
@@ -6,17 +7,27 @@ from ibis.expr.datatypes import Date, Time, Timestamp
 from apps.base.live_update_form import LiveUpdateForm
 from apps.base.utils import create_column_choices
 from apps.base.widgets import SelectWithDisable
+from apps.columns.bigquery import aggregate_columns
 from apps.dashboards.forms import PaletteColorsField
 from apps.tables.models import Table
 
 from .formsets import FORMSETS, AggregationColumnFormset, FilterFormset
-from .models import WIDGET_KIND_TO_WEB, Widget
+from .models import COUNT_COLUMN_NAME, WIDGET_KIND_TO_WEB, Widget
 from .widgets import SourceSelect
+
+
+def get_not_deleted_entries(data, regex):
+    return [
+        value
+        for key, value in data.items()
+        if re.match(re.compile(regex), key) and data.get(key[:-6] + "DELETE") != "on"
+    ]
 
 
 class GenericWidgetForm(LiveUpdateForm):
     dimension = forms.ChoiceField(choices=())
     second_dimension = forms.ChoiceField(choices=())
+    sort_column = forms.ChoiceField(choices=(), required=False)
 
     class Meta:
         model = Widget
@@ -26,6 +37,7 @@ class GenericWidgetForm(LiveUpdateForm):
             "dimension",
             "second_dimension",
             "sort_by",
+            "sort_column",
             "sort_ascending",
             "stack_100_percent",
             "date_column",
@@ -61,6 +73,29 @@ class GenericWidgetForm(LiveUpdateForm):
                     help_text=self.base_fields["date_column"].help_text,
                 )
 
+            if table and self.get_live_field("kind") == Widget.Kind.TABLE:
+                group_columns = (
+                    get_not_deleted_entries(kwargs["data"], "columns-[0-9]*-column")
+                    if kwargs.get("data")
+                    else [col.column for col in self.instance.columns.all()]
+                )
+                aggregations = (
+                    get_not_deleted_entries(
+                        kwargs["data"], "aggregations-[0-9]*-column"
+                    )
+                    if kwargs.get("data")
+                    else [col.column for col in self.instance.aggregations.all()]
+                )
+                columns = group_columns + aggregations
+                if columns:
+                    if not aggregations:
+                        columns += [COUNT_COLUMN_NAME]
+                    self.fields["sort_column"].choices = [
+                        ("", "No column selected")
+                    ] + [(name, name) for name in columns]
+                else:
+                    self.fields["sort_column"].choices = create_column_choices(schema)
+
     def get_live_fields(self):
         fields = ["table", "kind"]
 
@@ -70,7 +105,7 @@ class GenericWidgetForm(LiveUpdateForm):
         if self.get_live_field("kind") == Widget.Kind.TABLE and self.get_live_field(
             "table"
         ):
-            fields += ["show_summary_row"]
+            fields += ["sort_column", "sort_ascending", "show_summary_row"]
         return fields
 
     def get_live_formsets(self):

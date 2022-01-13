@@ -70,8 +70,11 @@ def table_to_output(widget: Widget, control) -> Dict[str, Any]:
     summary = None
     if widget.columns.first():
         if widget.show_summary_row:
+            # TODO: add sorting and limit
             summary = get_summary_row(query, widget)
         query = aggregate_columns(query, widget)
+    if widget.sort_column:
+        query = query.sort_by([(widget.sort_column, widget.sort_ascending)])
     return get_table(query.schema(), query, summary)
 
 

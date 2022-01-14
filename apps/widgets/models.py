@@ -166,6 +166,10 @@ class Widget(WidgetStyle, CloneMixin, BaseModel):
     def category(self):
         return WIDGET_KIND_TO_WEB[self.kind][1]
 
+    @property
+    def has_control(self):
+        return hasattr(self, "control")
+
 
 NO_DIMENSION_WIDGETS = [
     Widget.Kind.RADAR,

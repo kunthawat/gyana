@@ -24,29 +24,20 @@ COMMON_FIELDS = [
 ]
 
 
-PREBUILT_REPORTS = {
-    "delivery_purchase_roas": {
-        "fields": [],
-        "breakdowns": [],
-        "action_breakdowns": [
-            "inline_link_clicks",
-            "outbound_clicks",
-            "website_purchase_roas",
-            "mobile_app_purchase_roas",
-        ],
-    },
-    "roas": {
-        "fields": [],
-        "breakdowns": [],
-        "action_breakdowns": ["purchase_roas", "website_purchase_roas"],
-    },
-}
+SECONDARY_TABLES = [
+    "actions",
+    "action_values",
+    "inline_link_clicks",
+    "outbound_clicks",
+    "website_purchase_roas",
+    "mobile_app_purchase_roas",
+    "purchase_roas",
+]
 
 
 def _get_table_ids_for_report(name):
     return [name] + [
-        f"{name}_{field}"
-        for field in (PREBUILT_REPORTS.get(name, {}).get("action_breakdowns", []))
+        f"{name}_{secondary_table}" for secondary_table in SECONDARY_TABLES
     ]
 
 

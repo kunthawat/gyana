@@ -1,51 +1,135 @@
-from django.core import mail
-from django.core.management import call_command
-from django.http.response import JsonResponse
-from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
-from rest_framework.request import Request
+from functools import cache
 
-from apps.base import clients
-from apps.base.cypress_mail import Outbox
-from apps.integrations.periodic import delete_outdated_pending_integrations
-from apps.teams.periodic import update_team_row_limits
+from django import forms
+from django.db import transaction
+from django.http.response import HttpResponse
+from django.views.generic.edit import CreateView, UpdateView
+from turbo_response.mixins import TurboFormMixin
+
+from .forms import LiveUpdateForm
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def resetdb(request: Request):
-
-    # Delete all data from the database.
-    call_command("flush", interactive=False)
-
-    # Import the fixture data into the database.
-    call_command("loaddata", "cypress/fixtures/fixtures.json")
-
-    mail.outbox = Outbox()
-    mail.outbox.clear()
-
-    clients.fivetran()._schema_cache.clear()
-    clients.fivetran()._started = {}
-
-    return JsonResponse({})
+class TurboCreateView(TurboFormMixin, CreateView):
+    ...
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def outbox(request: Request):
-
-    messages = mail.outbox.messages if hasattr(mail, "outbox") else []
-
-    return JsonResponse({"messages": messages, "count": len(messages)})
+class TurboUpdateView(TurboFormMixin, UpdateView):
+    ...
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def periodic(request: Request):
+# temporary overrides for formset labels
+FORMSET_LABELS = {
+    "columns": "Group columns",
+    "aggregations": "Aggregations",
+    "sort_columns": "Sort columns",
+    "edit_columns": "Edit columns",
+    "add_columns": "Add columns",
+    "rename_columns": "Rename columns",
+    "formula_columns": "Formula columns",
+    "filters": "Filters",
+    "secondary_columns": "Select specific columns",
+    "window_columns": "Window columns",
+    "convert_columns": "Select columns to convert",
+    "values": "Additional values",
+    "charts": "Charts",
+    "queryparams": "Query Params",
+    "httpheaders": "HTTP Headers",
+    "formdataentries": "Form Data",
+    "formurlencodedentries": "Form Data",
+}
 
-    # force all periodic tasks to run synchronously
 
-    delete_outdated_pending_integrations()
-    update_team_row_limits()
+def _get_formset_label(formset):
+    prefix = formset.get_default_prefix()
+    return FORMSET_LABELS.get(prefix, prefix)
 
-    return JsonResponse({"message": "ok"})
+
+class FormsetUpdateView(TurboUpdateView):
+    @cache
+    def get_form(self):
+        return super().get_form()
+
+    def get_formset_class(self):
+        form = self.get_form()
+        if form and hasattr(form, "get_live_formsets"):
+            return form.get_live_formsets()
+        return []
+
+    def get_form_instance(self):
+        return self.object
+
+    def get_formset_form_kwargs(self, formset):
+        return {}
+
+    def get_formset_kwargs(self, formset):
+        return {}
+
+    def get_formset(self, formset):
+        forms_kwargs = self.get_formset_form_kwargs(formset)
+
+        # provide a reference to parent instance in live update forms
+        if issubclass(formset.form, LiveUpdateForm):
+            forms_kwargs["parent_instance"] = self.get_form_kwargs()["instance"]
+
+        formset = (
+            # POST request for form creation
+            formset(
+                self.request.POST,
+                self.request.FILES,
+                instance=self.get_form_instance(),
+                **self.get_formset_kwargs(formset),
+                form_kwargs=forms_kwargs,
+            )
+            # form is only bound if formset is in previous render, otherwise load from database
+            if self.request.POST
+            and f"{formset.get_default_prefix()}-TOTAL_FORMS" in self.request.POST
+            # initial render
+            else formset(
+                instance=self.get_form_instance(),
+                **self.get_formset_kwargs(formset),
+                form_kwargs=forms_kwargs,
+            )
+        )
+        # When the post contains the wrong total forms number new forms aren't
+        # created. This happens for example when changing the widget kind.
+        if len(formset.forms) < formset.min_num:
+            formset.forms.extend(
+                formset._construct_form(i, **forms_kwargs)
+                for i in range(len(formset.forms), formset.min_num)
+            )
+
+        return formset
+
+    @cache
+    def get_formsets(self):
+        return {
+            _get_formset_label(formset): self.get_formset(formset)
+            for formset in self.get_formset_class()
+        }
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["formsets"] = self.get_formsets()
+        return context
+
+    def post(self, request, *args: str, **kwargs) -> HttpResponse:
+        # override BaseUpdateView/ProcessFormView to check validation on formsets
+        self.object = self.get_object()
+
+        form = self.get_form()
+        if form.is_valid() and all(
+            formset.is_valid() for formset in self.get_formsets().values()
+        ):
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
+
+    def form_valid(self, form: forms.Form) -> HttpResponse:
+        with transaction.atomic():
+            response = super().form_valid(form)
+            for formset in self.get_formsets().values():
+                if formset.is_valid():
+                    formset.instance = self.get_form_instance()
+                    formset.save()
+
+        return response

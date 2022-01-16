@@ -5,8 +5,8 @@ from django import forms
 from ibis.expr.datatypes import Date, Time, Timestamp
 
 from apps.base.forms import BaseModelForm
-from apps.base.live_update_form import LiveUpdateForm
-from apps.base.utils import create_column_choices
+from apps.base.forms import LiveUpdateForm
+from apps.base.core.utils import create_column_choices
 from apps.base.widgets import SelectWithDisable
 from apps.columns.bigquery import aggregate_columns
 from apps.dashboards.forms import PaletteColorsField
@@ -258,9 +258,7 @@ class ImageWidgetForm(BaseModelForm):
             "kind",
             "image",
         ]
-        widgets = {
-            "kind": forms.HiddenInput()
-        }
+        widgets = {"kind": forms.HiddenInput()}
 
     def __init__(self, *args, **kwargs):
         # https://stackoverflow.com/a/30766247/15425660

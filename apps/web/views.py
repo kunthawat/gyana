@@ -8,6 +8,8 @@ from rest_framework.decorators import api_view
 
 from apps.teams.models import Team
 
+from .content import get_content
+
 
 class Home(TemplateView):
     template_name = "web/home.html"
@@ -35,6 +37,11 @@ class Home(TemplateView):
             return redirect("account_login")
 
         return super().get(request, *args, **kwargs)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["content"] = get_content("home.yaml")
+        return context
 
 
 @api_view(["POST"])

@@ -3,16 +3,26 @@ from django.urls import path
 from django.views.generic import TemplateView
 
 from . import frames, views
+from .cache import cache_site
 
 app_name = "web"
 
 urlpatterns = [
     # site
-    path("", views.Home.as_view(), name="home"),
-    path("pricing", views.Pricing.as_view(), name="pricing"),
-    path("about", views.About.as_view(), name="about"),
-    path("legal/privacy-policy", views.PrivacyPolicy.as_view(), name="privacy-policy"),
-    path("legal/terms-of-use", views.TermsOfUse.as_view(), name="terms-of-use"),
+    path("", views.Home.as_view(), name="home"),  # cache_site in view.get
+    path("pricing", cache_site(views.Pricing.as_view()), name="pricing"),
+    path("integrations", cache_site(views.Integrations.as_view()), name="integrations"),
+    path("about", cache_site(views.About.as_view()), name="about"),
+    path(
+        "legal/privacy-policy",
+        cache_site(views.PrivacyPolicy.as_view()),
+        name="privacy-policy",
+    ),
+    path(
+        "legal/terms-of-use",
+        cache_site(views.TermsOfUse.as_view()),
+        name="terms-of-use",
+    ),
     # app
     path("toggle-sidebar", views.toggle_sidebar),
     # frames

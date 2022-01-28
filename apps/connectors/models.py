@@ -1,7 +1,9 @@
 from datetime import datetime
 
 from dirtyfields import DirtyFieldsMixin
+from django import forms
 from django.conf import settings
+from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -286,6 +288,17 @@ class Connector(DirtyFieldsMixin, BaseModel):
         except FivetranClientError:
             # certain connectors fail to return schema objects
             pass
+
+    @property
+    def custom_reports(self):
+        return [
+            forms.model_to_dict(obj) for obj in self.facebookadscustomreport_set.all()
+        ]
+
+    def update_fivetran_config(self):
+        clients.fivetran().update(
+            self, config={**self.config, "custom_tables": self.custom_reports}
+        )
 
     @property
     def setup_state_icon(self):

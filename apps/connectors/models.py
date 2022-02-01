@@ -3,7 +3,6 @@ from datetime import datetime
 from dirtyfields import DirtyFieldsMixin
 from django import forms
 from django.conf import settings
-from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -13,6 +12,7 @@ from apps.base.models import BaseModel
 from apps.connectors.fivetran.schema import FivetranSchemaObj
 from apps.integrations.models import Integration
 
+from .clone import create_fivetran, update_schema
 from .fivetran.config import ServiceTypeEnum, get_services_obj
 
 FIVETRAN_CHECK_SYNC_TIMEOUT_HOURS = 24
@@ -64,6 +64,16 @@ class Connector(DirtyFieldsMixin, BaseModel):
         SyncState.RESCHEDULED: "fa fa-history",
     }
 
+    _clone_excluded_fields = [
+        # TODO: right now this needs to be falsely copied
+        # otherwise the integration won't be shown on the overview page.
+        # "fivetran_authorized",
+        "fivetran_sync_started",
+        "bigquery_succeeded_at",
+        # TODO: should this be added later or do we need to replace the schema during duplication
+        "schema_config",
+    ]
+    _clone_excluded_o2o_fields = ["integration"]
     # internal fields
 
     integration = models.OneToOneField(Integration, on_delete=models.CASCADE)
@@ -324,3 +334,10 @@ class Connector(DirtyFieldsMixin, BaseModel):
     @property
     def latest_sync_validated(self):
         return self.succeeded_at == self.bigquery_succeeded_at
+
+    def make_clone(self, attrs=None, sub_clone=False, using=None):
+        attrs = update_schema(attrs, self)
+        clone = super().make_clone(attrs=attrs, sub_clone=sub_clone, using=using)
+        create_fivetran(clone)
+
+        return clone

@@ -9,6 +9,7 @@ from django.utils.functional import cached_property
 
 from apps.base import clients
 from apps.base.models import BaseModel
+from apps.connectors.clone import update_schema
 from apps.connectors.fivetran.schema import FivetranSchemaObj
 from apps.integrations.models import Integration
 

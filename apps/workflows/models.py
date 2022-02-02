@@ -6,10 +6,10 @@ from django.urls import reverse
 
 from apps.base.models import BaseModel
 from apps.base.tables import ICONS
-from apps.dashboards.models import Dashboard
 from apps.projects.models import Project
 from apps.runs.models import JobRun
 from apps.tables.models import Table
+from apps.workflows.clone import clone_nodes
 
 from .clone import clone_nodes
 
@@ -147,6 +147,11 @@ class Workflow(BaseModel):
             self.runs.filter(state=JobRun.State.SUCCESS).order_by("-created").first()
         )
         self.save(update_fields=["state", "last_success_run"])
+
+    def make_clone(self, attrs=None, sub_clone=False, using=None):
+        clone = super().make_clone(attrs=attrs, sub_clone=sub_clone, using=using)
+        clone_nodes(self, clone)
+        return clone
 
     @property
     def used_in_nodes(self):

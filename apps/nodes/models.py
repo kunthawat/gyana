@@ -97,29 +97,7 @@ class Node(DirtyFieldsMixin, BaseModel):
     # aggregations exists on AggregationColumn as FK
 
     # Join
-    join_how = models.CharField(
-        max_length=12,
-        choices=[
-            ("inner", "Inner"),
-            ("outer", "Outer"),
-            ("left", "Left"),
-            ("right", "Right"),
-        ],
-        default="inner",
-        help_text="Select the join method, more information in the docs",
-    )
-    join_left = models.CharField(
-        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH,
-        null=True,
-        blank=True,
-        help_text="The column from the first parent you want to join on.",
-    )
-    join_right = models.CharField(
-        max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH,
-        null=True,
-        blank=True,
-        help_text="The column from the second parent you want to join on.",
-    )
+    # See JoinColumn
 
     # Union/Except
     union_distinct = models.BooleanField(
@@ -253,7 +231,20 @@ class Node(DirtyFieldsMixin, BaseModel):
 
         func = NODE_FROM_CONFIG[self.kind]
         min_arity, _ = get_arity_from_node_func(func)
-        return self.parents.count() >= min_arity
+
+        return self.parents.count() >= min_arity and (
+            self.kind != self.Kind.JOIN or self.join_is_valid
+        )
+
+    @property
+    def join_is_valid(self):
+        if self.kind == self.Kind.JOIN:
+            join_count = self.join_columns.count()
+            parents = self.parent_edges.all()
+            positions = {p.position for p in parents[:join_count]}
+            missing = set(range(join_count)).difference(positions)
+            return len(parents) > 1 and not missing
+        return False
 
     def get_table_name(self):
         return f"Workflow:{self.workflow.name}:{self.name}"

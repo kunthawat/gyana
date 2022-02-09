@@ -6,6 +6,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.views.generic import TemplateView
 from rest_framework.decorators import api_view
 
+from apps.columns.transformer import FUNCTIONS
 from apps.connectors.fivetran.config import get_services_obj
 from apps.nodes.config import NODE_CONFIG
 from apps.teams.models import Team
@@ -45,9 +46,14 @@ class Home(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["content"] = get_content("home.yaml")
-        context["services"] = get_services_obj()
-        context["node_config"] = NODE_CONFIG
-        context["widget_config"] = WIDGET_KIND_TO_WEB
+        node_config = {
+            k: v for k, v in NODE_CONFIG.items() if k not in ["input", "output", "text"]
+        }
+        context["workflow_statistics"] = {
+            "node_count": len(node_config.keys()),
+            "function_count": len(FUNCTIONS),
+        }
+        context["widget_count"] = len(WIDGET_KIND_TO_WEB.keys())
         return context
 
 
@@ -84,15 +90,6 @@ class PrivacyPolicy(TemplateView):
 
 class TermsOfUse(TemplateView):
     template_name = "web/terms_of_use.html"
-
-
-class Agency(TemplateView):
-    template_name = "web/agency.html"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["content"] = get_content("agency.yaml")
-        return context
 
 
 @api_view(["POST"])

@@ -11,18 +11,13 @@
   <meta name="turbo-visit-control" content="reload">
 
   {% block meta %}
-    <title>Gyana | BI & Analytics for the web</title>
+    <title>Gyana | Build custom reports 10x faster</title>
     <meta name="description" content="Gyana delivers the power of business intelligence and data analytics in a web interface. Build repeatable workflows and dashboards with all your online data." /> 
   {% endblock  %}
 
   {% include "web/components/favicon.html" %}
 
   <link rel="preconnect" href="https://fonts.gstatic.com" />
-  {% comment %} Poppins medium to extrabold {% endcomment %}
-  <link
-    href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap"
-    rel="stylesheet"
-  />
 
   <link rel="stylesheet" href="{% static "css/fontawesome.css" %}" />
   <link rel="stylesheet" href="{% static "css/tailwind.css" %}" />
@@ -30,7 +25,7 @@
   <link rel="stylesheet" href="{% static "css/website.css" %}" />
 
   {% comment %} TODO: Decide whether to keep use Turbo for website {% endcomment %}
-  {% comment %} <script src="{% static "js/turbo-bundle.js" %}"></script> {% endcomment %}
+  <script src="{% static "js/turbo-bundle.js" %}"></script>
   <script src="{% static "js/stimulus-bundle.js" %}"></script>
 
   {% if WEBSITE_GTM_ID %}

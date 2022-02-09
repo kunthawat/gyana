@@ -25,10 +25,6 @@
 @use "vendors/libcodemirror";
 @import "tippy.js/dist/tippy.css"; // This import must be AFTER any @use/at-use
 
-:root {
-  font-family: Poppins, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
-}
-
 // https://github.com/tailwindlabs/tailwindcss/issues/1692
 .bg-white-opacity-10 {
   background: rgba(255, 255, 255, .1);
@@ -39,4 +35,74 @@
   // It's considered dangerous to use !important but this needs to override any
   // displays set on the element later in the flow.
   display: none !important;
+}
+
+// Integrations animation
+.fade-left:after {
+  content: "";
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  width: 24%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(90deg, white 2.52%, rgba(255, 255, 255, 0) 100%);
+  z-index: 2;
+}
+
+.fade-right:after {
+  content: "";
+  position: absolute;
+  top: 0px;
+  right: 0px;
+  width: 24%;
+  height: 100%;
+  pointer-events: none;
+  background: linear-gradient(270deg, white 2.52%, rgba(255, 255, 255, 0) 100%);
+  z-index: 2;
+}
+
+// Workflows animation
+.react-flow__edge.animated path {
+  animation: dashdraw-40 .5s linear infinite !important;
+}
+
+@keyframes dashdraw-40 {
+  0% {
+    stroke-dashoffset: 40;
+  }
+}
+
+.integration-demo {
+  height: 18rem;
+
+  @screen lg {
+    height: auto;
+  }
+}
+
+.workflow-demo {
+  height: 28rem;
+
+  @screen lg {
+    height: auto;
+  }
+}
+
+.dashboard-demo {
+  height: 30rem;
+
+  @screen lg {
+    height: auto;
+  }
+}
+
+.agency-monitoring {
+  animation: 40s linear 0s infinite normal none running agency-monitoring-slide;
+}
+
+@keyframes agency-monitoring-slide {
+  100% {
+    transform: translateX(-100%);
+  }
 }

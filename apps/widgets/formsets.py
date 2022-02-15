@@ -1,7 +1,11 @@
 from django import forms
 
 from apps.base.formsets import RequiredInlineFormset
-from apps.columns.forms import AggregationColumnForm, BaseLiveSchemaForm
+from apps.columns.forms import (
+    AggregationColumnForm,
+    AggregationFormWithFormatting,
+    ColumnFormWithFormatting,
+)
 from apps.columns.models import AggregationColumn, Column
 from apps.controls.forms import ControlForm
 from apps.controls.models import Control
@@ -19,22 +23,23 @@ FilterFormset = forms.inlineformset_factory(
     formset=RequiredInlineFormset,
 )
 
-AggregationColumnFormset = forms.inlineformset_factory(
-    Widget,
-    AggregationColumn,
-    form=AggregationColumnForm,
-    can_delete=True,
-    extra=0,
-    formset=RequiredInlineFormset,
-)
 
 ColumnFormset = forms.inlineformset_factory(
     Widget,
     Column,
-    form=BaseLiveSchemaForm,
-    fields=("column",),
+    form=ColumnFormWithFormatting,
     extra=0,
     can_delete=True,
+    formset=RequiredInlineFormset,
+)
+
+
+AggregationColumnFormset = forms.inlineformset_factory(
+    Widget,
+    AggregationColumn,
+    form=AggregationFormWithFormatting,
+    can_delete=True,
+    extra=0,
     formset=RequiredInlineFormset,
 )
 

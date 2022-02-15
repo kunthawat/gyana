@@ -10,6 +10,7 @@ from django_tables2.templatetags.django_tables2 import QuerystringNode
 
 from apps.base import clients
 from apps.base.core.utils import md5
+from apps.columns.currency_symbols import CURRENCY_SYMBOLS_MAP
 
 # Monkey patch the querystring templatetag for the pagination links
 # Without this links only lead to the whole document url and add query parameter
@@ -47,7 +48,7 @@ class BigQueryTableData(TableData):
     ):
         self.data = data
         # calculate before the order_by is applied, as len is not effected
-        self._len_key = f"cache-table-length-{str(hash(self.data))}"
+        self._len_key = f"cache-table-length-{hash(self.data)}"
 
     @property
     def _page_selected(self):
@@ -128,12 +129,31 @@ def get_type_class(type_):
 
 
 class BigQueryColumn(Column):
+    def __init__(self, **kwargs):
+        settings = kwargs.pop("settings") or {}
+        super().__init__(**kwargs)
+
+        self.verbose_name = settings.get("name") or self.verbose_name
+        self.rounding = settings.get("rounding", 2)
+        self.currency = settings.get("currency")
+
     def render(self, value):
         if value is None:
             return get_template("columns/empty_cell.html").render()
+        if isinstance(value, (float, int)) and self.currency:
+            return get_template("columns/currency_cell.html").render(
+                {
+                    "value": value,
+                    "currency": CURRENCY_SYMBOLS_MAP[self.currency],
+                    "rounding": self.rounding,
+                }
+            )
         if isinstance(value, float):
             return get_template("columns/float_cell.html").render(
-                {"value": value, "clean_value": round(value, 2)}
+                {
+                    "value": value,
+                    "clean_value": round(value, self.rounding),
+                }
             )
         if isinstance(value, int):
             return get_template("columns/int_cell.html").render({"value": value})
@@ -148,15 +168,17 @@ class BigQueryColumn(Column):
         return super().render(value)
 
 
-def get_table(schema, query, footer=None, **kwargs):
+def get_table(schema, query, footer=None, settings=None, **kwargs):
     """Dynamically creates a table class and adds the correct table data
 
     See https://django-tables2.readthedocs.io/en/stable/_modules/django_tables2/views.html
     """
+    settings = settings or {}
     # Inspired by https://stackoverflow.com/questions/16696066/django-tables2-dynamically-adding-columns-to-table-not-adding-attrs-to-table
     attrs = {
         md5(name): BigQueryColumn(
             empty_values=(),
+            settings=settings.get(name),
             verbose_name=name,
             attrs={
                 "th": {

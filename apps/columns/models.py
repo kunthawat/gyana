@@ -4,6 +4,7 @@ from django.db import models
 
 from apps.base.core.aggregations import AggregationFunctions
 from apps.base.models import SaveParentModel
+from apps.columns.currency_symbols import CurrencySymbols
 from apps.nodes.models import Node
 
 from .bigquery import (
@@ -100,8 +101,29 @@ class AbstractOperationColumn(SaveParentModel):
         )
 
 
-class Column(SaveParentModel):
+class ColumnSettings(models.Model):
+    class Meta:
+        abstract = True
 
+    name = models.CharField(
+        max_length=64,
+        null=True,
+        blank=True,
+        help_text="Set column header name",
+    )
+    rounding = models.IntegerField(
+        default=2, blank=True, help_text="Decimal point to round to"
+    )
+    currency = models.CharField(
+        max_length=32,
+        choices=CurrencySymbols.choices,
+        blank=True,
+        null=True,
+        help_text="Select a currency",
+    )
+
+
+class Column(ColumnSettings, SaveParentModel):
     column = models.CharField(
         max_length=settings.BIGQUERY_COLUMN_NAME_LENGTH, help_text="Select columns"
     )
@@ -150,7 +172,7 @@ class SecondaryColumn(SaveParentModel):
     )
 
 
-class AggregationColumn(SaveParentModel):
+class AggregationColumn(ColumnSettings, SaveParentModel):
     class Meta:
         ordering = ("created",)
 

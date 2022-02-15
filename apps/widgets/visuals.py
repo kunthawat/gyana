@@ -75,9 +75,19 @@ def table_to_output(widget: Widget, control) -> Dict[str, Any]:
             # TODO: add sorting and limit
             summary = get_summary_row(query, widget)
         query = aggregate_columns(query, widget)
+
+    settings = {
+        col.column: {
+            "name": col.name,
+            "rounding": col.rounding,
+            "currency": col.currency,
+        }
+        for col in [*widget.columns.all(), *widget.aggregations.all()]
+    }
+
     if widget.sort_column:
         query = query.sort_by([(widget.sort_column, widget.sort_ascending)])
-    return get_table(query.schema(), query, summary)
+    return get_table(query.schema(), query, summary, settings)
 
 
 def metric_to_output(widget, control, use_previous_period=False):

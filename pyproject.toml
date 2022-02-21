@@ -10,8 +10,20 @@ ignore = "T003,H021,H006,H013,H016"
 use_gitignore = true
 indent = 2
 
+[tool.black]
+extend-exclude = '''
+(
+  /(
+    apps/cookiecutter-app
+    | .+/migrate
+    | .+/migrations
+  )/
+)
+'''
+
 [tool.isort]
 profile = "black"
+extend_skip = ['migrations', 'migrate', 'apps/cookiecutter-app']
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "gyana.settings.development"
@@ -82,7 +94,6 @@ deepdiff = "^5.7.0"
 wagtailmenus = "^3.0.2"
   
 [tool.poetry.dev-dependencies]
-black = "^20.8b1"
 isort = "^5.7.0"
 mypy = "^0.812"
 autoflake = "^1.4"
@@ -95,6 +106,7 @@ pytest-factoryboy = "^2.1.0"
 pytest-cov = "^3.0.0"
 django-coverage-plugin = "^2.0.1"
 wagtail-factories = "^2.0.1"
+black = "^22.1.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

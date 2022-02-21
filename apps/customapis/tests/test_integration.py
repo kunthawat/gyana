@@ -6,7 +6,7 @@ from celery import states
 from django.core import mail
 from pytest_django.asserts import assertRedirects
 
-from apps.base.tests.asserts import assertFormRenders, assertLink, assertOK
+from apps.base.tests.asserts import assertFormRenders, assertOK
 from apps.integrations.models import Integration
 
 pytestmark = pytest.mark.django_db
@@ -57,7 +57,7 @@ def test_customapi_create(client, logged_in_user, project, bigquery, request_saf
     # create
     r = client.get(f"{LIST}/customapis/new")
     assertOK(r)
-    assertFormRenders(r, ["name", 'is_scheduled'])
+    assertFormRenders(r, ["name", "is_scheduled"])
 
     r = client.post(f"{LIST}/customapis/new", data={"name": "JSON todos"})
 

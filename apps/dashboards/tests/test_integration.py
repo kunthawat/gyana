@@ -89,7 +89,9 @@ def test_dashboard_share(
 
     # share a dashboard
     r = client.get(DETAIL)
-    assertSelectorLength(r, f'button[data-modal-src="/dashboards/{dashboard.id}/share"]', 1)
+    assertSelectorLength(
+        r, f'button[data-modal-src="/dashboards/{dashboard.id}/share"]', 1
+    )
     r = client.get(f"/dashboards/{dashboard.id}/share")
     assertOK(r)
     assertFormRenders(r, ["shared_status"])
@@ -97,7 +99,7 @@ def test_dashboard_share(
     # public
     r = client.post(
         f"/dashboards/{dashboard.id}/share",
-        data={"shared_status": Dashboard.SharedStatus.PUBLIC, "submit": True},
+        data={"shared_status": Dashboard.SharedStatus.PUBLIC},
     )
     assertRedirects(r, f"/dashboards/{dashboard.id}/share", status_code=303)
     dashboard.refresh_from_db()
@@ -116,9 +118,12 @@ def test_dashboard_share(
     client.force_login(logged_in_user)
     r = client.post(
         f"/dashboards/{dashboard.id}/share",
-        data={"shared_status": Dashboard.SharedStatus.PASSWORD_PROTECTED},
+        data={
+            "hidden_live": True,
+            "shared_status": Dashboard.SharedStatus.PASSWORD_PROTECTED,
+        },
     )
-    assert r.status_code == 422
+    assertOK(r)
     assertFormRenders(r, ["shared_status", "password"])
 
     r = client.post(
@@ -126,7 +131,6 @@ def test_dashboard_share(
         data={
             "shared_status": Dashboard.SharedStatus.PASSWORD_PROTECTED,
             "password": "secret",
-            "submit": True,
         },
     )
     assertRedirects(r, f"/dashboards/{dashboard.id}/share", status_code=303)
@@ -171,7 +175,7 @@ def test_dashboard_share(
     client.force_login(logged_in_user)
     r = client.post(
         f"/dashboards/{dashboard.id}/share",
-        data={"shared_status": Dashboard.SharedStatus.PRIVATE, "submit": True},
+        data={"shared_status": Dashboard.SharedStatus.PRIVATE},
     )
 
     client.logout()

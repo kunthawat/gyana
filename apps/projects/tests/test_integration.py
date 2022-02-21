@@ -1,6 +1,5 @@
 import pytest
 from deepdiff import DeepDiff
-from django.db import transaction
 from django.utils import timezone
 from pytest_django.asserts import assertContains, assertRedirects
 
@@ -40,7 +39,6 @@ def test_project_crudl(client, logged_in_user):
             "name": "Metrics",
             "description": "All the company metrics",
             "access": "everyone",
-            "submit": True,
         },
     )
     project = team.project_set.first()
@@ -73,7 +71,6 @@ def test_project_crudl(client, logged_in_user):
             "name": "KPIs",
             "description": "All the company kpis",
             "access": "everyone",
-            "submit": True,
         },
     )
     assertRedirects(r, f"/projects/{project.id}/update", status_code=303)
@@ -102,6 +99,7 @@ def test_private_projects(client, logged_in_user):
     r = client.post(
         f"/teams/{team.id}/projects/new",
         data={
+            "hidden_live": True,
             "name": "Metrics",
             "description": "All the company metrics",
             "access": "invite",
@@ -114,15 +112,15 @@ def test_private_projects(client, logged_in_user):
     r = client.post(
         f"/teams/{team.id}/projects/new",
         data={
+            "hidden_live": True,
             "name": "Metrics",
             "description": "All the company metrics",
             "access": "invite",
             "members": [logged_in_user.id],
-            "submit": True,
         },
     )
 
-    assert r.status_code == 422
+    assertOK(r)
     project = team.project_set.first()
     assert project is None
 
@@ -137,7 +135,6 @@ def test_private_projects(client, logged_in_user):
             "description": "All the company metrics",
             "access": "invite",
             "members": [logged_in_user.id],
-            "submit": True,
         },
     )
 
@@ -166,10 +163,7 @@ def test_free_tier_project_limit(client, logged_in_user, project_factory):
     )
     r = client.post(
         f"/teams/{team.id}/projects/new",
-        data={
-            "name": "Metrics",
-            "access": "everyone",
-        },
+        data={"name": "Metrics", "access": "everyone"},
     )
     assert r.status_code == 422
 

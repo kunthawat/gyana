@@ -301,16 +301,16 @@ def test_team_subscriptions(client, logged_in_user, settings, paddle):
 
     r = client.post(
         f"/teams/{team.id}/subscription",
-        data={"plan": str(business_plan.id)},
+        data={"hidden_live": True, "plan": str(business_plan.id)},
     )
     # the new price is calculated and shown
     assert paddle.get_plan.call_count == 2
     assert paddle.get_plan.call_args.args == (business_plan.id,)
-    assertContains(r, "150", status_code=422)
+    assertContains(r, "150")
 
     r = client.post(
         f"/teams/{team.id}/subscription",
-        data={"plan": str(business_plan.id), "submit": True},
+        data={"plan": str(business_plan.id)},
     )
     assertRedirects(r, f"/teams/{team.id}/account", status_code=303)
     assert paddle.update_subscription.call_count == 1

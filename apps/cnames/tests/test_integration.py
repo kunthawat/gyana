@@ -159,12 +159,7 @@ def test_cname_middleware_for_public_dashboard(
 
     r = client.post(
         f"/projects/{project.id}/update",
-        data={
-            "name": "Project",
-            "access": "everyone",
-            "cname": cname.id,
-            "submit": True,
-        },
+        data={"name": "Project", "access": "everyone", "cname": cname.id},
     )
     assertRedirects(r, f"/projects/{project.id}/update", status_code=303)
 

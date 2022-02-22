@@ -9,6 +9,9 @@ profile = "django"
 ignore = "T003,H021,H006,H013,H016"
 use_gitignore = true
 indent = 2
+blank_line_after_tag = "load,extends"
+custom_blocks = "timezone,flag"
+max_line_length = 100
 
 [tool.black]
 extend-exclude = '''
@@ -55,7 +58,6 @@ ibis-bigquery = "^2.0.0"
 django-storages = {extras = ["google"], version = "^1.11.1"}
 django-filter = "^2.4.0"
 backoff = "^1.10.0"
-PyYAML = "^5.4.1"
 inflection = "^0.5.1"
 django-tables2 = "^2.3.4"
 google-api-python-client = "^2.4.0"
@@ -90,8 +92,8 @@ django-cryptography = "^1.0"
 django-heroicons = {git = "https://github.com/geoffbeier/django-heroicons"}
 wagtail = "^2.15.1"
 readtime = "^1.1.1"
-deepdiff = "^5.7.0"
 wagtailmenus = "^3.0.2"
+PyYAML = "^6.0"
   
 [tool.poetry.dev-dependencies]
 isort = "^5.7.0"
@@ -107,6 +109,8 @@ pytest-cov = "^3.0.0"
 django-coverage-plugin = "^2.0.1"
 wagtail-factories = "^2.0.1"
 black = "^22.1.0"
+deepdiff = "^5.7.0"
+djlint = "^0.7.5"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

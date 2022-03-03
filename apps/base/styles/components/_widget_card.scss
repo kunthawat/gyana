@@ -53,8 +53,17 @@
     }
   }
 
+  &__date-range-indicator {
+    display: none;
+    position: absolute;
+    top: 1.6rem;
+    right: 1.6rem;
+    z-index: calc(var(--z-ui) + 1);
+  }
+
   &:focus-within &__commands,
-  &:hover &__commands {
+  &:hover &__commands,
+  &:hover &__date-range-indicator {
     display: flex;
   }
 

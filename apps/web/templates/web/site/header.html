@@ -91,6 +91,12 @@
         >
           Pricing
         </a>
+        <a
+          href="{% url 'web:about' %}"
+          class="text-gray-600 font-normal hover:text-gray-900"
+        >
+          About
+        </a>
       </nav>
 
       <div class="hidden md:flex items-center justify-end md:flex-1 lg:w-0">
@@ -102,19 +108,12 @@
         <a href="{% url 'account_login' %}" class="button button--transparent">
           Sign in
         </a>
-        <a 
-          id="CTA_header"
-          class="button button--secondary"
-          href="{% url 'account_signup' %}"
-        >
-          Sign up
-        </a>
         <a
           id="CTA_header"
           class="ml-4 button"
-          href="{% external_url 'talk_to_us' %}"
+          href="{% external_url 'request_demo' %}"
         >
-          Talk to us
+          Request Demo
         </a>
         {% endif %}
       </div>

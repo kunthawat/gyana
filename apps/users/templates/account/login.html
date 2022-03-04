@@ -2,6 +2,12 @@
 {% load static %}
 {% load socialaccount %}
 
+{% block header %}
+<p>
+  Welcome, sign in to continue where you left off.
+</p>
+{% endblock %}
+
 {% block content %}
 <section>
   <a class="button button--primary button--outline button--google w-full" href="{% provider_login_url 'google' %}">
@@ -29,11 +35,13 @@
     </a>
   </p>
 
-  <p class="text-center">
-    No account yet? No problem,
-    <a class="link" href="{% url 'account_signup' %}">
-      create one here!
-    </a>
-  </p>
+  {% comment %}
+    <p class="text-center">
+      No account yet? No problem,
+      <a class="link" href="{% url 'account_signup' %}">
+        create one here!
+      </a>
+    </p>
+  {% endcomment %}
 </section>
 {% endblock %}

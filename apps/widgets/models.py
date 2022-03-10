@@ -2,11 +2,10 @@ from django.conf import settings
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.urls import reverse
-from simple_history.models import HistoricalRecords
 
 from apps.base.clients import SLUG
 from apps.base.core.aggregations import AggregationFunctions
-from apps.base.models import BaseModel, SaveParentModel
+from apps.base.models import HistoryModel, SaveParentModel
 from apps.columns.bigquery import DatePeriod
 from apps.columns.currency_symbols import CurrencySymbols
 from apps.dashboards.models import Page
@@ -59,7 +58,7 @@ class WidgetStyle(models.Model):
         return None
 
 
-class Widget(WidgetStyle, BaseModel):
+class Widget(WidgetStyle, HistoryModel):
     class Category(models.TextChoices):
         CONTENT = "content", "Content"
         SIMPLE = "simple", "Simple charts"
@@ -107,7 +106,6 @@ class Widget(WidgetStyle, BaseModel):
         MEAN = "mean", "Average"
 
     _clone_excluded_m2o_or_o2m_fields = ["table"]
-    history = HistoricalRecords()
 
     page = models.ForeignKey(Page, on_delete=models.CASCADE, related_name="widgets")
 

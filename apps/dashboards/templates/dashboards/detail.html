@@ -95,14 +95,27 @@
               Duplicate
             </button>
           </form>
-
+          
           <a
             class="list__item list__item--interactive w-full"
             href="{% url "project_dashboards:delete" project.id object.id %}"
           >
             Delete
           </a>
-
+          {% flag 'alpha' %}
+          <turbo-frame id="dashboard:save"></turbo-frame>
+          <form method="post"
+                action="{% url "project_dashboards:save" project.id object.id %}"
+                class="form--no-layout">
+              {% csrf_token %}
+              <button type="submit"
+                      class="list__item list__item--interactive w-full"
+                      id="dashboards-duplicate-{{ object.id }}"
+                      data-loading-false>
+                      Save current version
+              </button>
+          </form>
+          {% endflag %}
             <p
               class="list__item list__item--br w-full"
             >

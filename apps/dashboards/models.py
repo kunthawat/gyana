@@ -9,11 +9,11 @@ from django.contrib.auth.hashers import (
 )
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
-from django.db.models import Deferrable, UniqueConstraint
+from django.db.models import Deferrable, Q, UniqueConstraint
 from django.urls import reverse
 from django.utils.translation import gettext_lazy
 
-from apps.base.models import BaseModel
+from apps.base.models import BaseModel, HistoryModel
 from apps.projects.models import Project
 
 from .utils import getFusionThemePalette
@@ -62,7 +62,7 @@ class DashboardSettings(models.Model):
     widget_border_thickness = models.IntegerField(default=1)
 
 
-class Dashboard(DashboardSettings, BaseModel):
+class Dashboard(DashboardSettings, HistoryModel):
     class SharedStatus(models.TextChoices):
         PRIVATE = "private", "Private"
         PUBLIC = "public", "Public"
@@ -149,7 +149,7 @@ class Dashboard(DashboardSettings, BaseModel):
         return super().make_clone(attrs, sub_clone, using)
 
 
-class Page(BaseModel):
+class Page(HistoryModel):
     class Meta:
         ordering = ("position",)
         constraints = [
@@ -172,6 +172,15 @@ class Page(BaseModel):
 
     def get_absolute_url(self):
         return f'{reverse("project_dashboards:detail", args=(self.dashboard.project.id, self.dashboard.id))}?dashboardPage={self.position}'
+
+
+# The DashboardVersion linsk to the dashboard model and we will be using the creation date
+# For the other models. Hopefully, this is robust even in the event of children not
+# propagating their update to their parents.
+class DashboardVersion(BaseModel):
+    dashboard = models.ForeignKey(
+        Dashboard, on_delete=models.CASCADE, related_name="versions"
+    )
 
 
 DASHBOARD_SETTING_TO_CATEGORY = {

@@ -9,6 +9,7 @@ from .access import (
     dashboard_is_password_protected,
     dashboard_is_public,
     login_and_dashboard_required,
+    login_and_dashboardversion_required,
 )
 
 app_name = "dashboards"
@@ -46,6 +47,11 @@ urlpatterns = [
         dashboard_is_in_template(frames.DashboardPreview.as_view()),
         name="preview",
     ),
+    path(
+        "restore/<hashid:pk>",
+        login_and_dashboardversion_required(views.DashboardRestore.as_view()),
+        name="restore",
+    ),
 ]
 
 router = routers.DefaultRouter()
@@ -81,6 +87,11 @@ project_urlpatterns = (
             "<hashid:pk>/delete",
             login_and_project_required(views.DashboardDelete.as_view()),
             name="delete",
+        ),
+        path(
+            "<hashid:pk>/save",
+            login_and_project_required(frames.DashboardVersionSave.as_view()),
+            name="save",
         ),
         path(
             "<hashid:dashboard_id>/pages/new",

@@ -1,10 +1,12 @@
+import itertools
+
 import django_tables2 as tables
 from django.template import Context
 from django.template.loader import get_template
 
-from apps.base.tables import ICONS, DuplicateColumn, NaturalDatetimeColumn
+from apps.base.tables import ICONS, NaturalDatetimeColumn, TemplateColumn
 
-from .models import Dashboard
+from .models import Dashboard, DashboardVersion
 
 
 class StatusColumn(tables.TemplateColumn):
@@ -32,8 +34,26 @@ class DashboardTable(tables.Table):
     status = StatusColumn(template_name="columns/status.html", orderable=False)
     created = NaturalDatetimeColumn()
     updated = NaturalDatetimeColumn()
-    duplicate = DuplicateColumn(
+    duplicate = TemplateColumn(
         template_name="components/_duplicate.html",
         orderable=False,
         verbose_name="Actions",
     )
+
+
+class DashboardHistoryTable(tables.Table):
+    class Meta:
+        model = DashboardVersion
+        fields = ("created",)
+        attrs = {"class": "table"}
+        order_by = ("created",)
+
+    created = NaturalDatetimeColumn()
+    version = tables.Column(empty_values=(), orderable=False)
+    action = TemplateColumn(
+        template_name="dashboards/_restore_cell.html", orderable=False
+    )
+
+    def render_version(self):
+        self.row_counter = getattr(self, "row_counter", itertools.count())
+        return next(self.row_counter) + 1

@@ -1,7 +1,7 @@
 import analytics
 from django.db.models.query import QuerySet
 from django.http import HttpResponseRedirect
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from django.urls.base import reverse
 from django.utils import timezone
 from django.utils.decorators import method_decorator
@@ -26,7 +26,7 @@ from apps.projects.mixins import ProjectMixin
 from apps.widgets.models import WIDGET_CHOICES_ARRAY, Widget
 
 from .forms import DashboardCreateForm, DashboardLoginForm, DashboardNameForm
-from .models import Dashboard, Page
+from .models import Dashboard, DashboardVersion, Page
 
 
 class DashboardList(ProjectMixin, SingleTableView):
@@ -158,7 +158,7 @@ class DashboardDuplicate(TurboUpdateView):
 
         clone = self.object.make_clone(
             attrs={
-                "name": "Copy of " + self.object.name,
+                "name": f"Copy of {self.object.name}",
                 "shared_id": None,
                 "shared_status": Dashboard.SharedStatus.PRIVATE,
             }
@@ -285,6 +285,22 @@ class PageDelete(DashboardMixin, DeleteView):
 
     def get_success_url(self) -> str:
         return f"{reverse('project_dashboards:detail', args=(self.project.id, self.dashboard.id))}?dashboardPage={min(self.object.position, self.dashboard.pages.count()-1)}"
+
+
+class DashboardRestore(TurboUpdateView):
+    model = DashboardVersion
+    fields = []
+
+    def form_valid(self, form):
+        version = form.instance
+        version.dashboard.restore_as_of(version.created)
+
+        return redirect(
+            reverse(
+                "project_dashboards:detail",
+                args=(version.dashboard.project.id, version.dashboard.id),
+            )
+        )
 
 
 class PageMove(DashboardMixin, TurboUpdateView):

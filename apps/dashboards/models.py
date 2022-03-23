@@ -7,6 +7,8 @@ from django.contrib.auth.hashers import (
     is_password_usable,
     make_password,
 )
+from django.contrib.contenttypes.fields import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
 from django.db.models import Deferrable, Q, UniqueConstraint
@@ -88,7 +90,12 @@ class Dashboard(DashboardSettings, HistoryModel):
         return reverse("project_dashboards:detail", args=(self.project.id, self.id))
 
     def save(self, *args, **kwargs):
+        is_creation = self.id is None
+        skip_dashboard_update = kwargs.pop("skip_dashboard_update", False)
         super().save(*args, **kwargs)
+
+        if not is_creation and not skip_dashboard_update:
+            self.updates.create(content_object=self)
         if self._password is not None:
             password_validation.password_changed(self._password, self)
             self._password = None
@@ -173,8 +180,27 @@ class Page(HistoryModel):
     def get_absolute_url(self):
         return f'{reverse("project_dashboards:detail", args=(self.dashboard.project.id, self.dashboard.id))}?dashboardPage={self.position}'
 
+    def save(self, **kwargs) -> None:
+        is_first_page = self.id is None and self.dashboard.pages.count() == 0
+        skip_dashboard_update = kwargs.pop("skip_dashboard_update", False)
+        super().save(**kwargs)
+        if not skip_dashboard_update:
+            # for the first page of a dashboard we want it to reflect the dashboard creation
+            self.dashboard.updates.create(
+                content_object=self if not is_first_page else self.dashboard
+            )
 
-# The DashboardVersion linsk to the dashboard model and we will be using the creation date
+    def delete(self, **kwargs):
+        skip_dashboard_update = kwargs.pop("skip_dashboard_update", False)
+        if not skip_dashboard_update:
+            self.dashboard.updates.create(content_object=self)
+        return super().delete(**kwargs)
+
+    def __str__(self) -> str:
+        return f"Page {self.position}{f': {self.name}' if self.name else ''}"
+
+
+# The DashboardVersion links to the dashboard model and we will be using the creation date
 # For the other models. Hopefully, this is robust even in the event of children not
 # propagating their update to their parents.
 class DashboardVersion(BaseModel):
@@ -182,6 +208,15 @@ class DashboardVersion(BaseModel):
         Dashboard, on_delete=models.CASCADE, related_name="versions"
     )
     name = models.CharField(max_length=255, null=True, blank=True)
+
+
+class DashboardUpdate(BaseModel):
+    dashboard = models.ForeignKey(
+        Dashboard, on_delete=models.CASCADE, related_name="updates"
+    )
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
+    object_id = models.PositiveIntegerField()
+    content_object = GenericForeignKey("content_type", "object_id")
 
 
 DASHBOARD_SETTING_TO_CATEGORY = {

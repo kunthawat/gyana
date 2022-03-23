@@ -190,7 +190,7 @@ class Widget(WidgetStyle, HistoryModel):
     positive_decrease = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"<Widget {self.kind} on {self.table}>"
+        return f'{self.get_kind_display()}{f" {self.name}" if self.name else ""}'
 
     @property
     def is_valid(self) -> bool:
@@ -239,6 +239,18 @@ class Widget(WidgetStyle, HistoryModel):
                 return "self_controlled"
             if self.page.has_control:
                 return "page_controlled"
+
+    def save(self, **kwargs):
+        skip_dashboard_update = kwargs.pop("skip_dashboard_update", False)
+        super().save(**kwargs)
+        if not skip_dashboard_update:
+            self.page.dashboard.updates.create(content_object=self)
+
+    def delete(self, **kwargs):
+        skip_dashboard_update = kwargs.pop("skip_dashboard_update", False)
+        if not skip_dashboard_update:
+            self.page.dashboard.updates.create(content_object=self)
+        return super().delete(**kwargs)
 
 
 NO_DIMENSION_WIDGETS = [

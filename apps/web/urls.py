@@ -27,6 +27,12 @@ sitmap_urlpatterns = [
 ]
 
 urlpatterns = sitmap_urlpatterns + [
+    # manually added to sitemap
+    path(
+        "integrations/<str:id>",
+        cache_site(views.Integration.as_view()),
+        name="integration",
+    ),
     path("toggle-sidebar", views.toggle_sidebar),
     # frames
     path(

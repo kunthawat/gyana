@@ -1,6 +1,7 @@
 {% extends "projects/settings_base.html" %}
 {% load static %}
 {% load help_utils %}
+{% load waffle_tags %}
 
 {% block app %}
 {% if not request.GET.service %}
@@ -46,16 +47,14 @@
           <p>{{ services_query_count }} sources</p>
         </div>
         {% for service in services_query %}
-          <a class="card card--sm"
-            href="{% url 'project_integrations_connectors:create' project.id %}?service={{ service.id }}">
-            <div class="flex items-center gap-7">
-              <img style="height:2.4rem;"
-                src="{% static 'images/integrations/fivetran/'|add:service.icon_path %}"
-                  alt="{{ service.name }}"
-              />
-              <h4>{{ service.name }}</h4>
-            </div>
-          </a>
+          {% if service.is_beta %}
+            {%flag 'beta'%}
+              {% include 'connectors/_connector_card.html' %}
+            {% endflag %}
+          {% else %}
+            {% include 'connectors/_connector_card.html' %}
+          {% endif %}
+
         {% endfor %}
       </div>
     </div>
@@ -75,7 +74,7 @@
       <div class="card mb-4">
         <div class="flex flex-col items-start gap-4">
           <img class="h-40 object-contain mb-2" src="{% static 'images/integrations/fivetran/'|add:service.icon_path %}" alt="{{ service.name }}" />
-          <h1>{{ service.name }}</h1>
+          <h1 {% if service.is_beta %}class="beta"{% endif %}>{{ service.name }}</h1>
           <p class="max-w-xl">{{ service.description }}</p>
         </div>
       </div>

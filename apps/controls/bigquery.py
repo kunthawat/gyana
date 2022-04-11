@@ -412,15 +412,11 @@ def slice_query(query, column, control, use_previous_period):
     if control.date_range != CustomChoice.CUSTOM:
         func = DATETIME_FILTERS[control.date_range]
         range_filter = (
-            func["previous_function"] if use_previous_period else func["function"]
+            func["function"] if not use_previous_period else func["previous_function"]
         )
-
         return range_filter(query, column)
 
-    if (
-        isinstance(query[column], TimestampValue)
-        and query[column].type().timezone is None
-    ):
+    if query[column].type().timezone is None:
         query = query.mutate(**{column: query[column].to_timestamp()})
     if control.start:
         query = query[query[column] > control.start]

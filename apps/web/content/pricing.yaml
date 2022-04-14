@@ -1,32 +1,53 @@
 tiers:
-  - name: Pro
-    description: Best-in-class, no-code custom report builder with 100+ integrations.
+  - name: Free
+    description: Ideal for personal use and individuals at early stage companies.
     includedHeader: What's included
     includedFeatures:
+      - 50,000 rows synced
       - Pre-built integrations
       - Build custom reports
-      - Automated updates
-    color: text-gray-600
-    button: button--tertiary
-  - name: Elite
-    description: Build custom reports for any source, supported by our team of experts.
+  - name: Pro
+    description: Ideal for founders, analysts and marketing teams at 10 to 25-person companies.
+    includedHeader: Everything in free, plus
+    price: 99
+    includedFeatures:
+      - 10,000,000 rows synced
+      - Report automation
+      - Dedicated support
+  - name: Enterprise
+    description: Ideal for 50 to 1,000-person companies with an existing data warehouse.
     includedHeader: Everything in pro, plus
     includedFeatures:
-      - Custom integrations
-      - Personalized setup
-      - Hands-on training
-    color: text-indigo-900
-    button: button--primary
-    mostPopular: True
+      - Bring your own warehouse
+      - Hosted in your cloud
+      - Solution architect
+addons:
+  - name: Report setup
+    summary: Our data experts will understand your business use case, and build your reports from scratch. We've done it for hundreds of companies.
+    price: $499
+    features:
+      - Connect sources
+      - Data modelling
+      - Dashboard build
+      - Personalized training
+      - Private Slack
+  - name: Custom integrations
+    summary: We can build you a custom data pipeline for your source. It will sync historical data and daily updates into Gyana.
+    features:
+      - Saas
+      - Databases
+      - Warehouse
+      - Cloud
+      - Internal APIs
+      - Web scraping
+      - Feeds
   - name: Agency
-    description: Manage custom reports for your clients, in your own branded portal.
-    includedHeader: Everything in elite, plus
-    includedFeatures:
+    summary: Setup Gyana to manage multiple clients, in your own branded portal. Partner with us for exclusive insights, templates and training.
+    features:
       - Client management
       - White-label
       - Custom domains
-    color: text-indigo-600
-    button: button--secondary
+      - Partner programme
 
 faqs:
   - q: What does Gyana do?

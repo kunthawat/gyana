@@ -6,7 +6,6 @@ from django.template.loader import get_template
 from django_tables2 import Column, Table
 from django_tables2.config import RequestConfig as BaseRequestConfig
 from django_tables2.data import TableData
-from django_tables2.templatetags.django_tables2 import QuerystringNode
 
 from apps.base import clients
 from apps.base.core.utils import md5
@@ -49,9 +48,11 @@ class BigQueryTableData(TableData):
 
     def __getitem__(self, page: slice):
         """Fetches the data for the current page"""
-        if not self._page_selected:
-            return self._get_query_results().rows_dict_by_md5[: page.stop - page.start]
-        return self._get_query_results(page.start, page.stop).rows_dict_by_md5
+        return (
+            self._get_query_results(page.start, page.stop).rows_dict_by_md5
+            if self._page_selected
+            else self._get_query_results().rows_dict_by_md5[: page.stop - page.start]
+        )
 
     def __len__(self):
         """Fetches the total size from BigQuery"""
@@ -94,30 +95,29 @@ class RequestConfig(BaseRequestConfig):
         return super().configure(table)
 
 
-def get_type_name(type_):
-    if isinstance(type_, (dt.Floating, dt.Integer, dt.Decimal)):
-        return "Numeric"
-    if isinstance(type_, dt.String):
-        return "String"
-    if isinstance(type_, dt.Boolean):
-        return "Boolean"
-    if isinstance(type_, (dt.Date, dt.Time, dt.Timestamp)):
-        return "Time"
-    if isinstance(type_, dt.Struct):
-        return "Dictionary"
+TYPE_NAME = {
+    dt.Floating: "Numeric",
+    dt.Decimal: "Numeric",
+    dt.Integer: "Numeric",
+    dt.String: "String",
+    dt.Boolean: "Boolean",
+    dt.Time: "Time",
+    dt.Timestamp: "Date & Time",
+    dt.Date: "Date",
+    dt.Struct: "Dictionary",
+}
 
-
-def get_type_class(type_):
-    if isinstance(type_, (dt.Floating, dt.Integer, dt.Decimal)):
-        return "column column--numeric"
-    if isinstance(type_, dt.String):
-        return "column column--string"
-    if isinstance(type_, dt.Boolean):
-        return "column column--boolean"
-    if isinstance(type_, (dt.Date, dt.Time, dt.Timestamp)):
-        return "column column--time"
-    if isinstance(type_, dt.Struct):
-        return "column column--dict"
+TYPE_CLASS = {
+    dt.Floating: "column--numeric",
+    dt.Decimal: "column--numeric",
+    dt.Integer: "column--numeric",
+    dt.String: "column--string",
+    dt.Boolean: "column--boolean",
+    dt.Time: "column--time",
+    dt.Timestamp: "column--datetime",
+    dt.Date: "column--date",
+    dt.Struct: "column--dict",
+}
 
 
 class BigQueryColumn(Column):
@@ -175,7 +175,7 @@ class BigQueryColumn(Column):
                 "data-controller": "tooltip",
                 "data-tooltip-content": value,
             }
-            return super().render("{}...".format(value[:61]))
+            return super().render(f"{value[:61]}...")
 
         return super().render(value)
 
@@ -200,9 +200,9 @@ def get_table(schema, query, footer=None, settings=None, **kwargs):
             verbose_name=name,
             attrs={
                 "th": {
-                    "class": get_type_class(type_),
+                    "class": f"column {TYPE_CLASS.get(type_)}",
                     "data-controller": "tooltip",
-                    "data-tooltip-content": get_type_name(type_),
+                    "data-tooltip-content": TYPE_NAME.get(type_),
                 },
             },
             footer=footer.get(name) if footer else None,

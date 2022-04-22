@@ -27,11 +27,6 @@ urlpatterns = [
         login_and_integration_required(frames.IntegrationSchema.as_view()),
         name="schema",
     ),
-    path(
-        "<hashid:pk>/table_detail",
-        login_and_integration_required(frames.IntegrationTableDetail.as_view()),
-        name="table_detail",
-    ),
 ]
 
 router = routers.DefaultRouter()

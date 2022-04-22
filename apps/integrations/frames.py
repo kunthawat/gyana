@@ -72,9 +72,3 @@ class IntegrationSchema(TableInstanceMixin, SingleTableMixin, TurboFrameDetailVi
             {"type": get_humanize_from_bigquery_type(t.field_type), "name": str(t.name)}
             for t in get_bq_table_schema_from_table(self.table_instance)
         ]
-
-
-class IntegrationTableDetail(TableInstanceMixin, TurboFrameDetailView):
-    template_name = "integrations/table_detail.html"
-    model = Integration
-    turbo_frame_dom_id = "integrations:table_detail"

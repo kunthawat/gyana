@@ -83,11 +83,12 @@ class IntegrationListTable(tables.Table):
 
 class StructureTable(tables.Table):
     class Meta:
-        fields = ("name", "type")
+        fields = ("name", "_type")
         attrs = {"class": "table-data"}
 
-    type = tables.Column()
-    name = tables.Column()
+    # type is a function keyword in python, avoiding it with underscore
+    _type = tables.Column(accessor="type", verbose_name="Data Type")
+    name = tables.Column(verbose_name="Column Name")
 
 
 class ReferencesTable(tables.Table):

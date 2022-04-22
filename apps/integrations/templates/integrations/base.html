@@ -135,17 +135,21 @@
 {% if integration.ready %}
   <div class="workflow-detail__footer">
     <div class="flex items-center w-full gap-2">
-      <p class="flex items-center m-0">
+      <p class="flex items-center">
         {% if integration.created_by %}
         <img
-          class="h-8 w-8 rounded-full ml-2"
+          class="h-8 w-8 rounded-full mr-2"
           src="{{ integration.created_by.avatar_url }}"
           alt="{{ integration.created_by.get_display_name }}"
+          data-controller="tooltip"
+          data-tooltip-content="Created by {{ integration.created_by.get_display_name }}"
         />
         {% endif %}
+      </p>
 
+      <p class="m-0">
         {% if object.kind == 'sheet' %}
-          <turbo-frame id="sheets:status" src="{% url 'sheets:status' object.sheet.id %}">
+          • <turbo-frame id="sheets:status" src="{% url 'sheets:status' object.sheet.id %}">
             {% include "sheets/status.html" with object=object.sheet %}
           </turbo-frame>
         {% elif object.kind == 'connector' %}
@@ -154,11 +158,14 @@
           </turbo-frame>
         {% endif %}
       </p>
-      {% if object.kind == 'connector' %}
-        <turbo-frame id="connectors:pause" class='ml-auto'>
-          {% include "connectors/pause.html" with object=object.connector %}
-        </turbo-frame>
-      {% endif %}
+
+      <p class="m-0">
+        {% if object.kind == 'connector' %}
+          <turbo-frame id="connectors:pause" class='ml-auto'>
+            {% include "connectors/pause.html" with object=object.connector %}
+          </turbo-frame>
+        {% endif %}
+      </p>
     </div>
   </div>
 {% endif %}

@@ -1,13 +1,16 @@
 <form 
   method="POST"
   id="control-update-form"
+  data-controller="live-update"
+  data-tf-modal-target="form"
+  data-tf-modal-submit-on-close
+  data-action="change->tf-modal#change"
   action="{% if is_public %}
     {% url 'dashboard_controls:update-public' project.id dashboard.id object.id %}
   {% else %}
     {% url 'dashboard_controls:update-widget' project.id dashboard.id object.id %}
   {% endif %}" 
-  class="form--no-layout popover-body"
-  data-controller="live-update"
+  class="form--no-layout pad"
 >
   {% csrf_token %}
   
@@ -20,8 +23,9 @@
   <button
     class="button button--success button--sm mt-3 w-full"
     name="submit"
-    value="submit"
     type="submit"
+    value="Save &amp; Close"
+    data-action="click->tf-modal#forceClose"
   >
     Apply
   </button>

@@ -1,12 +1,9 @@
 {% extends 'widgets/widget_base.html' %}
 
-{% block widget.id %}control-widget-{{ object.id }}{% endblock widget.id %}
+{% block widget.id %}control-widget-{{ control.id }}{% endblock widget.id %}
 
 {% block widget.attrs %}
   data-is-control="true"
-  data-controller="popover"
-  data-placement="top-start"
-  data-theme="popover-control"
 {% endblock widget.attrs %}
 
 {% block widget %}
@@ -31,11 +28,24 @@
 {% endblock widget %}
 
 {% block widget.commands %}
-  <button
+  <button  
     class="widget-card__button"
     data-controller="tooltip"
     data-tooltip-content="Edit"
-    data-popover-target="trigger"
+    data-action="click->tf-modal#open"
+    id="widget-update-{{ control.id }}"
+    data-modal-item="{{ control.id }}"
+    data-modal-src="
+    {% if is_public %}
+      {% url 'dashboard_controls:update-public' project.id dashboard.id control.id %}
+    {% else %}
+      {% url 'dashboard_controls:update-widget' project.id dashboard.id control.id %}?mode={{ request.GET.mode }}
+    {% endif %}"
+    data-modal-id="controls:update-widget"
+    {% if request.GET.modal_item == control.id|stringformat:"i" %}
+    data-tf-modal-target="onParam"
+    {% endif %}
+    data-modal-classes="tf-modal--auto"
   >
     <i class="fas fa-fw fa-edit"></i>
   </button>
@@ -58,16 +68,3 @@
     </form>
   {% endif %}
 {% endblock widget.commands %}
-
-{% block widget.extra %}
-  <div class="control-popover" data-popover-target="body">
-    <turbo-frame id="controls:update-widget"
-      src="
-      {% if is_public  %}
-        {% url 'dashboard_controls:update-public' project.id dashboard.id control.id %}
-      {% else %}
-        {% url 'dashboard_controls:update-widget' project.id dashboard.id control.id %}?mode={{ request.GET.mode }}
-      {% endif %}"
-    ></turbo-frame>
-  </div>
-{% endblock widget.extra %}

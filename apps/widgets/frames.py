@@ -25,7 +25,7 @@ from apps.tables.bigquery import get_query_from_table
 from apps.tables.models import Table
 from apps.widgets.visuals import chart_to_output, metric_to_output, table_to_output
 
-from .forms import FORMS, STYLE_FORMS, DefaultStyleForm
+from .forms import FORMS, STYLE_FORMS, DefaultStyleForm, WidgetSourceForm
 from .models import Widget
 
 
@@ -85,7 +85,10 @@ class WidgetName(TurboFrameUpdateView):
         )
 
 
-class WidgetUpdateMixin(DashboardMixin):
+class WidgetUpdate(DashboardMixin, TurboFrameUpdateView):
+    model = Widget
+    turbo_frame_dom_id = "widget-modal"
+
     def get_turbo_stream_response(self, context):
         return TurboStreamResponse(
             [
@@ -97,6 +100,10 @@ class WidgetUpdateMixin(DashboardMixin):
                 .render(),
             ]
         )
+
+    @property
+    def tab(self):
+        return self.request.GET.get("tab", "data" if self.object.table else "source")
 
     def get_output_context(self):
         context = {
@@ -132,11 +139,6 @@ class WidgetUpdateMixin(DashboardMixin):
 
         return context
 
-
-class WidgetUpdate(WidgetUpdateMixin, TurboFrameUpdateView):
-    model = Widget
-    turbo_frame_dom_id = "widget-modal"
-
     def get_template_names(self):
         if self.object.kind == Widget.Kind.IFRAME:
             return "widgets/update-simple.html"
@@ -146,22 +148,30 @@ class WidgetUpdate(WidgetUpdateMixin, TurboFrameUpdateView):
         return "widgets/update.html"
 
     def get_form_class(self):
-        return FORMS[self.request.POST.get("kind") or self.object.kind]
+        if self.tab == "style":
+            return STYLE_FORMS.get(self.object.kind, DefaultStyleForm)
+        if self.tab == "source":
+            return WidgetSourceForm
+        return FORMS[self.request.POST.get("kind", self.object.kind)]
 
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
+        if self.tab == "style":
+            return kwargs
+        if self.tab == "source":
+            kwargs["project"] = self.dashboard.project
+            return kwargs
         table = self.request.POST.get("table") or getattr(self.object, "table")
         if table is not None:
             kwargs["schema"] = (
                 table if isinstance(table, Table) else Table.objects.get(pk=table)
             ).schema
 
-        kwargs["project"] = self.dashboard.project
         return kwargs
 
     def get_success_url(self) -> str:
         if self.is_preview_request:
-            return reverse(
+            base_url = reverse(
                 "dashboard_widgets:update",
                 args=(
                     self.project.id,
@@ -169,6 +179,8 @@ class WidgetUpdate(WidgetUpdateMixin, TurboFrameUpdateView):
                     self.object.id,
                 ),
             )
+            return f"{base_url}?tab={self.tab if self.tab!='source' else 'data'}"
+
         return reverse(
             "project_dashboards:detail",
             args=(self.project.id, self.dashboard.id),
@@ -176,16 +188,15 @@ class WidgetUpdate(WidgetUpdateMixin, TurboFrameUpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        if self.object.kind not in [
+        context["tab"] = self.tab
+
+        if self.tab == "data" and self.object.kind not in [
             Widget.Kind.TEXT,
             Widget.Kind.IFRAME,
             Widget.Kind.IMAGE,
         ]:
             context["show_date_column"] = bool(
                 context["form"].get_live_field("date_column")
-            )
-            context["styleForm"] = STYLE_FORMS.get(self.object.kind, DefaultStyleForm)(
-                instance=self.object
             )
 
         return context
@@ -236,77 +247,6 @@ class WidgetUpdate(WidgetUpdateMixin, TurboFrameUpdateView):
 
             return self.get_turbo_stream_response(context)
         return r
-
-
-class WidgetStyle(WidgetUpdateMixin, TurboFrameUpdateView):
-    template_name = "widgets/update.html"
-    model = Widget
-    turbo_frame_dom_id = "widget-modal-style"
-
-    def get_form_class(self):
-        return STYLE_FORMS.get(self.object.kind, DefaultStyleForm)
-
-    def form_valid(self, form):
-        if not form.has_changed():
-            return HttpResponseRedirect(self.get_success_url())
-
-        r = super().form_valid(form)
-
-        analytics.track(
-            self.request.user.id,
-            WIDGET_CONFIGURED_EVENT,
-            {
-                "id": form.instance.id,
-                "dashboard_id": self.dashboard.id,
-                "type": form.instance.kind,
-            },
-        )
-        context = self.get_output_context()
-
-        if self.is_preview_request:
-            analytics.track(
-                self.request.user.id,
-                WIDGET_PREVIEWED_EVENT,
-                {
-                    "id": form.instance.id,
-                    "dashboard_id": self.dashboard.id,
-                    "type": form.instance.kind,
-                },
-            )
-            return r
-
-        analytics.track(
-            self.request.user.id,
-            WIDGET_COMPLETED_EVENT,
-            {
-                "id": form.instance.id,
-                "dashboard_id": self.dashboard.id,
-                "type": form.instance.kind,
-            },
-        )
-
-        return self.get_turbo_stream_response(context)
-
-    def get_success_url(self) -> str:
-        if self.is_preview_request:
-            return "{}?{}".format(
-                reverse(
-                    "dashboard_widgets:update",
-                    args=(
-                        self.project.id,
-                        self.dashboard.id,
-                        self.object.id,
-                    ),
-                ),
-                "show_style=True",
-            )
-        return "{}?{}".format(
-            reverse(
-                "project_dashboards:detail",
-                args=(self.project.id, self.dashboard.id),
-            ),
-            "show_style=True",
-        )
 
 
 class WidgetOutput(DashboardMixin, SingleTableMixin, TurboFrameDetailView):

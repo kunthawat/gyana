@@ -54,6 +54,7 @@ class Team(DirtyFieldsMixin, BaseModel, SafeDeleteModel):
     # the last checkout associated with this team (until subscription information syncs via webhook from Paddle)
     last_checkout = models.OneToOneField(Checkout, null=True, on_delete=models.SET_NULL)
     timezone = TimeZoneField(default="GMT", choices_display="WITH_GMT_OFFSET")
+    has_free_trial = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         from .bigquery import create_team_dataset
@@ -137,6 +138,7 @@ class Team(DirtyFieldsMixin, BaseModel, SafeDeleteModel):
             self.active_codes == 0
             and not self.has_subscription
             and not self.recently_completed_checkout
+            and not self.has_free_trial
         )
 
     @property
@@ -154,9 +156,11 @@ class Team(DirtyFieldsMixin, BaseModel, SafeDeleteModel):
         if self.active_codes > 0:
             return {**PLANS["appsumo"], **get_deal(self.appsumocode_set.all())}
 
-        if self.has_subscription:
-            if self.active_subscription.plan.id == settings.DJPADDLE_PRO_PLAN_ID:
-                return PLANS["pro"]
+        if (
+            self.has_subscription
+            and self.active_subscription.plan.id == settings.DJPADDLE_PRO_PLAN_ID
+        ) or self.has_free_trial:
+            return PLANS["pro"]
 
         return PLANS["free"]
 

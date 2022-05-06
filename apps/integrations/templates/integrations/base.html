@@ -170,13 +170,11 @@
         {% endif %}
       </p>
 
-      <p class="m-0">
-        {% if object.kind == 'connector' %}
-          <turbo-frame id="connectors:pause" class='ml-auto'>
-            {% include "connectors/pause.html" with object=object.connector %}
-          </turbo-frame>
-        {% endif %}
-      </p>
+      {% if object.kind == 'connector' %}
+       • <turbo-frame id="connectors:pause" class='p'>
+          {% include "connectors/pause.html" with object=object.connector %}
+        </turbo-frame>
+      {% endif %}
     </div>
   </div>
 {% endif %}

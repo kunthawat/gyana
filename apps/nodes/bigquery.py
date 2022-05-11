@@ -18,17 +18,12 @@ from apps.columns.bigquery import (
     get_groups,
 )
 from apps.filters.bigquery import get_query_from_filters
+from apps.nodes.exceptions import JoinTypeError, NodeResultNone
 from apps.tables.bigquery import get_query_from_table
 from apps.teams.models import OutOfCreditsException
 
 from ._sentiment_utils import CreditException, get_gcp_sentiment
 from ._utils import create_or_replace_intermediate_table, get_parent_updated
-
-
-def _get_duplicate_names(left, right):
-    left_names = {col.lower() for col in left.schema()}
-    right_names = {col.lower() for col in right.schema()}
-    return left_names & right_names
 
 
 def _rename_duplicates(queries):
@@ -124,7 +119,19 @@ def get_join_query(node, left, right, *queries):
             join.left_column, join.left_column
         )
         right_col = duplicate_map[idx + 1].get(join.right_column, join.right_column)
-        query = query.join(right, left[left_col] == right[right_col], how=join.how)
+        try:
+            query = query.join(right, left[left_col] == right[right_col], how=join.how)
+        except TypeError:
+            # We don't to display the original column names (instead of the potentiall
+            # suffixed left_col or right_col)
+            # but need to fetch the type from the right table
+            raise JoinTypeError(
+                left_column_name=join.left_column,
+                right_column_name=join.right_column,
+                left_column_type=left[left_col].type(),
+                right_column_type=right[right_col].type(),
+            )
+
         if join.how == "inner":
             drops.add(right_col)
             relabels[left_col] = join.left_column
@@ -391,16 +398,10 @@ def get_query_from_node(node):
                 node.uses_credits = err.uses_credits
             node.save()
             logging.error(err, exc_info=err)
+            raise err
 
         # input node zero state
         if results.get(node) is None:
             raise NodeResultNone(node=node)
 
     return results[node]
-
-
-class NodeResultNone(Exception):
-    def __init__(self, node, *args: object) -> None:
-        super().__init__(*args)
-
-        self.node = node

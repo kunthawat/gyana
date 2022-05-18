@@ -1,4 +1,4 @@
-{% load static %}
+{% load static waffle_tags %}
 
 <!DOCTYPE html>
 <html>
@@ -98,11 +98,13 @@
     {% endif %}
     <div
       class="widgets__canvas"
-      style="--background-color:{{ object.background_color }};"
+      style="--background-color:{{ object.background_color }};overflow:hidden;"
       data-controller="widget-list"
     > 
       <div
         id="dashboard-widget-container"
+        data-width="{{ object.width }}"
+        data-height="{{ object.height }}"
         style="width:{{ object.width }}px;height:{{object.height}}px;"
         data-widget-list-target="dashboard"
       >
@@ -119,13 +121,19 @@
     </div>
 
     {% if not request.GET.embed %}
-      <footer class="widget__public-footer">
+      <footer class="widget__public-footer" data-html2canvas-ignore>
         <p class="small">
           Last updated <abbr>{% include "columns/natural_datetime.html" with datetime=dashboard.updated %}</abbr>
         </p>
 
-        {% if dashboard.shared_status == 'password_protected' %}
-        <a class="link small" href="{% url 'dashboards:logout' dashboard.shared_id %}">Forget me on this browser</a>
+        {% flag 'beta' %}
+          <a class="link small" href="{% url 'dashboards:public' object.shared_id %}?printPreview=1">
+            Preview print
+          </a>
+        {% endflag %}
+
+        {% if dashboard.shared_status == "password_protected" %}
+          <a class="link small" href="{% url 'dashboards:logout' dashboard.shared_id %}">Forget me on this browser</a>
         {% endif %}
       </footer>
     {% endif %}
@@ -172,6 +180,11 @@
   {% endblock body.modal %}
 
   {% comment %} Has to be loaded once GyWidgets are rendered {% endcomment %}
-  {% include 'components/fusionchart_scripts.html' %}
+  <script src="{% static "fusioncharts/fusioncharts.js" %}"></script>
+  <script src="{% static "fusioncharts/fusioncharts.charts.js" %}"></script>
+  <script src="{% static "fusioncharts/fusioncharts.widgets.js" %}"></script>
+  <script src="{% static "fusioncharts/fusioncharts.powercharts.js" %}"></script>
+  <script src="{% static "fusioncharts/fusioncharts.timeseries.js" %}"></script>
+  <script src="{% static "fusioncharts/themes/fusioncharts.theme.fusion.js" %}"></script>
 </body>
 </html>

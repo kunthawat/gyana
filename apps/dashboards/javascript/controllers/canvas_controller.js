@@ -1,5 +1,8 @@
 import { Controller } from '@hotwired/stimulus'
 
+const clamp = (value, min, max) => Math.min(Math.max(num, min), max)
+const clampToGrid = (value, grid) => Math.ceil(value / grid) * grid
+
 export default class extends Controller {
   static targets = ['form', 'formControl']
 

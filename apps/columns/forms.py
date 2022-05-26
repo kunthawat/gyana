@@ -82,6 +82,7 @@ class ColumnFormWithFormatting(ColumnForm):
             "class": "hidden",
         }
     )
+    template_name = "columns/forms/column_form.html"
 
     class Meta:
         model = Column
@@ -173,6 +174,7 @@ class AggregationFormWithFormatting(AggregationColumnForm):
             "class": "hidden",
         }
     )
+    template_name = "columns/forms/column_form.html"
 
     class Meta:
         fields = (

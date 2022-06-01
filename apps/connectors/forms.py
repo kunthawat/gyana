@@ -68,7 +68,10 @@ class BaseConnectorUpdateMixin:
             )
             self.fields[tables_field] = forms.MultipleChoiceField(
                 choices=[
-                    (t.name_in_destination, t.display_name) for t in schema.tables
+                    (t.name_in_destination, t.display_name)
+                    for t in sorted(
+                        schema.tables, key=lambda t: t.enabled, reverse=True
+                    )
                 ],
                 widget=ConnectorSchemaMultiSelect(
                     schema_dict={t.name_in_destination: t for t in schema.tables}
@@ -93,6 +96,10 @@ class BaseConnectorUpdateMixin:
             raise ValidationError(
                 "Failed to update, please try again or reach out to support."
             )
+
+    def pre_save(self, instance):
+        instance.has_import_triggered = True
+        return super().pre_save(instance)
 
 
 class ConnectorUpdateForm(LiveFormsetMixin, BaseConnectorUpdateMixin, BaseModelForm):

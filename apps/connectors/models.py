@@ -138,6 +138,7 @@ class Connector(DirtyFieldsMixin, BaseModel):
     source_sync_details = models.JSONField(null=True)
     # https://fivetran.com/docs/rest-api/connectors#retrieveaconnectorschemaconfig
     schema_config = models.JSONField(null=True)
+    has_import_triggered = models.BooleanField(default=False, blank=True)
 
     # deprecated: track the celery task
     sync_task_id = models.UUIDField(null=True)
@@ -361,11 +362,26 @@ class Connector(DirtyFieldsMixin, BaseModel):
                 clients.fivetran().update(self, daily_sync_time=self.daily_sync_time)
             self.save()
 
-    def sync_schema_obj_from_fivetran(self):
+    def sync_schema_obj_from_fivetran(self, enable_defaults=False):
         from apps.connectors.fivetran.client import FivetranClientError
 
         try:
-            self.schema_config = clients.fivetran().get_schemas(self)
+            schemas = clients.fivetran().get_schemas(self)
+            if self.conf.default_tables and enable_defaults:
+                schemas = {
+                    schema_name: {
+                        **schema,
+                        "tables": {
+                            table_name: {
+                                **table,
+                                "enabled": table_name in self.conf.default_tables,
+                            }
+                            for table_name, table in schema["tables"].items()
+                        },
+                    }
+                    for schema_name, schema in schemas.items()
+                }
+            self.schema_config = schemas
             self.save()
         except FivetranClientError:
             # certain connectors fail to return schema objects

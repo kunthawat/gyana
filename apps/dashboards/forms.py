@@ -10,54 +10,7 @@ from apps.base.fields import ColorField, ColorInput
 from apps.base.forms import BaseModelForm, LiveModelForm
 
 from .models import DASHBOARD_SETTING_TO_CATEGORY, Dashboard
-from .widgets import TextareaCode
-
-
-class PaletteColorsWidget(forms.MultiWidget):
-    widgets = [
-        ColorInput(),
-        ColorInput(),
-        ColorInput(),
-        ColorInput(),
-        ColorInput(),
-        ColorInput(),
-        ColorInput(),
-    ]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(widgets=self.widgets, *args, **kwargs)
-
-    def decompress(self, value):
-        if value:
-            return value.split(" ")
-
-        return [None]
-
-
-class PaletteColorsField(forms.MultiValueField):
-    widget = PaletteColorsWidget
-    fields = (
-        ColorField(),
-        ColorField(),
-        ColorField(),
-        ColorField(),
-        ColorField(),
-        ColorField(),
-        ColorField(),
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(
-            fields=self.fields,
-            *args,
-            **kwargs,
-        )
-
-    def compress(self, data_list):
-        return data_list
-
-    def has_changed(self, initial, data):
-        return super().has_changed(initial, map(lambda x: x.upper(), data))
+from .widgets import PaletteColorsField, TextareaCode
 
 
 class DashboardCreateForm(BaseModelForm):
@@ -88,12 +41,14 @@ class DashboardForm(BaseModelForm):
     )
     width = forms.IntegerField(
         required=False,
+        initial=1200,
         widget=forms.NumberInput(
             attrs={"class": "label--half", "unit_suffix": "pixels"}
         ),
     )
     height = forms.IntegerField(
         required=False,
+        initial=840,
         widget=forms.NumberInput(
             attrs={"class": "label--half", "unit_suffix": "pixels"}
         ),

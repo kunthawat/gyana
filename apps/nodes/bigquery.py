@@ -4,6 +4,7 @@ from functools import wraps
 from itertools import chain
 
 import ibis
+import ibis.expr.datatypes as dt
 import ibis.expr.operations as ops
 from cacheops import cached_as
 from ibis.expr.datatypes import String
@@ -19,7 +20,7 @@ from apps.columns.bigquery import (
     get_groups,
 )
 from apps.filters.bigquery import get_query_from_filters
-from apps.nodes.exceptions import JoinTypeError, NodeResultNone
+from apps.nodes.exceptions import ColumnNamesDontMatch, JoinTypeError, NodeResultNone
 from apps.nodes.models import Node
 from apps.tables.bigquery import get_query_from_table
 from apps.teams.models import OutOfCreditsException
@@ -150,17 +151,38 @@ def get_aggregation_query(node, query):
 
 
 def get_union_query(node, query, *queries):
-    colnames = query.schema()
-    for parent in queries:
-        if set(parent.schema()) == set(colnames):
-            # Project to make sure columns are in the same order
-            query = query.union(
-                parent.projection(list(colnames)), distinct=node.union_distinct
+    columns = query.schema()
+    for idx, parent in enumerate(queries):
+        if set(parent.schema()) != set(columns):
+            raise ColumnNamesDontMatch(
+                index=idx,
+                left_columns=set(columns) - set(parent.schema()),
+                right_columns=set(parent.schema()) - set(columns),
             )
-        else:
-            raise ibis.common.exceptions.RelationError
+
+        # Project to make sure columns are in the same order
+        parent = parent.projection([parent[column] for column in columns])
+        if parent.schema().types != query.schema().types:
+            # We can cast integer columns to float columns to make the union possible
+            # we need to do it for query or parent depending which source contains the
+            # integer column
+            p_castings = {}
+            q_castings = {}
+            for colname in columns:
+                if isinstance(parent[colname].type(), dt.Integer) and isinstance(
+                    query[colname].type(), (dt.Floating, dt.Decimal)
+                ):
+                    p_castings[colname] = parent[colname].cast(query[colname].type())
+                elif isinstance(query[colname].type(), dt.Integer) and isinstance(
+                    parent[colname].type(), (dt.Floating, dt.Decimal)
+                ):
+                    q_castings[colname] = query[colname].cast(parent[colname].type())
+            query = query.mutate(**q_castings)
+            parent = parent.mutate(**p_castings)
+
+        query = query.union(parent, distinct=node.union_distinct)
     # Need to `select *` so we can operate on the query
-    return query.projection(colnames)
+    return query[query]
 
 
 def get_except_query(node, query, *queries):
@@ -168,7 +190,7 @@ def get_except_query(node, query, *queries):
     for parent in queries:
         query = query.difference(parent)
     # Need to `select *` so we can operate on the query
-    return query.projection(colnames)
+    return query[query]
 
 
 def get_intersect_query(node, query, *queries):
@@ -177,7 +199,7 @@ def get_intersect_query(node, query, *queries):
         query = query.intersect(parent)
 
     # Need to `select *` so we can operate on the query
-    return query.projection(colnames)
+    return query[query]
 
 
 def get_sort_query(node, query):
@@ -189,9 +211,8 @@ def get_sort_query(node, query):
 
 def get_limit_query(node, query):
     # Need to project again to make sure limit isn't overwritten
-    return query.limit(node.limit_limit, offset=node.limit_offset or 0).projection(
-        query.schema()
-    )
+    query = query.limit(node.limit_limit, offset=node.limit_offset or 0)
+    return query[query]
 
 
 def get_filter_query(node, query):

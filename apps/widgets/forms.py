@@ -18,6 +18,7 @@ from apps.dashboards.widgets import PaletteColorsField
 
 from .formsets import FORMSETS, AggregationColumnFormset, ControlFormset, FilterFormset
 from .models import (
+    CATEGORIES,
     COUNT_COLUMN_NAME,
     DEFAULT_HEIGHT,
     DEFAULT_WIDTH,
@@ -163,10 +164,9 @@ class GenericWidgetForm(LiveFormsetForm):
         super().__init__(*args, **kwargs)
 
         self.fields["kind"].choices = [
-            choice
-            for choice in self.fields["kind"].choices
-            if choice[0]
-            not in [Widget.Kind.TEXT, Widget.Kind.IMAGE, Widget.Kind.IFRAME]
+            (key.label, values)
+            for key, values in CATEGORIES.items()
+            if key != Widget.Category.CONTENT
         ]
 
         schema = self.instance.table.schema

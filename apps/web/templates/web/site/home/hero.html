@@ -23,9 +23,9 @@
             <button type="submit" href="{% url 'account_signup' %}" class="w-full sm:w-auto button button--secondary">
               Create account
             </button>
-            <a class="button button--tertiary w-16" href="{% provider_login_url 'google' %}">
+            {% comment %} <a class="button button--tertiary w-16" href="{% provider_login_url 'google' %}">
               <img class="w-6 h-6" src="{% static 'images/socialauth/google-g.svg' %}" alt="Google Logo">
-            </a>
+            </a> {% endcomment %}
           </div>
       </form>
     </div>

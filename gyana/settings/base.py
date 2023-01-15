@@ -119,7 +119,8 @@ PROJECT_APPS = [
     "apps.columns",
     "apps.uploads",
     "apps.sheets",
-    "apps.connectors.apps.ConnectorsConfig",
+    # TODO: Remove once migrations have run
+    "apps.connectors",
     # TODO: Remove once migrations have run
     "apps.appsumo",
     "apps.cnames.apps.CNamesConfig",
@@ -386,17 +387,9 @@ GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME")
 GS_PUBLIC_BUCKET_NAME = os.environ.get("GS_PUBLIC_BUCKET_NAME")
 GS_PUBLIC_CACHE_CONTROL = "public, max-age=31536000"
 
-FIVETRAN_KEY = os.environ.get("FIVETRAN_KEY")
-FIVETRAN_URL = "https://api.fivetran.com/v1"
-FIVETRAN_GROUP = os.environ.get("FIVETRAN_GROUP")
-FIVETRAN_HEADERS = {
-    "Authorization": f"Basic {FIVETRAN_KEY}",
-    "Accept": "application/json;version=2",
-}
 
 EXTERNAL_URL = "http://localhost:8000"
-# for local development
-MOCK_FIVETRAN = os.environ.get("MOCK_FIVETRAN", "False") == "True"
+
 
 BIGQUERY_COLUMN_NAME_LENGTH = 300
 BIGQUERY_TABLE_NAME_LENGTH = 1024

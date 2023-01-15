@@ -226,7 +226,7 @@ class Team(DirtyFieldsMixin, BaseModel, SafeDeleteModel):
 
     def update_daily_sync_time(self):
         for project in self.project_set.all():
-            project.update_daily_sync_time()
+            project.update_schedule()
 
 
 class Membership(BaseModel):

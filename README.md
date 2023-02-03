@@ -13,16 +13,16 @@ In short:
 # Create a virtual environment
 mkvirtualenv gyana -p python3
 
-# Install poetry and yarn dependencies
+# Install poetry and npm dependencies
 poetry install
-yarn install
+npm install
 
 # Create a local database and run migrations
 createdb gyana
 python manage.py migrate
 
 # Build the client
-yarn build
+npm run build
 
 # Run the app
 just dev

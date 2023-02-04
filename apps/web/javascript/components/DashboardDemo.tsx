@@ -1,13 +1,24 @@
 import React, { useEffect, useState } from 'react'
+import Plot from 'react-plotly.js'
 
-import chartData from './dashboard-demo-data'
 import { useDemoStore } from '../store'
 
+const chartData = {
+  x: [
+    'Direct',
+    'Referral',
+    'Organic Search',
+    'Organic Social',
+    'Organic Video',
+    'Paid',
+  ],
+  y: [290, 260, 180, 140, 115, 100],
+}
+
 const TYPE_CONFIG = [
-  { id: 'pie2d', icon: 'fa-chart-pie' },
-  { id: 'column2d', icon: 'fa-chart-bar' },
+  { id: 'pie', icon: 'fa-chart-pie' },
+  { id: 'bar', icon: 'fa-chart-bar' },
   { id: 'line', icon: 'fa-chart-line' },
-  { id: 'area2d', icon: 'fa-chart-area' },
 ]
 
 const THEME_CONFIG = [
@@ -143,7 +154,7 @@ const AgencyButtonGroup = ({ agency, setAgency }) => {
 }
 
 const DashboardDemo = () => {
-  const [type, setType] = useState('pie2d')
+  const [type, setType] = useState('pie')
   const [theme, setTheme] = useState('indigo')
   const [font, setFont] = useState('sans-serif')
   const [agency, setAgency] = useState('squirrel')
@@ -151,13 +162,34 @@ const DashboardDemo = () => {
 
   const { integrations, node } = useDemoStore()[0]
 
+  const palette = THEME_CONFIG.find((item) => item.id === theme)?.palette
+
+  const plotlyData = {
+    ...data,
+    labels: data.x,
+    values: data.y,
+    type,
+    marker: {
+      colors: palette,
+      color: palette[0],
+      line: { color: palette },
+    },
+  }
+
+  const plotlyLayout = {
+    showlegend: false,
+    font: { family: font },
+    height: 250,
+    margin: { l: 40, r: 40, t: 40, b: 60 },
+  }
+
+  const plotlyConfig = { displayModeBar: false, responsive: true }
+
   useEffect(() => {
-    setData(
-      chartData.map(({ label, value }) => ({
-        label,
-        value: value + Math.floor(Math.random() * 240) - 120,
-      }))
-    )
+    setData({
+      x: chartData.x,
+      y: chartData.y.map((p) => p + Math.floor(Math.random() * 240) - 120),
+    })
   }, [JSON.stringify({ integrations, node })])
 
   return (
@@ -170,7 +202,8 @@ const DashboardDemo = () => {
             suppressContentEditableWarning
           >
             <i className='fa fa-search text-gray mr-1'></i>
-            <span className='text-black-20'>https://</span>reports.{agency}.com
+            <span className='text-black-20'>https://</span>dashboard.{agency}
+            .com
           </div>
         </div>
         <div className='w-full bg-gray-10 flex-none flex items-center gap-2 p-2 border-b border-gray'>
@@ -186,9 +219,12 @@ const DashboardDemo = () => {
             <p>{AGENCY_CONFIG.find((item) => item.id === agency)?.name} Inc.</p>
           </div>
         </div>
-        <div className='p-2'>
-          There used to be charts here but we removed FusionCharts and now need
-          to do the same with Plotly
+        <div className='flex flex-col'>
+          <Plot
+            data={[plotlyData]}
+            layout={plotlyLayout}
+            config={plotlyConfig}
+          />
         </div>
         <p className='absolute bottom-0 right-0 text-gray-600 text-sm inline-flex items-center gap-1 bg-gray-10 p-1 m-2 rounded border border-gray'>
           Data sources

@@ -8,7 +8,6 @@ EXTERNAL_URLS = {
     "newsletter": "http://eepurl.com/gAi94b",
     "onboarding": "https://calendly.com/lorraine-chabeda/30min",
     "sales": "mailto:joyeeta.das@gyana.com",
-    "request_demo": reverse_lazy("web:book-a-demo"),
     "hubspot_meeting": "https://meetings-eu1.hubspot.com/david-kell",
     "facebook_group": "https://www.facebook.com/groups/891928461364849/",
     "slack_community": "https://join.slack.com/t/gyanacommunity/shared_invite/zt-vly76dna-dxv12CkXdanlwqMam5zDPQ",
@@ -17,6 +16,7 @@ EXTERNAL_URLS = {
     "appsumo": "https://appsumo.com/products/gyana/",
     "demo_dashboard": "https://www.gyana.com/dashboards/a7b7458f-8162-4ec9-b92b-5b6911e02d49?embed=true",
     "github": "https://www.github.com/gyana/gyana",
+    "hire_an_expert": "",
     # social
     "facebook": "https://www.facebook.com/GyanaHQ",
     "twitter": "https://twitter.com/GyanaHQ",

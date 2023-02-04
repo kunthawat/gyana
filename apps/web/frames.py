@@ -73,13 +73,3 @@ class SupportDemo(TurboFrameTemplateView):
         context = super().get_context_data(**kwargs)
         context["content"] = get_content("home.yaml")
         return context
-
-
-class SearchIntegrationsDemo(TurboFrameTemplateView):
-    template_name = "web/demo/search_integrations.html"
-    turbo_frame_dom_id = "web:search-integrations-demo"
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["content"] = get_content("integrations.yaml")
-        return context

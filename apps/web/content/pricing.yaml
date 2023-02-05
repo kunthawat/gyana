@@ -1,171 +1,210 @@
 tiers:
-  - name: Free
-    description: Ideal for personal use and individuals at early stage companies.
+  - name: Open source
+    description: Run Gyana on your own infrastructure for free.
     includedHeader: What's included
     includedFeatures:
-      - Google Sheets and CSV
-      - Build custom reports
-      - Live chat
+      - Fully open source
+      - You own your data
+      - Gyana community
     features:
-      Integrations:
-        Google Sheets: true
-        CSV: true
-        Rows synced per integration: 100,000
-      Reports:
-        Projects: 3
+      Data:
+        Rows: Run in your data warehouse
+        Hosting: Self hosted
+      Features:
+        Integrations: true
+        Workflows: true
+        Dashboards: true
+        Collaboration: true
+      Automation: {}
       Support:
-        Live chat: true
-      Other:
+        Gyana community: true
+      Advanced features:
+        Shareable URLs: true
+        HTML Embed: true
+  - name: Free
+    description: Explore Gyana with our forever free plan.
+    includedHeader: What's included
+    includedFeatures:
+      - No-code business intelligence
+      - Build custom dashboards
+      - Managed by us
+    features:
+      Data:
+        Rows: 1,000
+        Hosting: Gyana cloud
+      Features:
+        Integrations: true
+        Workflows: true
+        Dashboards: true
+        Collaboration: true
+      Automation: {}
+      Support:
+        Gyana community: true
+      Advanced features:
         Shareable URLs: true
         HTML Embed: true
   - name: Pro
-    description: Ideal for founders, analysts and marketing teams at 10 to 25-person companies.
+    description: Ideal for SMBs, startups, agencies and non-profits.
     includedHeader: Everything in free, plus
-    price: 99
+    price: 10
     includedFeatures:
-      - All integrations
-      - Report automation
-      - Dedicated support
+      - Scale your usage
+      - Dashboard automation
+      - Remove branding
     features:
-      Integrations:
-        Google Sheets: true
-        CSV: true
-        Custom API & Webhooks: true
-        Databases: true
-        Applications: true
-        Custom integration: Add-on
-        Accounts per integration: 1
-        Rows synced per integration: 10,000,000
-      Reports:
-        Projects: Unlimited
-        Report automation: Daily
+      Data:
+        Rows: Starting at 1,000,000
+        Hosting: Gyana cloud
+      Features:
+        Integrations: true
+        Workflows: true
+        Dashboards: true
+        Collaboration: true
+      Automation:
+        Schedule: true
+        Frequency: Daily
       Support:
-        Live chat: true
+        Gyana community: true
         Shared Slack Channel: true
-        Report setup: Add-on
-      Other:
-        Shareable URLs: true
-        HTML Embed: true
-        Remove Gyana branding: true
-        White-labelling: Add-on
+        Professional support: Hire an expert
+      Advanced features:
+        Remove branding: true
+        Custom domains: true
   - name: Enterprise
-    description: Ideal for 50 to 1,000-person companies with an existing data warehouse.
+    description: For organizations seeking enterprise-grade features.
     includedHeader: Everything in pro, plus
     includedFeatures:
+      - Single-sign on
+      - Customised billing & MSA
       - Bring your own warehouse
-      - Hosted in your cloud
-      - Solution architect
     features:
-      Integrations:
-        Google Sheets: true
-        CSV: true
-        Custom API & Webhooks: true
-        Applications: true
-        Databases: true
-        Custom integration: true
-        Accounts per integration: Custom
-        Rows synced per integration: Custom
-      Reports:
-        Projects: Unlimited
-        Report automation: Custom
+      Data:
+        Rows: Custom volume
+        Hosting: Gyana cloud
+      Features:
+        Integrations: true
+        Workflows: true
+        Dashboards: true
+        Collaboration: true
+      Automation:
+        Schedule: true
+        Frequency: Custom
       Support:
-        Live chat: true
+        Gyana community: true
         Shared Slack Channel: true
-        Report setup: true
-        Solution architect: true
-      Other:
-        Shareable URLs: true
-        HTML Embed: true
-        Remove Gyana branding: true
-        White-labelling: true
+        Professional support: Hire an expert
+      Advanced features:
+        Remove branding: true
+        Custom domains: true
         Okta Single Sign-On: true
         Custom billing & MSA: true
 
+usage:
+  - rows: 1,000,000
+    price: 10
+  - rows: 2,000,000
+    price: 20
+  - rows: 5,000,000
+    price: 40
+  - rows: 10,000,000
+    price: 75
+  - rows: 20,000,000
+    price: 150
+  - rows: 50,000,000
+    price: 250
+  - rows: 100,000,000
+    price: 500
+
 features:
+  Collaboration:
+    - name: Projects
+      icon: fa-folders
+    - name: Teams
+      icon: fa-users
+    - name: Access
+      icon: fa-lock
+    - name: Interactive controls
+      icon: fa-calendar
+    - name: Version history
+      icon: fa-code-branch
+    - name: Public dashboards
+      icon: fa-link
+    - name: Embedded BI
+      icon: fa-desktop
+    - name: Project templates
+      icon: fa-copy
   Integrations:
-    - Google Sheets
-    - CSV
-    - Custom API & Webhooks
-    - Applications
-    - Databases
-    - Custom integration
-    - name: Accounts per integration
-      description: E.g. How many Shopify stores, Google Ads accounts or Postgres databases you can connect. Excludes Google Sheets, CSV, custom API and webhooks, which are unlimited.
-    - name: Rows synced per integration
-      description: Total rows synced to Gyana from each data source e.g. Shopify store.
-  Reports:
-    - Projects
-    - Report automation
+    - name: Upload
+      icon: fa-upload
+    - name: Google Sheet
+      icon: fa-file-spreadsheet
+    - name: Custom API
+      icon: fa-brackets-curly
+    - name: Automation
+      heading: true
+    - name: Schedule
+      icon: fa-clock
+    - name: Monitor
+      icon: fa-desktop
+    - name: Export
+      icon: fa-download
+  Workflows: []
+  Dashboards: []
+
+comparison:
+  Data:
+    - name: Rows
+      description: Total rows synced to Gyana from external data sources
+    - Hosting
+  Features:
+    - Integrations
+    - Workflows
+    - Dashboards
+    - Collaboration
+  Automation:
+    - name: Schedule
+      description: Schedule an integration or workflow to run at a fixed frequency
+    - Frequency
   Support:
-    - Live chat
+    - Gyana community
     - Shared Slack Channel
-    - Report setup
-    - Solution architect
-  Other:
-    - HTML Embed
-    - White-labelling
+    - Professional support
+  Advanced features:
+    - Remove branding
+    - Custom domains
     - Okta Single Sign-On
     - Custom billing & MSA
-addons:
-  - name: Report setup
-    summary: Our data experts will understand your business use case, and build your reports from scratch. We've done it for hundreds of companies.
-    price: $499
-    features:
-      - Connect sources
-      - Data modelling
-      - Dashboard build
-      - Personalized training
-      - Private Slack
-  - name: Custom integrations
-    summary: We can build you a custom data pipeline for your source. It will sync historical data and daily updates into Gyana.
-    note: Setup fee + monthly
-    features:
-      - Applications
-      - Databases
-      - Warehouse
-      - Cloud
-      - Internal APIs
-      - Web scraping
-      - Feeds
-  - name: Agency
-    summary: Setup Gyana to manage multiple clients, in your own branded portal. Partner with us for exclusive insights, templates and training.
-    note: Billed per client
-    features:
-      - Client management
-      - White-label
-      - Custom domains
-      - Partner programme
 
 faqs:
   - q: What does Gyana do?
-    a: Gyana is a no-code tool for building custom reports for any source.
-      It replaces workflows that are typically done with files, spreadsheets and traditional dashboard tools.
+    a: Gyana is an open source, no-code business intelligence tool.
+      It replaces workflows that are typically done with files, spreadsheets and traditional BI tools.
   - q: How long does it take to learn Gyana?
     a:
       Gyana only has a handful of core concepts. It takes ~30 minutes to learn them,
       and a couple of hours of building to really understand the "Gyana way" of doing things.
   - q: Who typically uses Gyana?
-    a: Marketing analysts are the biggest users of Gyana, but every team in a company has use-cases for building reports — operations, product, engineering, etc.
+    a: Data analysts are the biggest users of Gyana, but every team in a company has use-cases for building dashboards — operations, product, engineering, etc.
   - q: Can Gyana connect to my data?
     a: Gyana can pull data from any source that you use.
-      See <a class="link" href="/integrations">Integrations</a> for a full list of data sources that we support.
-      Can't find yours? We'll build it for you.
+      You can configure an existing no-code integration, or contribute a new one
+      on Github.
   - q: Is Gyana secure?
-    a:
-      Security and privacy are of paramount importance to us, and we are ISO 27001 compliant.
-      Gyana is hosted on Google Cloud. Reach out to us if you'd like to learn more.
+    a: Security and privacy are of paramount importance to us.
+      Gyana is hosted on Google Cloud and Heroku.
+      Our source code is open source and anyone can review it.
   - q: What about GDPR?
     a:
       Gyana is committed to GDPR compliance. Your data is always located in the UK and
       EU, and we act as your data processing partner.
   - q: Do you offer 1-on-1 training/support?
     a:
-      We offer hands-on training and support as part of our Elite and Agency plans.
-      We typically run training sessions as part of the onboarding, and use shared Slack channels for priority support.
-  - q: Can you replicate my Data Studio / Power BI report?
-    a: Yes — we have a team of data analytics specialists who can build your existing report in Gyana.
-  - q: Can you help me set up a report from scratch?
-    a: Yes — our data analytics specialists can work with you to set up a new report from scratch, for internal use or your clients.
+      We do not offer hands-on training ourselves, but we can connect you to a Gyana expert.
+      We also offer a shared Slack channel for Pro plans.
+  - q: Can you replicate my Looker Studio dashboard?
+    a: Yes — our community of Gyana experts can help build your existing dashboard in Gyana.
+  - q: Can you help me set up a dashboard from scratch?
+    a: Yes — our community of Gyana experts can work with you to set up a new dashboard from scratch, for internal use or your clients.
 testimonial:
   quote: As an <b>online marketing freelancer</b>, I have tried and tested many reporting tools such as DigiXport and Portometrics, but the issues I kept facing were data limitation and <b>restrictions on how I can display my data</b>. Gyana allows me to pull in <b>all the data I need</b> and the workflow stage let’s me create <b>the exact metrics that I require</b>.
   avatar: images/site/home/neels-van-niekerk.jpeg

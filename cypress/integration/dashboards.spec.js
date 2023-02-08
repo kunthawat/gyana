@@ -20,7 +20,7 @@ describe('dashboards', () => {
 
   it('dashboard editor', () => {
     cy.get('[data-cy=dashboard-create]').click()
-    cy.get('#dashboard-name input[id=name]')
+    cy.get('#dashboards-name input[id=name]')
       .clear()
       .type('Magical dashboard{enter}')
 
@@ -42,11 +42,11 @@ describe('dashboards', () => {
       cy.wrap(el)
         .get('button')
         .should('not.be.disabled')
-        .click({ turbo: false })
+        .click()
     })
     cy.get('select[name=aggregations-0-column]').select('Employees')
     cy.get('select[name=aggregations-0-function]').select('SUM')
-    cy.contains('Save & Close').click({ turbo: false })
+    cy.contains('Save & Close').click()
 
     cy.get(`#widget-${widgetStartId + 1}`).within((el) => {
       // TODO: check for visibility

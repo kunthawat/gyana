@@ -1,0 +1,14 @@
+<form id="workflows-name"
+    hx-post="{% url "workflows:name" object.id %}"
+    class="form">
+  {% csrf_token %}
+
+  <input
+    class="input__inline mr-auto"
+    id="name"
+    type="text"
+    name="name"
+    value="{{ object.name }}"
+    onBlur="this.form.requestSubmit();"
+    />
+</form>

@@ -1,24 +1,20 @@
 from django.db.models import F
 from django.urls import reverse
+from django.views.generic import TemplateView, UpdateView
 from django_tables2 import MultiTableMixin
 
-from apps.base.frames import (
-    TurboFrameDetailView,
-    TurboFrameTemplateView,
-    TurboFrameUpdateView,
-)
+from apps.base.frames import TurboFrameDetailView, TurboFrameUpdateView
 from apps.nodes.models import Node
 from apps.projects.mixins import ProjectMixin
 from apps.runs.tables import JobRunTable
 from apps.workflows.tables import ReferenceTable
 
-from .forms import WorkflowSettingsForm
+from .forms import WorkflowNameForm, WorkflowSettingsForm
 from .models import Workflow
 
 
-class WorkflowOverview(ProjectMixin, TurboFrameTemplateView):
+class WorkflowOverview(ProjectMixin, TemplateView):
     template_name = "workflows/overview.html"
-    turbo_frame_dom_id = "workflows:overview"
 
     def get_context_data(self, **kwargs):
         context_data = super().get_context_data(**kwargs)
@@ -74,3 +70,12 @@ class WorkflowSettings(ProjectMixin, MultiTableMixin, TurboFrameUpdateView):
         return reverse(
             "project_workflows:settings", args=(self.project.id, self.object.id)
         )
+
+
+class WorkflowName(UpdateView):
+    template_name = "workflows/name.html"
+    model = Workflow
+    form_class = WorkflowNameForm
+
+    def get_success_url(self) -> str:
+        return reverse("workflows:name", args=(self.object.id,))

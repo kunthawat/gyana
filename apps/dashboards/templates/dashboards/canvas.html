@@ -13,8 +13,8 @@
     {% comment %} Hidden form used by canvas controller {% endcomment %}
     <form
       id="dashboard-widget-create-form"
-      method="post"
-      action="{% url 'dashboard_widgets:create' project.id dashboard.id %}?mode=edit"
+      hx-post="{% url 'dashboard_widgets:create' project.id dashboard.id %}?mode=edit"
+      hx-swap="beforebegin"
       hidden
       data-canvas-target="form"
     >
@@ -28,8 +28,8 @@
       <button name="submit" type="submit"></button>
     </form>
     <form
-      method="POST"
-      action="{% url 'dashboard_controls:create-widget' project.id dashboard.id %}"
+      hx-post="{% url 'dashboard_controls:create-widget' project.id dashboard.id %}"
+      hx-swap="beforebegin"
       hidden
       data-canvas-target="formControl"
     >

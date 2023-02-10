@@ -37,8 +37,7 @@
     {% if object.shared_status != "private" %}
     <div data-controller="to-clipboard" class="clipboard-copy mb-4">
       <a
-        href="{{ dashboard.public_url }}" 
-        data-turbo="false"
+        href="{{ dashboard.public_url }}"
         target="_blank"
         rel="noreferrer noopener"
       >
@@ -53,8 +52,7 @@
 
     <form
       id="dashboard-share-form"
-      method="post"
-      action="{% url "dashboards:share" object.id %}"
+      hx-post="{% url "dashboards:share" object.id %}"
       data-controller="live-update"
     >
       {% csrf_token %}

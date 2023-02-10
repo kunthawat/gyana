@@ -65,13 +65,8 @@ export default class extends Controller {
       </div>
     `
 
-    this.turboFrameTarget.removeAttribute('src')
     this.turboFrameTarget.setAttribute(
-      'id',
-      event.currentTarget.dataset.modalId
-    )
-    this.turboFrameTarget.setAttribute(
-      'src',
+      'hx-get',
       event.currentTarget.dataset.modalSrc
     )
 
@@ -96,6 +91,9 @@ export default class extends Controller {
     }
 
     this.modalTarget.removeAttribute('hidden')
+
+    htmx.process(this.turboFrameTarget)
+    this.turboFrameTarget.dispatchEvent(new CustomEvent('hx-modal-load'))
   }
 
   async submit(e) {
@@ -110,10 +108,13 @@ export default class extends Controller {
     // so it know it isnt live anymore
     if (e.target.name) data.set(e.target.name, e.target.value)
 
-    const result = await fetch(this.formTarget.action, {
-      method: 'POST',
-      body: data,
-    })
+    const result = await fetch(
+      this.formTarget.getAttribute('hx-post') || this.formTarget.action,
+      {
+        method: 'POST',
+        body: data,
+      }
+    )
 
     const text = await result.text()
     const parser = new DOMParser()

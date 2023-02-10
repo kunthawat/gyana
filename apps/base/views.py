@@ -46,6 +46,22 @@ class LiveMixin:
         return response
 
 
+class LiveCreateView(LiveMixin, CreateView):
+    def post(self, request, *args, **kwargs):
+        self.object = None
+        return super().post(request, *args, **kwargs)
+
+
+class LiveUpdateView(LiveMixin, UpdateView):
+    @property
+    def is_preview_request(self):
+        return self.request.POST.get("submit") == "Save & Preview"
+
+    def post(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
+
+
 class TurboCreateView(LiveMixin, TurboFormMixin, CreateView):
     def post(self, request, *args, **kwargs):
         self.object = None

@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import analytics
 from django.urls import reverse
+from django.views.generic import DetailView, UpdateView
 from django_tables2.tables import Table as DjangoTable
 from django_tables2.views import SingleTableMixin
 from honeybadger import honeybadger
@@ -16,8 +17,8 @@ from apps.base.analytics import (
 )
 from apps.base.core.table_data import RequestConfig, get_table
 from apps.base.core.utils import error_name_to_snake
-from apps.base.frames import TurboFrameDetailView, TurboFrameUpdateView
 from apps.base.templates import template_exists
+from apps.base.views import LiveUpdateView
 from apps.columns.currency_symbols import CURRENCY_SYMBOLS_MAP
 from apps.controls.bigquery import DATETIME_FILTERS
 from apps.dashboards.mixins import DashboardMixin
@@ -76,11 +77,10 @@ def add_output_context(context, widget, request, control, url=None):
         context["chart_id"] = chart_id
 
 
-class WidgetName(TurboFrameUpdateView):
+class WidgetName(UpdateView):
     model = Widget
     fields = ("name",)
     template_name = "widgets/name.html"
-    turbo_frame_dom_id = "widget-editable-name"
 
     def get_success_url(self) -> str:
         return reverse(
@@ -89,9 +89,8 @@ class WidgetName(TurboFrameUpdateView):
         )
 
 
-class WidgetUpdate(DashboardMixin, TurboFrameUpdateView):
+class WidgetUpdate(DashboardMixin, LiveUpdateView):
     model = Widget
-    turbo_frame_dom_id = "widget-modal"
 
     def get_turbo_stream_response(self, context):
         return TurboStreamResponse(
@@ -258,14 +257,10 @@ class WidgetUpdate(DashboardMixin, TurboFrameUpdateView):
         return r
 
 
-class WidgetOutput(DashboardMixin, SingleTableMixin, TurboFrameDetailView):
+class WidgetOutput(DashboardMixin, SingleTableMixin, DetailView):
     template_name = "widgets/output.html"
     model = Widget
     paginate_by = 15
-
-    def get_turbo_frame_dom_id(self):
-        source = f"-{source}" if (source := self.request.GET.get("source")) else ""
-        return f"widgets-output-{self.object.id}{source}"
 
     def get_context_data(self, **kwargs):
         context = None
@@ -312,14 +307,10 @@ class WidgetOutput(DashboardMixin, SingleTableMixin, TurboFrameDetailView):
         return type("DynamicTable", (DjangoTable,), {})(data=[])
 
 
-class WidgetInput(DashboardMixin, SingleTableMixin, TurboFrameDetailView):
+class WidgetInput(DashboardMixin, SingleTableMixin, DetailView):
     template_name = "widgets/input.html"
     model = Widget
     paginate_by = 15
-
-    def get_turbo_frame_dom_id(self):
-        source = f"-{source}" if (source := self.request.GET.get("source")) else ""
-        return f"widgets-output-{self.object.id}{source}"
 
     def get_table(self, **kwargs):
         if self.object.table:

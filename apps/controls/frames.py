@@ -2,16 +2,15 @@ from django.shortcuts import render
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django_htmx.http import retarget, trigger_client_event
-from turbo_response.response import HttpResponseSeeOther
 
-from apps.base.views import LiveUpdateView
+from apps.base.views import HttpResponseSeeOther, UpdateView
 from apps.dashboards.mixins import DashboardMixin
 
 from .forms import ControlForm
 from .models import Control
 
 
-class ControlUpdate(DashboardMixin, LiveUpdateView):
+class ControlUpdate(DashboardMixin, UpdateView):
     template_name = "controls/update.html"
     model = Control
     form_class = ControlForm

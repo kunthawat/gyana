@@ -1,13 +1,13 @@
 from django.urls import reverse
 
-from apps.base.views import TurboCreateView
+from apps.base.views import CreateView
 from apps.projects.mixins import ProjectMixin
 
 from .forms import CustomApiCreateForm
 from .models import CustomApi
 
 
-class CustomApiCreate(ProjectMixin, TurboCreateView):
+class CustomApiCreate(ProjectMixin, CreateView):
     template_name = "customapis/create.html"
     model = CustomApi
     form_class = CustomApiCreateForm

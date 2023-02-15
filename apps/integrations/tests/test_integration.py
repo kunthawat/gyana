@@ -51,7 +51,7 @@ def test_integration_crudl(client, logged_in_user, sheet_factory):
     # name
     new_name = "Superduper integration"
     r = client.post(f"/integrations/{integration.id}/name", data={"name": new_name})
-    assertRedirects(r, f"/integrations/{integration.id}/name", status_code=302)
+    assertRedirects(r, f"/integrations/{integration.id}/name", status_code=303)
     integration.refresh_from_db()
     assert integration.name == new_name
 
@@ -120,7 +120,9 @@ def test_integration_schema_and_preview(
     )
 
     # preview page 2
-    assertLink(r, f"/integrations/{integration.id}/grid?table_id=&page=2", "2")
+    assertLink(
+        r, f"/integrations/{integration.id}/grid?table_id=&page=2", "2", htmx=True
+    )
 
     r = client.get(f"/integrations/{integration.id}/grid?table_id=&page=2")
     assertOK(r)
@@ -137,7 +139,7 @@ def test_integration_schema_and_preview(
     SORT_URL = (
         f"/integrations/{integration.id}/grid?table_id=&page=2&sort={md5('name')}"
     )
-    assertLink(r, SORT_URL)
+    assertLink(r, SORT_URL, htmx=True)
 
     r = client.get(SORT_URL)
     assertOK(r)

@@ -4,14 +4,13 @@ from django.db.models.query import QuerySet
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone
-from django.views.generic import DetailView
-from django.views.generic.edit import DeleteView
+from django.views.generic import DeleteView, DetailView
 from django_filters.views import FilterView
 from django_tables2.views import SingleTableMixin
 from waffle import flag_is_active
 
 from apps.base.analytics import INTEGRATION_SYNC_STARTED_EVENT
-from apps.base.views import TurboUpdateView
+from apps.base.views import UpdateView
 from apps.integrations.filters import IntegrationFilter
 from apps.integrations.tasks import run_integration
 from apps.projects.mixins import ProjectMixin
@@ -95,7 +94,7 @@ class IntegrationRuns(ReadyMixin, SingleTableMixin, DetailView):
         return self.object.runs.all()
 
 
-class IntegrationSettings(ProjectMixin, TurboUpdateView):
+class IntegrationSettings(ProjectMixin, UpdateView):
     template_name = "integrations/settings.html"
     model = Integration
 
@@ -148,7 +147,7 @@ class IntegrationDelete(ProjectMixin, DeleteView):
 # Setup
 
 
-class IntegrationConfigure(ProjectMixin, TurboUpdateView):
+class IntegrationConfigure(ProjectMixin, UpdateView):
     template_name = "integrations/configure.html"
     model = Integration
 
@@ -197,7 +196,7 @@ class IntegrationConfigure(ProjectMixin, TurboUpdateView):
         )
 
 
-class IntegrationLoad(ProjectMixin, TurboUpdateView):
+class IntegrationLoad(ProjectMixin, UpdateView):
     template_name = "integrations/load.html"
     model = Integration
     fields = []
@@ -228,7 +227,7 @@ class IntegrationLoad(ProjectMixin, TurboUpdateView):
         )
 
 
-class IntegrationDone(ProjectMixin, TurboUpdateView):
+class IntegrationDone(ProjectMixin, UpdateView):
     model = Integration
     fields = []
 
@@ -292,7 +291,7 @@ class IntegrationDone(ProjectMixin, TurboUpdateView):
         )
 
 
-class IntegrationSync(TurboUpdateView):
+class IntegrationSync(UpdateView):
     template_name = "components/_sync.html"
     model = Integration
     fields = []

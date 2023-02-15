@@ -7,13 +7,13 @@ from django.views.generic.base import View
 
 from apps.base.analytics import ONBOARDING_COMPLETED_EVENT
 from apps.base.mixins import PageTitleMixin
-from apps.base.views import TurboUpdateView
+from apps.base.views import UpdateView
 
 from .forms import UserNameForm, UserOnboardingForm
 from .models import CustomUser
 
 
-class UserOnboarding(PageTitleMixin, TurboUpdateView):
+class UserOnboarding(PageTitleMixin, UpdateView):
     template_name = "users/onboarding.html"
     model = CustomUser
     page_title = "Onboarding"

@@ -32,7 +32,7 @@ def test_workflow_crudl(client, project, workflow_factory):
     # update/rename
     new_name = "Superduper workflow"
     r = client.post(f"/workflows/{workflow.id}/name", data={"name": new_name})
-    assertRedirects(r, f"/workflows/{workflow.id}/name", status_code=302)
+    assertRedirects(r, f"/workflows/{workflow.id}/name", status_code=303)
     workflow.refresh_from_db()
     assert workflow.name == new_name
 
@@ -48,7 +48,7 @@ def test_workflow_crudl(client, project, workflow_factory):
     workflow_factory.create_batch(30, project=project)
     r = client.get(f"{project_url}/workflows/")
     assertOK(r)
-    assertLink(r, f"{project_url}/workflows/?page=2", "2")
+    assertLink(r, f"{project_url}/workflows/?page=2", "2", htmx=True)
     r = client.get(f"{project_url}/workflows/?page=2")
     assertOK(r)
 

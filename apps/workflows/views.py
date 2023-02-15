@@ -11,7 +11,7 @@ from apps.base.analytics import (
     WORKFLOW_CREATED_EVENT_FROM_INTEGRATION,
     WORKFLOW_DUPLICATED_EVENT,
 )
-from apps.base.views import TurboCreateView, TurboUpdateView
+from apps.base.views import CreateView, UpdateView
 from apps.integrations.models import Integration
 from apps.nodes.config import get_node_config_with_arity
 from apps.nodes.models import Node
@@ -42,7 +42,7 @@ class WorkflowList(ProjectMixin, SingleTableView):
         return Workflow.objects.filter(project=self.project).all()
 
 
-class WorkflowCreate(ProjectMixin, TurboCreateView):
+class WorkflowCreate(ProjectMixin, CreateView):
     template_name = "workflows/create.html"
     model = Workflow
     form_class = WorkflowFormCreate
@@ -69,7 +69,7 @@ class WorkflowCreate(ProjectMixin, TurboCreateView):
         return r
 
 
-class WorkflowCreateFromIntegration(ProjectMixin, TurboCreateView):
+class WorkflowCreateFromIntegration(ProjectMixin, CreateView):
     model = Workflow
     template_name = "workflows/create_from_integration.html"
     fields = ("project",)
@@ -129,7 +129,7 @@ class WorkflowDelete(ProjectMixin, DeleteView):
         return reverse("project_workflows:list", args=(self.project.id,))
 
 
-class WorkflowDuplicate(TurboUpdateView):
+class WorkflowDuplicate(UpdateView):
     template_name = "components/_duplicate.html"
     model = Workflow
     fields = []

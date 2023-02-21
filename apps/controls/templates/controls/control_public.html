@@ -44,8 +44,7 @@
     <div class='widget-card__commands'>
       <button  
         class="widget-card__button"
-        data-controller="tooltip"
-        data-tooltip-content="Edit"
+        x-tooltip="Edit"
         data-action="click->tf-modal#open"
         id="widget-update-{{ control.id }}"
         data-modal-item="{{ control.id }}"
@@ -66,8 +65,7 @@
 
       {% if not is_public and request.GET.mode != 'view' %}
         <form
-          data-controller="tooltip"
-          data-tooltip-content="Delete"
+          x-tooltip="Delete"
           method="POST"
           action="{% url 'dashboard_controls:delete-widget' project.id dashboard.id object.id %}"
         >

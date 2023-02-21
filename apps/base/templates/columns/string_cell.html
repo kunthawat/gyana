@@ -1,6 +1,3 @@
-<span
-  {% if tooltip %}
-    data-controller="tooltip"
-    data-tooltip-content="{{value}}"
-  {% endif %}
->{{value}}</span>
+<span {% if tooltip %}x-tooltip="{{ value }}"{% endif %}>
+  {{value}}
+</span>

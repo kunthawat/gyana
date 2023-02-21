@@ -65,11 +65,7 @@
               {% for table in syncing_or_empty  %}
               
                 <li>
-                  <p 
-                    data-controller="tooltip" 
-                    class="text-black-50"
-                    data-tooltip-content="This table is still syncing or empty"
-                  >
+                  <p class="text-black-50" x-tooltip="This table is still syncing or empty">
                     {{ table  }}
                   </p>
                 <li>

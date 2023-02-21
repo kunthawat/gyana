@@ -18,8 +18,6 @@ export default (args) => ({
   init() {
     const { placement, theme, trigger } = args || {}
 
-    console.log(placement, theme, trigger)
-
     console.assert(this.$refs.body, 'Popover components need a body target')
 
     /** @link https://atomiks.github.io/tippyjs/v6/all-props/ */

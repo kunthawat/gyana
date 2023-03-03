@@ -43,7 +43,7 @@ def mock_gcp_analyze_sentiment(text, _):
     return mocked
 
 
-INPUT_QUERY = f"SELECT *\nFROM `{TABLE_NAME}`"
+INPUT_QUERY = f"SELECT t0.*\nFROM `{TABLE_NAME}` t0"
 DEFAULT_X_Y = {"x": 0, "y": 0}
 
 
@@ -60,7 +60,7 @@ INPUT_DATA = [
     },
 ]
 
-DISTINCT_QUERY = "SELECT *\nFROM (\n  SELECT `athlete` AS `text`\n  FROM (\n    SELECT DISTINCT `athlete`\n    FROM `project.dataset.table`\n  ) t1\n) t0\nWHERE `text` IS NOT NULL"
+DISTINCT_QUERY = "SELECT t0.*\nFROM (\n  SELECT t1.`athlete` AS `text`\n  FROM (\n    SELECT DISTINCT t2.`athlete`\n    FROM `project.dataset.table` t2\n  ) t1\n) t0\nWHERE t0.`text` IS NOT NULL"
 
 
 def mock_bq_client_data(bigquery):

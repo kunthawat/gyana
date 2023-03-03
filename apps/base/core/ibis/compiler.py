@@ -1,5 +1,7 @@
 import ibis.expr.datatypes as dt
 import ibis.expr.rules as rlz
+from ibis.backends.bigquery.compiler import BigQueryExprTranslator
+from ibis.backends.bigquery.registry import _timestamp_units
 from ibis.expr.operations import (
     Constant,
     DateDiff,
@@ -16,61 +18,11 @@ from ibis.expr.types import (
     TimestampValue,
     TimeValue,
 )
-from ibis_bigquery.compiler import BigQueryExprTranslator
-from ibis_bigquery.registry import _timestamp_units
 
 # Do not place compile functions and classes in a function as local variables
 # this will mess with cacheops and lead to cant pickle local object error
 
 compiles = BigQueryExprTranslator.compiles
-
-
-class StartsWith(ValueOp):
-    value = rlz.string
-    start_string = rlz.string
-    output_dtype = dt.boolean
-    output_shape = rlz.shape_like("value")
-
-
-def startswith(value, start_string):
-    return StartsWith(value, start_string).to_expr()
-
-
-class EndsWith(ValueOp):
-    value = rlz.string
-    end_string = rlz.string
-    output_dtype = dt.boolean
-    output_shape = rlz.shape_like("value")
-
-
-def endswith(value, start_string):
-    return EndsWith(value, start_string).to_expr()
-
-
-StringValue.startswith = startswith
-StringValue.endswith = endswith
-
-
-@compiles(StartsWith)
-def _startswith(t, expr):
-    # pull out the arguments to the expression
-    value, start_string = expr.op().args
-    # compile the argument
-    t_value = t.translate(value)
-    t_start = t.translate(start_string)
-    # return a SQL expression that calls the BigQuery STARTS_WITH function
-    return f"STARTS_WITH({t_value}, {t_start})"
-
-
-@compiles(EndsWith)
-def _endswith(t, expr):
-    # pull out the arguments to the expression
-    value, start_string = expr.op().args
-    # compile the argument
-    t_value = t.translate(value)
-    t_start = t.translate(start_string)
-    # return a SQL expression that calls the BigQuery STARTS_WITH function
-    return f"ENDS_WITH({t_value}, {t_start})"
 
 
 class AnyValue(Reduction):

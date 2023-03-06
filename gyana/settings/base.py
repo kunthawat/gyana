@@ -98,6 +98,7 @@ THIRD_PARTY_APPS = [
     "wagtail.contrib.modeladmin",
     "wagtailmenus",
     "django_htmx",
+    "crispy_forms",
 ]
 
 # Put your project-specific apps here
@@ -480,3 +481,6 @@ CACHEOPS = {"*.*": {"timeout": 60 * 60}}
 
 
 SOCIALACCOUNT_LOGIN_ON_GET = True
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "crispy"
+CRISPY_TEMPLATE_PACK = "crispy"

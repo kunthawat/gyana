@@ -18,9 +18,7 @@ class MemberSelectMixin:
             members_field.queryset = self._team.members.all()
             members_field.widget.current_user = current_user
 
-        if not self._team.can_create_invite_only_project and (
-            access_field := self.fields.get("access")
-        ):
+        if access_field := self.fields.get("access"):
             access_field.required = False
             access_field.widget = forms.Select(
                 choices=access_field.choices, attrs={"disabled": "disabled"}
@@ -43,25 +41,6 @@ class ProjectCreateForm(MemberSelectMixin, LiveModelForm):
             fields += ["members"]
 
         return fields
-
-    def clean(self):
-        cleaned_data = super().clean()
-
-        if not self._team.can_create_project:
-            raise forms.ValidationError(
-                "You've reached the maximum number of projects on this plan"
-            )
-
-        if (
-            cleaned_data.get("access", False)
-            and cleaned_data["access"] == Project.Access.INVITE_ONLY
-            and not self._team.can_create_invite_only_project
-        ):
-            raise forms.ValidationError(
-                "You've reached the maximum number of invite only projects on your plan"
-            )
-
-        return cleaned_data
 
     def pre_save(self, instance):
         instance.team = self._team
@@ -110,16 +89,9 @@ class ProjectRunForm(BaseModelForm):
         super().__init__(*args, **kwargs)
 
         daily_schedule_time = self.fields["daily_schedule_time"]
-
-        if self.instance.team.is_free:
-            daily_schedule_time.disabled = True
-            daily_schedule_time.help_text = mark_safe(
-                f'Scheduling is only available on a paid plan <a class="link" href="{reverse("teams:pricing", args=(self.instance.team.id, ))}" hx-boost="false">learn more</a>'
-            )
-        else:
-            daily_schedule_time.help_text = (
-                f"Select an hour in {self.instance.team.timezone_with_gtm_offset}"
-            )
+        daily_schedule_time.help_text = (
+            f"Select an hour in {self.instance.team.timezone_with_gtm_offset}"
+        )
 
     def pre_save(self, instance):
         self._daily_schedule_time_is_dirty = (

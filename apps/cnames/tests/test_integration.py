@@ -2,9 +2,7 @@ from unittest import mock
 from uuid import uuid4
 
 import pytest
-from django.conf import settings
 from django.utils import timezone
-from djpaddle.models import Plan
 from pytest_django.asserts import assertFormError, assertRedirects
 
 from apps.base.tests.asserts import (
@@ -14,14 +12,10 @@ from apps.base.tests.asserts import (
     assertSelectorLength,
     assertSelectorText,
 )
-from apps.base.tests.subscribe import upgrade_to_pro
 from apps.dashboards.models import Dashboard
 from apps.teams.models import Team
 
 pytestmark = pytest.mark.django_db
-
-
-can_create_cname = mock.patch.object(Team, "can_create_cname", True)
 
 
 def test_cname_crudl(client, logged_in_user, heroku):
@@ -30,29 +24,16 @@ def test_cname_crudl(client, logged_in_user, heroku):
     heroku.get_domain().acm_status = "waiting"
     heroku.reset_mock()
 
-    # User on free plan can't create custom domain
     r = client.get_htmx_partial(f"/teams/{team.id}/update", f"/teams/{team.id}/cnames/")
     assertOK(r)
     assertSelectorText(
-        r, "p", "You cannot create more custom domains on your current plan."
+        r, "p", "Why not create one?"
     )
 
     r = client.get(f"/teams/{team.id}/cnames/new")
     assertOK(r)
     assertFormRenders(r, ["domain"])
-
-    r = client.post(f"/teams/{team.id}/cnames/new", data={"domain": "test.domain.com"})
-    assert r.status_code == 422
-
-    # Upgrade user
-    pro_plan = Plan.objects.create(
-        id=settings.DJPADDLE_PRO_PLAN_ID,
-        name="Business",
-        billing_type="month",
-        billing_period=1,
-    )
-    upgrade_to_pro(logged_in_user, team, pro_plan)
-
+    
     r = client.get_htmx_partial(f"/teams/{team.id}/update", f"/teams/{team.id}/cnames/")
     assertOK(r)
     assertLink(r, f"/teams/{team.id}/cnames/new", "create one")
@@ -118,7 +99,6 @@ def test_cname_crudl(client, logged_in_user, heroku):
     assert heroku.get_domain().remove.call_count == 1
 
 
-@can_create_cname
 def test_cname_validation(client, logged_in_user, c_name_factory):
     team = logged_in_user.teams.first()
     c_name_factory(team=team)
@@ -133,7 +113,6 @@ def test_cname_validation(client, logged_in_user, c_name_factory):
     assertFormError(r, "form", "domain", ERROR)
 
 
-@can_create_cname
 def test_cname_middleware_for_public_dashboard(
     client,
     logged_in_user,
@@ -204,7 +183,6 @@ def test_cname_middleware_for_public_dashboard(
     assert r.status_code == 403
 
 
-@can_create_cname
 def test_cname_middleware_for_password_protected_dashboard(
     client, logged_in_user, c_name_factory, dashboard_factory, widget_factory
 ):

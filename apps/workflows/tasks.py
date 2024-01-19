@@ -5,8 +5,8 @@ from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
-from apps.base import clients
 from apps.base.analytics import WORFKLOW_RUN_EVENT
+from apps.base.clients import get_engine
 from apps.base.core.utils import error_name_to_snake
 from apps.nodes.bigquery import NodeResultNone, get_query_from_node
 from apps.nodes.models import Node
@@ -23,8 +23,6 @@ def run_workflow_task(self, run_id: int):
     workflow = run.workflow
     output_nodes = workflow.nodes.filter(kind=Node.Kind.OUTPUT).all()
 
-    client = clients.bigquery()
-
     for node in output_nodes:
         try:
             query = get_query_from_node(node)
@@ -33,9 +31,7 @@ def run_workflow_task(self, run_id: int):
             node.save()
             query = None
         if query is not None:
-
             with transaction.atomic():
-
                 table, _ = Table.objects.get_or_create(
                     source=Table.Source.WORKFLOW_NODE,
                     bq_table=node.bq_output_table_id,
@@ -43,10 +39,7 @@ def run_workflow_task(self, run_id: int):
                     project=workflow.project,
                     workflow_node=node,
                 )
-
-                client.query(
-                    f"CREATE OR REPLACE TABLE {table.bq_id} as ({query.compile()})"
-                ).result()
+                get_engine().create_or_replace_table(table.bq_id, query.compile())
 
                 table.data_updated = timezone.now()
                 table.save()

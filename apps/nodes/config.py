@@ -1,5 +1,7 @@
 import functools
 
+from apps.base.clients import get_engine
+
 NODE_CONFIG = {
     "input": {
         "displayName": "Get data",
@@ -162,4 +164,9 @@ def _add_max_parents(name):
 
 @functools.cache
 def get_node_config_with_arity():
-    return {k: {**v, "maxParents": _add_max_parents(k)} for k, v in NODE_CONFIG.items()}
+    excluded_nodes = get_engine().excluded_nodes
+    return {
+        k: {**v, "maxParents": _add_max_parents(k)}
+        for k, v in NODE_CONFIG.items()
+        if k not in excluded_nodes
+    }

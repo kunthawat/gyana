@@ -15,6 +15,7 @@ from apps.base.analytics import (
     WIDGET_CONFIGURED_EVENT,
     WIDGET_PREVIEWED_EVENT,
 )
+from apps.base.clients import get_engine
 from apps.base.core.table_data import RequestConfig, get_table
 from apps.base.core.utils import error_name_to_snake
 from apps.base.templates import template_exists
@@ -22,7 +23,6 @@ from apps.base.views import UpdateView
 from apps.columns.currency_symbols import CURRENCY_SYMBOLS_MAP
 from apps.controls.bigquery import DATETIME_FILTERS
 from apps.dashboards.mixins import DashboardMixin
-from apps.tables.bigquery import get_query_from_table
 from apps.tables.models import Table
 from apps.widgets.visuals import chart_to_output, metric_to_output, table_to_output
 
@@ -324,7 +324,7 @@ class WidgetInput(DashboardMixin, SingleTableMixin, DetailView):
 
     def get_table(self, **kwargs):
         if self.object.table:
-            query = get_query_from_table(self.object.table)
+            query = get_engine().get_table(self.object.table)
             table = get_table(query.schema(), query)
             return RequestConfig(
                 self.request, paginate=self.get_table_pagination(table)

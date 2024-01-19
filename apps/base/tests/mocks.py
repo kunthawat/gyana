@@ -1,6 +1,8 @@
 import hashlib
 from unittest.mock import MagicMock, Mock
 
+import pandas as pd
+import pyarrow as pa
 from google.cloud.bigquery.schema import SchemaField
 from google.cloud.bigquery.table import Table as BqTable
 
@@ -25,9 +27,18 @@ def mock_bq_client_with_schema(bigquery, schema_list):
     bigquery.get_table = MagicMock(return_value=bq_table)
 
 
-def mock_bq_client_with_records(bigquery, records):
-    mock = PickableMock()
-    mock.rows_dict = records
-    mock.rows_dict_by_md5 = [{md5(k): v for k, v in row.items()} for row in records]
-    mock.total_rows = len(records)
-    bigquery.get_query_results = Mock(return_value=mock)
+def mock_bq_client_with_records(bigquery, records, return_count=False):
+    def mock_query(stmt, *args, **kwargs):
+        r = MagicMock()
+        if "`count`" in stmt:
+            r.to_dataframe = MagicMock(
+                return_value=pd.DataFrame({"count": [len(list(records.values())[0])]})
+            )
+            r.total_rows = 1
+        else:
+            df = pd.DataFrame(records)
+            r.to_dataframe = MagicMock(return_value=df)
+            r.total_rows = len(df)
+        return r
+
+    bigquery.query_and_wait.side_effect = mock_query

@@ -4,12 +4,10 @@ from rest_framework.decorators import api_view
 from rest_framework.generics import get_object_or_404
 from rest_framework.response import Response
 
-from apps.base import clients
+from apps.base.clients import get_engine
 from apps.nodes.bigquery import get_query_from_node
 from apps.nodes.models import Node
 from apps.projects.access import user_can_access_project
-from apps.tables.bigquery import get_query_from_table
-from apps.tables.models import Table
 from apps.widgets.models import Widget
 
 
@@ -46,15 +44,14 @@ def autocomplete_options(request):
         # For nodes we actually want the parent of the parent
 
         query = (
-            get_query_from_table(parent.table)
+            get_engine().get_table(parent.table)
             if parentType == "widget"
             else get_query_from_node(parent.parents.first())
         )
 
-        client = clients.bigquery()
         options = [
             row[column]
-            for row in client.get_query_results(
+            for row in (
                 query[query[column].cast(dt.String()).lower().startswith(q)]
                 .projection([column])
                 .distinct()
@@ -62,8 +59,9 @@ def autocomplete_options(request):
                 # Later we could also make the list scrollable
                 # and send in chunks
                 .limit(20)
-                .compile()
-            ).rows_dict
+                .execute()
+                .to_dict(orient="records")
+            )
         ]
         return Response(options)
 

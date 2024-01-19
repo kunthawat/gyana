@@ -9,8 +9,10 @@ import ibis.expr.operations as ops
 from cacheops import cached_as
 from ibis.expr.datatypes import String
 
-from apps.base import clients
+from apps.base import engine
+from apps.base.clients import get_engine
 from apps.base.core.utils import error_name_to_snake
+from apps.base.engine import bigquery as bq
 from apps.columns.bigquery import (
     aggregate_columns,
     compile_formula,
@@ -22,7 +24,6 @@ from apps.columns.bigquery import (
 from apps.filters.bigquery import get_query_from_filters
 from apps.nodes.exceptions import ColumnNamesDontMatch, JoinTypeError, NodeResultNone
 from apps.nodes.models import Node
-from apps.tables.bigquery import get_query_from_table
 
 from ._utils import create_or_replace_intermediate_table, get_parent_updated
 
@@ -73,9 +74,8 @@ def _format_literal(value, type_):
 def use_intermediate_table(func):
     @wraps(func)
     def wrapper(node, parent):
-
         table = getattr(node, "intermediate_table", None)
-        conn = clients.ibis_client()
+        conn = engine.get_engine().client
 
         # if the table doesn't need updating we can simply return the previous computed pivot table
         if table and table.data_updated > max(tuple(get_parent_updated(node))):
@@ -90,7 +90,7 @@ def use_intermediate_table(func):
 
 
 def get_input_query(node):
-    return get_query_from_table(node.input_table) if node.input_table else None
+    return get_engine().get_table(node.input_table) if node.input_table else None
 
 
 def get_output_query(node, parent):
@@ -262,7 +262,8 @@ def get_distinct_query(node, query):
 
 @use_intermediate_table
 def get_pivot_query(node, parent):
-    client = clients.bigquery()
+    # TODO: move this to the base client
+    client = bq.bigquery()
     column_type = parent[node.pivot_column].type()
 
     # the new column names consist of the unique values inside the selected column
@@ -360,7 +361,6 @@ def _get_all_parents(node):
 
 
 def get_arity_from_node_func(func):
-
     node_arg, *params = inspect.signature(func).parameters.values()
 
     # testing for "*args" in signature
@@ -373,14 +373,12 @@ def get_arity_from_node_func(func):
 
 
 def _validate_arity(func, len_args):
-
     min_arity, variable_args = get_arity_from_node_func(func)
     return len_args >= min_arity if variable_args else len_args == min_arity
 
 
 @cached_as(Node, timeout=60)
 def get_query_from_node(current_node):
-
     nodes = _get_all_parents(current_node)
     # remove duplicates (python dicts are insertion ordered)
     nodes = list(dict.fromkeys(nodes))

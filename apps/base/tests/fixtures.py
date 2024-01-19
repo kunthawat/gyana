@@ -72,7 +72,7 @@ def bind(instance, name, func):
     )
 
 
-def mock_ibis_client_get_schema(self, name):
+def mock_backend_client_get_schema(self, name):
     bq_table = self.client.get_table(name)
     return sch.infer(bq_table)
 
@@ -82,20 +82,20 @@ def bigquery(mocker, settings):
     client = MagicMock()
     # manually override the ibis client with a mock instead
     # set the project name to "project" in auto-generated SQL
-    settings.GCP_PROJECT = "project"
+    settings.ENGINE_URL = "bigquery://project"
     mocker.patch(
         "ibis.backends.bigquery.pydata_google_auth.default",
         return_value=(None, "project"),
     )
-    mocker.patch("apps.base.clients.bigquery", return_value=client)
+    mocker.patch("apps.base.engine.bigquery.bigquery", return_value=client)
     mocker.patch("ibis.backends.bigquery.client.bq.Client", return_value=client)
-    ibis_client = clients.ibis_client()
-    ibis_client.client = client
 
+    ibis_client = clients.get_engine().client
+    ibis_client.client = client
     bind(
         ibis_client,
         "get_schema",
-        mock_ibis_client_get_schema,
+        mock_backend_client_get_schema,
     )
 
     client.get_table().num_rows = 10

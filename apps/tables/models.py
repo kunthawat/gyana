@@ -4,7 +4,7 @@ from django.conf import settings
 from django.db import models
 from django.utils.functional import cached_property
 
-from apps.base import clients
+from apps.base.clients import get_engine
 from apps.base.models import BaseModel
 from apps.projects.models import Project
 from apps.tables.clone import create_attrs
@@ -72,18 +72,12 @@ class Table(BaseModel):
         return f"{self.bq_dataset}.{self.bq_table}"
 
     @property
-    def bq_obj(self):
-        return clients.bigquery().get_table(self.bq_id)
-
-    @property
     def humanize(self):
         return self.bq_table.replace("_", " ").title()
 
     @cached_property
     def schema(self):
-        from apps.tables.bigquery import get_query_from_table
-
-        return get_query_from_table(self).schema()
+        return get_engine().get_table(self).schema()
 
     @property
     def owner_name(self):
@@ -93,11 +87,12 @@ class Table(BaseModel):
 
     @property
     def bq_dashboard_url(self):
-        return f"https://console.cloud.google.com/bigquery?project={settings.GCP_PROJECT}&p={settings.GCP_PROJECT}&d={self.bq_dataset}&t={self.bq_table}&page=table"
+        return get_engine().get_dashboard_url(self.bq_dataset, self.bq_table)
 
-    def sync_updates_from_bigquery(self):
-        self.data_updated = self.bq_obj.modified
-        self.num_rows = self.bq_obj.num_rows
+    def sync_metadata_from_source(self):
+        modified, num_rows = get_engine().get_source_metadata(self)
+        self.data_updated = modified
+        self.num_rows = num_rows
         self.save()
 
     @property

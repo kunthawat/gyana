@@ -4,13 +4,13 @@ from celery import shared_task
 from django.db import transaction
 from django.utils import timezone
 
+from apps.base.clients import get_engine
 from apps.base.core.utils import catchtime
 from apps.integrations.emails import send_integration_ready_email
 from apps.runs.models import JobRun
 from apps.tables.models import Table
 from apps.users.models import CustomUser
 
-from .bigquery import import_table_from_sheet
 from .models import Sheet
 
 
@@ -25,7 +25,6 @@ def run_sheet_sync_task(self, run_id, skip_up_to_date=False):
     # table creation, avoids orphaned table entities
 
     with transaction.atomic():
-
         table, created = Table.objects.get_or_create(
             integration=integration,
             source=Table.Source.INTEGRATION,
@@ -38,9 +37,9 @@ def run_sheet_sync_task(self, run_id, skip_up_to_date=False):
 
         if not (sheet.up_to_date_with_drive and skip_up_to_date):
             with catchtime() as get_time_to_sync:
-                import_table_from_sheet(table=table, sheet=sheet)
+                get_engine().import_table_from_sheet(table=table, sheet=sheet)
 
-            table.sync_updates_from_bigquery()
+            table.sync_metadata_from_source()
             sheet.drive_file_last_modified_at_sync = sheet.drive_modified_date
             sheet.save()
 

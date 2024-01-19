@@ -9,6 +9,7 @@ from django_filters.views import FilterView
 from django_tables2.views import SingleTableMixin
 
 from apps.base.analytics import INTEGRATION_SYNC_STARTED_EVENT
+from apps.base.clients import get_engine
 from apps.base.views import UpdateView
 from apps.integrations.filters import IntegrationFilter
 from apps.integrations.tasks import run_integration
@@ -111,6 +112,11 @@ class IntegrationSettings(ProjectMixin, UpdateView):
                 if formset.is_valid():
                     formset.save()
 
+        # Ibis caches the fetched schemas of a table that could have changed
+        # e.g. if cell range for sheet source has changed
+        # TODO: disable cache for Ibis schema, since we've implemented caching
+        get_engine().client.reconnect()
+
         # Do not run the integration if the only change is scheduling
         if not form.has_changed() or form.changed_data == ["is_scheduled"]:
             return redirect(
@@ -201,7 +207,6 @@ class IntegrationLoad(ProjectMixin, UpdateView):
     fields = []
 
     def get(self, request, *args, **kwargs):
-
         self.object = self.get_object()
 
         if self.object.state not in [
@@ -240,7 +245,6 @@ class IntegrationDone(ProjectMixin, UpdateView):
         return "integrations/done.html"
 
     def get(self, request, *args, **kwargs):
-
         self.object = self.get_object()
 
         if self.object.state in [

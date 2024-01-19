@@ -1,12 +1,10 @@
 from typing import Any, Dict
 
-from apps.base import clients
+from apps.base.clients import get_engine
 from apps.base.core.table_data import get_table
-from apps.columns.bigquery import aggregate_columns, get_groups, resolve_colname
-from apps.columns.currency_symbols import CURRENCY_SYMBOLS_MAP
+from apps.columns.bigquery import aggregate_columns, get_groups
 from apps.controls.bigquery import slice_query
 from apps.filters.bigquery import get_query_from_filters
-from apps.tables.bigquery import get_query_from_table
 
 from .bigquery import get_query_from_widget
 from .models import Widget
@@ -20,7 +18,7 @@ class MaxRowsExceeded(Exception):
 
 
 def pre_filter(widget, control, use_previous_period=False):
-    query = get_query_from_table(widget.table)
+    query = get_engine().get_table(widget.table)
     query = get_query_from_filters(query, widget.filters.all())
 
     if (
@@ -33,12 +31,12 @@ def pre_filter(widget, control, use_previous_period=False):
 def chart_to_output(widget: Widget, control) -> Dict[str, Any]:
     query = pre_filter(widget, control)
     query = get_query_from_widget(widget, query)
-    result = clients.bigquery().get_query_results(
-        query.compile(), max_results=CHART_MAX_ROWS
-    )
-    if (result.total_rows or 0) > CHART_MAX_ROWS:
+
+    # limit to 1001 rows to check if chart exceeds max rows
+    df = query.limit(CHART_MAX_ROWS + 1).execute()
+    if len(df) > CHART_MAX_ROWS:
         raise MaxRowsExceeded
-    df = result.rows_df
+
     chart, chart_id = to_chart(df, widget)
 
     return {"chart": chart}, chart_id
@@ -49,9 +47,9 @@ def get_summary_row(query, widget):
     group = widget.columns.first()
 
     query = aggregate_columns(query, widget.aggregations.all(), None)
-    summary = clients.bigquery().get_query_results(query.compile()).rows_dict[0]
+    summary = query.execute().iloc[0].to_dict()
 
-    return {**dict(summary.items()), group.column: "Total"}
+    return {**summary, group.column: "Total"}
 
 
 def table_to_output(widget: Widget, control, url=None) -> Dict[str, Any]:
@@ -96,8 +94,4 @@ def metric_to_output(widget, control, use_previous_period=False):
         aggregation.column
     )
 
-    return (
-        clients.bigquery()
-        .get_query_results(query.compile())
-        .rows_dict[0][aggregation.column]
-    )
+    return query.execute()

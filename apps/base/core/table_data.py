@@ -12,12 +12,15 @@ from django_tables2 import Column, Table
 from django_tables2.config import RequestConfig as BaseRequestConfig
 from django_tables2.data import TableData
 
-from apps.base import clients
 from apps.base.core.utils import md5
 from apps.columns.currency_symbols import CURRENCY_SYMBOLS_MAP
 
 
-class BigQueryTableData(TableData):
+def rows_dict_by_md5(df):
+    return [{md5(k): v for k, v in row.items()} for row in df.to_dict(orient="records")]
+
+
+class GyanaTableData(TableData):
     """Django table data class that queries data from BigQuery
 
     See https://github.com/jieter/django-tables2/blob/master/django_tables2/data.py
@@ -47,24 +50,27 @@ class BigQueryTableData(TableData):
         data = self.data
         if start > 0:
             data = data.limit(stop - start, offset=start)
-        return clients.bigquery().get_query_results(
-            data.compile(), max_results=self.rows_per_page
-        )
+        df = data.execute(limit=self.rows_per_page)
+        # automatically added by custom bigquery execute
+        # bypass the default `__getattr__`, `__setattr__` of `pd.DataFrame`
+        if not "total_rows" in df.__dict__:
+            df.__dict__["total_rows"] = self.data.count().execute()
+        return df
 
     def __getitem__(self, page: slice):
         """Fetches the data for the current page"""
         return (
-            self._get_query_results(page.start, page.stop).rows_dict_by_md5
+            rows_dict_by_md5(self._get_query_results(page.start, page.stop))
             if self._page_selected
-            else self._get_query_results().rows_dict_by_md5[: page.stop - page.start]
+            else rows_dict_by_md5(self._get_query_results())[: page.stop - page.start]
         )
 
     def __len__(self):
-        """Fetches the total size from BigQuery"""
+        """Fetches the total size from the database"""
         total_rows = cache.get(self._len_key)
 
         if not self._page_selected or total_rows is None:
-            total_rows = self._get_query_results().total_rows
+            total_rows = self._get_query_results().__dict__["total_rows"]
             cache.set(self._len_key, total_rows, 24 * 3600)
 
         return total_rows
@@ -137,7 +143,7 @@ def get_type_class(type_):
 validateURL = URLValidator()
 
 
-class BigQueryColumn(Column):
+class GyanaColumn(Column):
     def __init__(self, **kwargs):
         settings = kwargs.pop("settings") or {}
         self.summary = kwargs.pop("footer") or None
@@ -233,7 +239,7 @@ def get_table(schema, query, footer=None, settings=None, **kwargs):
 
     # Inspired by https://stackoverflow.com/questions/16696066/django-tables2-dynamically-adding-columns-to-table-not-adding-attrs-to-table
     for name, type_ in schema.items():
-        attrs[md5(name)] = BigQueryColumn(
+        attrs[md5(name)] = GyanaColumn(
             empty_values=(),
             settings=settings.get(name),
             verbose_name=name,
@@ -265,5 +271,5 @@ def get_table(schema, query, footer=None, settings=None, **kwargs):
     )
     table_class = type("DynamicTable", (Table,), attrs)
 
-    table_data = BigQueryTableData(query)
+    table_data = GyanaTableData(query)
     return table_class(data=table_data, **kwargs)

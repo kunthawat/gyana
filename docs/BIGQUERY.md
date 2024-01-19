@@ -2,9 +2,8 @@
 
 Actionable points for developers:
 
-- Use `apps.base.clients.bigquery.get_query_results` for synchronous queries
-- Use `apps.tables.bigquery.get_query_from_table` for fetching Ibis schema
 - Avoid multiple BigQuery requests
+- Profile changes to querying architecture with [Honeycomb](https://www.honeycomb.io/)
 
 Details on performance optimisations for BigQuery queries:
 
@@ -12,9 +11,9 @@ Details on performance optimisations for BigQuery queries:
   speed up interactive queries
 - Enable [query cache](https://cloud.google.com/bigquery/docs/cached-results)
   API setting for caching duplicate queries (default)
-- Write a faster [BigQuery client](apps/base/clients.py) using the synchronous
-  [query](https://cloud.google.com/bigquery/docs/reference/rest/v2/jobs/query)
-  REST API, rather than job creation plus waiting in separate API requests.
+- Monkey patch `ibis.client._execute` to use the [query_and_wait](https://github.com/googleapis/python-bigquery/pull/1722)
+  method of BigQuery Client, rather than job creation plus waiting in separate
+  API requests.
 - Write the code to avoid more than one request to BigQuery query endpoint,
   unless it is actually unavoidable.
 - Cache the Ibis schema for our table models, using `data_updated` for cache

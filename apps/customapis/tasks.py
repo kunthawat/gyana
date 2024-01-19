@@ -11,6 +11,7 @@ from django.utils import timezone
 from jsonpath_ng import parse
 from requests_oauthlib import OAuth2Session
 
+from apps.base.clients import get_engine
 from apps.base.core.bigquery import sanitize_bq_column_name
 from apps.base.core.utils import catchtime
 from apps.integrations.emails import send_integration_ready_email
@@ -18,7 +19,6 @@ from apps.runs.models import JobRun
 from apps.tables.models import Table
 from apps.users.models import CustomUser
 
-from .bigquery import import_table_from_customapi
 from .models import CustomApi
 from .requests import request
 from .requests.authorization import get_authorization
@@ -116,7 +116,6 @@ def run_customapi_sync_task(self, run_id):
     # table creation, avoids orphaned table entities
 
     with transaction.atomic():
-
         table, created = Table.objects.get_or_create(
             integration=integration,
             source=Table.Source.INTEGRATION,
@@ -126,9 +125,9 @@ def run_customapi_sync_task(self, run_id):
         )
 
         with catchtime() as get_time_to_sync:
-            import_table_from_customapi(table=table, customapi=customapi)
+            get_engine().import_table_from_customapi(table=table, customapi=customapi)
 
-        table.sync_updates_from_bigquery()
+        table.sync_metadata_from_source()
 
     if created:
         send_integration_ready_email(integration, int(get_time_to_sync()))

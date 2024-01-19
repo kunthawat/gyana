@@ -1,14 +1,16 @@
 from functools import lru_cache
 
-import google.auth
-import ibis
 from django.conf import settings
 from django.utils.text import slugify
-from google.cloud import bigquery as bigquery_client
 from google.cloud import storage
 from googleapiclient import discovery
 
+from apps.base.engine.bigquery import BigQueryClient
+from apps.base.engine.credentials import get_credentials
+from apps.base.engine.postgres import PostgresClient
+
 from .core.bigquery import *  # noqa
+from .core.ibis.bigquery import *  # noqa
 from .core.ibis.client import *  # noqa
 from .core.ibis.compiler import *  # noqa
 
@@ -16,17 +18,18 @@ SLUG = (
     slugify(settings.CLOUD_NAMESPACE) if settings.CLOUD_NAMESPACE is not None else None
 )
 
-# BigQuery jobs are limited to 6 hours runtime
-BIGQUERY_JOB_LIMIT = 6 * 60 * 60
 
+@lru_cache
+def get_engine():
+    engine_url = settings.ENGINE_URL
 
-def get_credentials():
-    return google.auth.default(
-        scopes=[
-            "https://www.googleapis.com/auth/drive",
-            "https://www.googleapis.com/auth/bigquery",
-        ]
-    )
+    if engine_url.startswith("postgresql://"):
+        return PostgresClient(engine_url)
+
+    if engine_url.startswith("bigquery://"):
+        return BigQueryClient(engine_url)
+
+    raise ValueError(f"Gyana doesnt not support this engine URL {engine_url}")
 
 
 @lru_cache
@@ -42,24 +45,6 @@ def drive_v2():
 
     # latest v3 client does not return all metadata for file
     return discovery.build("drive", "v2", credentials=credentials)
-
-
-@lru_cache
-def bigquery():
-    # https://cloud.google.com/bigquery/external-data-drive#python
-    credentials, project = get_credentials()
-
-    # return bigquery.Client(project=settings.GCP_PROJECT)
-    return bigquery_client.Client(
-        credentials=credentials, project=project, location=settings.BIGQUERY_LOCATION
-    )
-
-
-@lru_cache
-def ibis_client():
-    return ibis.bigquery.connect(
-        project_id=settings.GCP_PROJECT, auth_external_data=True
-    )
 
 
 @lru_cache()

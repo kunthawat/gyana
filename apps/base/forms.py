@@ -5,15 +5,10 @@ from functools import cache
 from crispy_forms import utils
 from crispy_forms.helper import FormHelper
 from django import forms
-from django.contrib.postgres.search import TrigramSimilarity
 from django.db import transaction
-from django.db.models import Case, Q, When
-from django.db.models.functions import Greatest
 from django.forms.models import ModelFormOptions
-from django.utils.datastructures import MultiValueDict
 
 from apps.base.core.utils import create_column_choices
-from apps.tables.models import Table
 
 
 # By default, django-crispy-form caches the template, breaking hot-reloading in development
@@ -42,55 +37,6 @@ def get_formsets(self):
 
 forms.BaseForm.get_formsets = get_formsets
 
-# temporary overrides for formset labels
-FORMSET_LABELS = {
-    "columns": "Group columns",
-    "aggregations": "Aggregations",
-    "sort_columns": "Sort columns",
-    "edit_columns": "Edit columns",
-    "add_columns": "Add columns",
-    "rename_columns": "Rename columns",
-    "formula_columns": "Formula columns",
-    "join_columns": "Joins",
-    "filters": "Filters",
-    "secondary_columns": "Select specific columns",
-    "window_columns": "Window columns",
-    "convert_columns": "Select columns to convert",
-    "values": "Additional values",
-    "charts": "Charts",
-    "queryparams": "Query Params",
-    "httpheaders": "HTTP Headers",
-    "formdataentries": "Form Data",
-    "formurlencodedentries": "Form URL Encoded",
-}
-
-
-def _get_formset_label(formset):
-    prefix = formset.get_default_prefix()
-    return FORMSET_LABELS.get(prefix, prefix)
-
-
-class SchemaFormMixin:
-    @property
-    def column_type(self):
-        column = self.get_live_field("column")
-        if self.schema and column in self.schema:
-            return self.schema[column]
-        return None
-
-    def __init__(self, *args, **kwargs):
-        self.schema = kwargs.pop("schema", None)
-        if self.schema:
-            self.schema_json = json.dumps({c: self.schema[c].name for c in self.schema})
-
-        super().__init__(*args, **kwargs)
-
-        if self.fields.get("column"):
-            self.fields["column"] = forms.ChoiceField(
-                choices=create_column_choices(self.schema),
-                help_text=self.base_fields["column"].help_text,
-            )
-
 
 # guarantee that widget attrs are updated after any changes in subclass __init__
 class PostInitCaller(forms.models.ModelFormMetaclass):
@@ -104,25 +50,25 @@ class BaseModelForm(forms.ModelForm, metaclass=PostInitCaller):
     template_name = "django/forms/default_form.html"
 
     def __init__(self, *args, **kwargs):
+        self.parent_instance = kwargs.pop("parent_instance", None)
+        self.schema = kwargs.pop("schema", None)
+
         super().__init__(*args, **kwargs)
+
         self.helper = FormHelper()
         self.helper.form_tag = False
         self.helper.render_hidden_fields = True
 
+        # TODO: add a custom field/widget for this if possible
+        if self.fields.get("column"):
+            self.fields["column"] = forms.ChoiceField(
+                choices=create_column_choices(self.schema),
+                help_text=self.base_fields["column"].help_text,
+            )
+
     def __post_init__(self):
         for k, v in self.effect.items():
             self.fields[k].widget.attrs.update({"x-effect": v})
-
-    @property
-    def fields_json(self):
-        return json.dumps(
-            {
-                field.name: field.value()
-                for field in self
-                if not isinstance(field.field, forms.FileField)
-            }
-            | {"computed": {}, "choices": {}}
-        )
 
     def pre_save(self, instance):
         # override in child to add behaviour on commit save
@@ -155,10 +101,21 @@ class BaseModelForm(forms.ModelForm, metaclass=PostInitCaller):
         return self._meta.formsets
 
 
-class LiveAlpineModelForm(BaseModelForm):
-    def __init__(self, *args, **kwargs):
-        self.parent_instance = kwargs.pop("parent_instance", None)
-        super().__init__(*args, **kwargs)
+class AlpineMixin:
+    @property
+    def fields_json(self):
+        return json.dumps(
+            {
+                field.name: field.value()
+                for field in self
+                if not isinstance(field.field, forms.FileField)
+            }
+            | {"computed": {}, "choices": {}}
+        )
+
+    def schema_json(self):
+        if self.schema:
+            return json.dumps({c: self.schema[c].name for c in self.schema})
 
     # only clean/validate/save fields rendered in the form
     # but keep track of all fields if form is invalid and is re-rendered
@@ -187,107 +144,7 @@ class LiveAlpineModelForm(BaseModelForm):
             return super().save_m2m(commit)
 
 
-class LiveModelForm(BaseModelForm):
-    ignore_live_update_fields = []
-
-    def __init__(self, *args, **kwargs):
-        self.parent_instance = kwargs.pop("parent_instance", None)
-        super().__init__(*args, **kwargs)
-
-        for field in self.ignore_live_update_fields:
-            self.fields[field].widget.attrs.update({"data-live-update-ignore": ""})
-
-        self.prefix = kwargs.get("prefix", None)
-
-        # the rendered fields are determined by the values of the other fields
-        # implementation designed to be overriden by subclass
-        fields = self.get_live_fields()
-
-        if self.is_live:
-            self._errors = {}  # disable form validation
-            self.data.update(self._get_live_data(fields))
-
-        self.fields = {k: v for k, v in self.fields.items() if k in fields}
-
-    def _get_field_data_key(self, field):
-        # formset data is prefixed
-        return f"{self.prefix}-{field}" if self.prefix else field
-
-    def _get_live_data(self, fields):
-        """Get the form data, falling back to initial or default values where
-        the field was not displayed in the previous live form render."""
-
-        data = MultiValueDict()
-
-        for field in fields:
-            key = self._get_field_data_key(field)
-            value = self.get_live_field(field)
-
-            # For HTML checkboxes, we need to distinguish two possibilities:
-            # - the value of the checkbox is false (unchecked)
-            # - the field was not displayed
-            # Under the default HTML form implementation, these are indistinguishable.
-            # Solution: we manually add the unchecked checkbox with "false" value
-
-            if isinstance(self.fields[field], forms.BooleanField) and value == "false":
-                continue
-
-            # e.g. for an ArrayField, each item should be a separate value (rather than one value as a list)
-            if isinstance(value, list):
-                data.setlist(key, value)
-            else:
-                data[key] = value
-
-        return data
-
-    @property
-    def is_live(self):
-        # the "hidden_live" value is populated by the stimulus controller
-        return "hidden_live" in self.data
-
-    def get_live_field(self, field):
-        """Return the current value of a field in a live form."""
-
-        key = self._get_field_data_key(field)
-
-        # data populated by POST request in update
-        if key in self.data:
-            return self.data[key]
-
-        # fallback 1: initial value for form
-        if field in self.initial:
-            return self.initial[field]
-
-        # fallback 2: default value for model field
-        # used for formset placeholder rows where self.initial is empty
-        initial = self.fields[field].initial
-        return initial() if callable(initial) else initial
-
-    def get_live_fields(self):
-        """Return list of rendered fields derived from current form state.
-
-        Designed to be overwritten by live form implementation. Default behaviour
-        is a normal form (i.e. all fields)."""
-
-        return list(self.fields.keys())
-
-    @property
-    def deleted(self):
-        return self.data.get(f"{self.prefix}-DELETE") == "on"
-
-
-class BaseLiveSchemaForm(SchemaFormMixin, LiveModelForm):
-    pass
-
-
-class BaseSchemaForm(SchemaFormMixin, BaseModelForm):
-    pass
-
-
 class LiveFormsetMixin:
-    def get_live_formsets(self):
-        return []
-
     def get_formset_kwargs(self, formset):
         return {}
 
@@ -298,12 +155,9 @@ class LiveFormsetMixin:
         forms_kwargs = self.get_formset_form_kwargs(formset)
 
         # provide a reference to parent instance in live update forms
-        if issubclass(formset.form, LiveModelForm) or issubclass(
-            formset.form, LiveAlpineModelForm
-        ):
-            forms_kwargs["parent_instance"] = self.instance
+        forms_kwargs["parent_instance"] = self.instance
 
-        if issubclass(formset.form, SchemaFormMixin):
+        if self.schema:
             forms_kwargs["schema"] = self.schema
 
         formset = (
@@ -341,40 +195,5 @@ class LiveFormsetMixin:
         return {k: self.get_formset(k, v) for k, v in self.formsets.items()}
 
 
-class LiveFormsetForm(LiveFormsetMixin, BaseLiveSchemaForm):
+class ModelForm(LiveFormsetMixin, AlpineMixin, BaseModelForm):
     pass
-
-
-INPUT_SEARCH_THRESHOLD = 0.3
-
-
-class IntegrationSearchMixin:
-    def search_queryset(self, field, project, table_instance, used_ids):
-        field.queryset = (
-            Table.available.filter(project=project)
-            .exclude(
-                source__in=[Table.Source.INTERMEDIATE_NODE, Table.Source.CACHE_NODE]
-            )
-            .annotate(
-                is_used_in=Case(
-                    When(id__in=used_ids, then=True),
-                    default=False,
-                ),
-            )
-            .order_by("updated")
-        )
-        if search := self.data.get("search"):
-            field.queryset = (
-                field.queryset.annotate(
-                    similarity=Greatest(
-                        TrigramSimilarity("integration__name", search),
-                        TrigramSimilarity("workflow_node__workflow__name", search),
-                        TrigramSimilarity("bq_table", search),
-                    )
-                )
-                .filter(
-                    Q(similarity__gte=INPUT_SEARCH_THRESHOLD)
-                    | Q(id=getattr(table_instance, "id", None))
-                )
-                .order_by("-similarity")
-            )

@@ -31,22 +31,7 @@ def __init__(self, options=None):
 ModelFormOptions.__init__ = __init__
 
 
-def get_formsets(self):
-    return {}
-
-
-forms.BaseForm.get_formsets = get_formsets
-
-
-# guarantee that widget attrs are updated after any changes in subclass __init__
-class PostInitCaller(forms.models.ModelFormMetaclass):
-    def __call__(cls, *args, **kwargs):
-        obj = type.__call__(cls, *args, **kwargs)
-        obj.__post_init__()
-        return obj
-
-
-class BaseModelForm(forms.ModelForm, metaclass=PostInitCaller):
+class BaseModelForm(forms.ModelForm):
     template_name = "django/forms/default_form.html"
 
     def __init__(self, *args, **kwargs):
@@ -65,10 +50,6 @@ class BaseModelForm(forms.ModelForm, metaclass=PostInitCaller):
                 choices=create_column_choices(self.schema),
                 help_text=self.base_fields["column"].help_text,
             )
-
-    def __post_init__(self):
-        for k, v in self.effect.items():
-            self.fields[k].widget.attrs.update({"x-effect": v})
 
     def pre_save(self, instance):
         # override in child to add behaviour on commit save
@@ -101,50 +82,7 @@ class BaseModelForm(forms.ModelForm, metaclass=PostInitCaller):
         return self._meta.formsets
 
 
-class AlpineMixin:
-    @property
-    def fields_json(self):
-        return json.dumps(
-            {
-                field.name: field.value()
-                for field in self
-                if not isinstance(field.field, forms.FileField)
-            }
-            | {"computed": {}, "choices": {}}
-        )
-
-    def schema_json(self):
-        if self.schema:
-            return json.dumps({c: self.schema[c].name for c in self.schema})
-
-    # only clean/validate/save fields rendered in the form
-    # but keep track of all fields if form is invalid and is re-rendered
-    @contextmanager
-    def alpine_fields(self):
-        all_fields = self.fields
-        self.fields = {
-            k: v
-            for k, v in self.fields.items()
-            if (f"{self.prefix}-{k}" if self.prefix else k) in self.data
-        }
-        yield
-        self.fields = all_fields
-
-    @property
-    def errors(self):
-        with self.alpine_fields():
-            return super().errors
-
-    def save(self, commit=True):
-        with self.alpine_fields():
-            return super().save(commit)
-
-    def save_m2m(self, commit=True):
-        with self.alpine_fields():
-            return super().save_m2m(commit)
-
-
-class LiveFormsetMixin:
+class FormsetMixin:
     def get_formset_kwargs(self, formset):
         return {}
 
@@ -192,8 +130,68 @@ class LiveFormsetMixin:
 
     @cache
     def get_formsets(self):
-        return {k: self.get_formset(k, v) for k, v in self.formsets.items()}
+        return [self.get_formset(k, v) for k, v in self.formsets.items()]
 
 
-class ModelForm(LiveFormsetMixin, AlpineMixin, BaseModelForm):
+class AlpineMixin:
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper.attrs["x-effect"] = self.effect
+
+    @property
+    def fields_json(self):
+        return json.dumps(
+            {
+                field.name: field.value()
+                for field in self
+                if not isinstance(field.field, forms.FileField)
+            }
+            | {"computed": {}, "choices": {}}
+        )
+
+    def schema_json(self):
+        if self.schema:
+            return json.dumps({c: self.schema[c].name for c in self.schema})
+
+    # only clean/validate/save fields rendered in the form
+    # but keep track of all fields if form is invalid and is re-rendered
+    @contextmanager
+    def alpine_fields(self):
+        all_fields = self.fields
+        self.fields = {
+            k: v
+            for k, v in self.fields.items()
+            if (f"{self.prefix}-{k}" if self.prefix else k) in self.data
+        }
+        yield
+        self.fields = all_fields
+
+    @property
+    def errors(self):
+        with self.alpine_fields():
+            return super().errors
+
+    def save(self, commit=True):
+        with self.alpine_fields():
+            return super().save(commit)
+
+    def save_m2m(self, commit=True):
+        with self.alpine_fields():
+            return super().save_m2m(commit)
+
+    def has_changed(self):
+        with self.alpine_fields():
+            return super().has_changed()
+
+    def get_formsets(self):
+        formsets = super().get_formsets()
+
+        if self.data:
+            # only clean/validate/save formsets that are rendered in the form
+            formsets = [f for f in formsets if f"{f.prefix}-TOTAL_FORMS" in self.data]
+
+        return formsets
+
+
+class ModelForm(AlpineMixin, FormsetMixin, BaseModelForm):
     pass

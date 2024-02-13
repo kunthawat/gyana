@@ -33,6 +33,8 @@ def force_login(self, live_server):
 
 Page.force_login = force_login
 
+pytestmark = pytest.mark.django_db
+
 
 class PlaywrightForm:
     def __init__(self, page, dynamic_view, live_server):

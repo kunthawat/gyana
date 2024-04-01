@@ -1,5 +1,9 @@
+from unittest.mock import MagicMock
+
 import pytest
 from django.core import mail
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django_drf_filepond.models import TemporaryUpload
 from pytest_django.asserts import assertRedirects
 
 from apps.base.tests.asserts import assertOK
@@ -15,8 +19,7 @@ def bq_table_schema_is_not_string_only(mocker):
     )
 
 
-def test_upload_create(client, logged_in_user, project, engine):
-    GCS_URL = "path/to/gcs"
+def test_upload_create(client, logged_in_user, project, engine, mocker):
 
     # test: create a new upload, configure it and complete the sync
 
@@ -24,11 +27,14 @@ def test_upload_create(client, logged_in_user, project, engine):
     r = client.get(f"/projects/{project.id}/integrations/uploads/new")
     assertOK(r)
 
-    # the form uses React, tested in Cypress
-    # pretend the file is upload and validate in mocked bigquery client
+    mocker.patch(
+        "django_drf_filepond.models.TemporaryUpload.objects.get",
+        return_value=MagicMock(file=SimpleUploadedFile("file.csv", b"")),
+    )
+
     r = client.post(
         f"/projects/{project.id}/integrations/uploads/new",
-        data={"file_name": "store_info.csv", "file_gcs_path": GCS_URL},
+        data={"filepond": "upload_id"},
     )
 
     integration = project.integration_set.first()
@@ -49,7 +55,7 @@ def test_upload_create(client, logged_in_user, project, engine):
     # validate the sql and external table configuration
     table = integration.table_set.first()
     assert engine.load_table_from_uri.call_args.args == (
-        f"gs://gyana-test/{GCS_URL}",
+        f"gs://gyana-test/{integration.upload.file}",
         table.fqn,
     )
     job_config = engine.load_table_from_uri.call_args.kwargs["job_config"]

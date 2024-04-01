@@ -1,11 +1,25 @@
+import os
 import textwrap
+import time
 from os.path import splitext
 
 from django.conf import settings
 from django.db import models
+from django.utils.text import slugify
 
+from apps.base.clients import SLUG
 from apps.base.models import BaseModel
 from apps.integrations.models import Integration
+
+
+def upload_to(instance, filename):
+    filename, file_extension = os.path.splitext(filename)
+    path = f"integrations/{filename}-{slugify(time.time())}{file_extension}"
+
+    if SLUG:
+        path = f"{SLUG}/{path}"
+
+    return path
 
 
 class Upload(BaseModel):
@@ -14,9 +28,9 @@ class Upload(BaseModel):
         TAB = "tab", "Tab"
         PIPE = "pipe", "Pipe"
 
-    integration = models.OneToOneField(Integration, on_delete=models.CASCADE)
+    integration = models.OneToOneField(Integration, on_delete=models.CASCADE, null=True)
 
-    file_gcs_path = models.TextField()
+    file = models.FileField(upload_to=upload_to)
     field_delimiter = models.CharField(
         max_length=8, choices=FieldDelimiter.choices, default=FieldDelimiter.COMMA
     )
@@ -31,7 +45,7 @@ class Upload(BaseModel):
 
     @property
     def gcs_uri(self):
-        return f"gs://{settings.GS_BUCKET_NAME}/{self.file_gcs_path}"
+        return f"gs://{settings.GS_BUCKET_NAME}/{self.file.name}"
 
     def create_integration(self, file_name, created_by, project):
         # file_gcs_path has an extra hidden input

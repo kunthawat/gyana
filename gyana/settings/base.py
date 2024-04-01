@@ -74,6 +74,7 @@ THIRD_PARTY_APPS = [
     "timezone_field",
     "django_celery_beat",
     "django_celery_results",
+    "django_drf_filepond",
     # TODO: Remove after website migration is complete
     "heroicons",
     "simple_history",
@@ -353,6 +354,8 @@ GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME")
 GS_PUBLIC_BUCKET_NAME = os.environ.get("GS_PUBLIC_BUCKET_NAME")
 GS_PUBLIC_CACHE_CONTROL = "public, max-age=31536000"
 
+DJANGO_DRF_FILEPOND_UPLOAD_TMP = os.path.join(BASE_DIR, "filepond-temp-uploads")
+DJANGO_DRF_FILEPOND_STORAGES_BACKEND = DEFAULT_FILE_STORAGE
 
 EXTERNAL_URL = "http://localhost:8000"
 

@@ -1,5 +1,7 @@
+from django.core.files import File
+from django_drf_filepond.models import TemporaryUpload
+
 from apps.base.forms import ModelForm
-from apps.uploads.widgets import GCSFileUpload
 
 from .models import Upload
 
@@ -7,10 +9,9 @@ from .models import Upload
 class UploadCreateForm(ModelForm):
     class Meta:
         model = Upload
-        fields = ["file_gcs_path"]
-        widgets = {"file_gcs_path": GCSFileUpload()}
-        labels = {"file_gcs_path": "Choose a file"}
-        help_texts = {"file_gcs_path": "Maximum file size is 1GB"}
+        fields = ["file"]
+        labels = {"file": "Choose a file"}
+        help_texts = {"file": "Maximum file size is 1GB"}
 
     def __init__(self, *args, **kwargs):
         self._project = kwargs.pop("project")
@@ -19,23 +20,28 @@ class UploadCreateForm(ModelForm):
         super().__init__(*args, **kwargs)
 
     def pre_save(self, instance):
+        self._tu = TemporaryUpload.objects.get(upload_id=self.data["filepond"])
+        instance.file = File(self._tu.file)
+
         instance.create_integration(
-            self.data["file_name"], self._created_by, self._project
+            self._tu.upload_name, self._created_by, self._project
         )
+
+    def post_save(self, instance):
+        self._tu.delete()
 
 
 class UploadUpdateForm(ModelForm):
     class Meta:
         model = Upload
-        fields = ["file_gcs_path", "field_delimiter"]
-        widgets = {"file_gcs_path": GCSFileUpload()}
-        labels = {"file_gcs_path": "Choose a file"}
+        fields = ["file", "field_delimiter"]
+        labels = {"file": "Choose a file"}
         help_texts = {
-            "file_gcs_path": "Maximum file size is 1GB",
+            "file": "Maximum file size is 1GB",
             "field_delimiter": "A field delimiter is a character that separates cells in a CSV table.",
         }
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.fields["file_gcs_path"].required = False
+        self.fields["file"].required = False

@@ -15,4 +15,5 @@ urlpatterns = [
         login_and_table_required(frames.ExportCreateIntegrationTable.as_view()),
         name="create_integration_table",
     ),
+    path("<int:pk>/download", frames.ExportDownload.as_view(), name="download"),
 ]

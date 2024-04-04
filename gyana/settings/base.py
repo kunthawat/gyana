@@ -345,14 +345,17 @@ PROJECT_METADATA = {
 
 DEFAULT_AUTO_FIELD = "django.db.models.AutoField"
 
-ENGINE_URL = os.environ.get("ENGINE_URL")
+ENGINE_URL = os.environ.get("ENGINE_URL", "")
+
+if ENGINE_URL.startswith("bigquery://"):
+    DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
+    GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME")
+    GS_PUBLIC_BUCKET_NAME = os.environ.get("GS_PUBLIC_BUCKET_NAME")
+    GS_PUBLIC_CACHE_CONTROL = "public, max-age=31536000"
+else:
+    DEFAULT_FILE_STORAGE = "apps.base.storage.PrivateFileSystemStorage"
 
 GCP_BQ_SVC_ACCOUNT = os.environ.get("GCP_BQ_SVC_ACCOUNT")
-
-DEFAULT_FILE_STORAGE = "storages.backends.gcloud.GoogleCloudStorage"
-GS_BUCKET_NAME = os.environ.get("GS_BUCKET_NAME")
-GS_PUBLIC_BUCKET_NAME = os.environ.get("GS_PUBLIC_BUCKET_NAME")
-GS_PUBLIC_CACHE_CONTROL = "public, max-age=31536000"
 
 DJANGO_DRF_FILEPOND_UPLOAD_TMP = os.path.join(BASE_DIR, "filepond-temp-uploads")
 DJANGO_DRF_FILEPOND_STORAGES_BACKEND = DEFAULT_FILE_STORAGE

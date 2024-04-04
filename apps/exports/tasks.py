@@ -15,7 +15,7 @@ from .models import Export
 
 
 @shared_task
-def export_to_gcs(export_id, user_id):
+def run_export_task(export_id, user_id):
     export = Export.objects.get(pk=export_id)
     user = CustomUser.objects.get(pk=user_id)
     engine = get_engine()
@@ -26,7 +26,7 @@ def export_to_gcs(export_id, user_id):
 
     path = f"exports/export_{uuid.uuid4()}.csv"
     export.file.name = path
-    engine.export_to_csv(query, f"gs://{settings.GS_BUCKET_NAME}/{path}")
+    engine.export_to_csv(query, export)
 
     send_export_email(export, user)
 

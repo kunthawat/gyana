@@ -1,11 +1,9 @@
-import textwrap
-from datetime import datetime
+from datetime import date
 
 import ibis
 import pandas as pd
 import pytest
 from django.utils import timezone
-from ibis.backends.bigquery import Backend
 
 from apps.columns.models import Column
 from apps.filters.models import DateRange, Filter
@@ -79,77 +77,7 @@ def test_select_node(setup, engine):
     assert query.equals(engine.data.drop(["athlete", "birthday"]))
 
 
-JOIN_QUERY = """\
-WITH t0 AS (
-  SELECT
-    t3.`id` AS `id_2`,
-    t3.`athlete` AS `athlete_2`,
-    t3.`birthday` AS `birthday_2`,
-    t3.`when` AS `when_2`,
-    t3.`lunch` AS `lunch_2`,
-    t3.`medals` AS `medals_2`,
-    t3.`stars` AS `stars_2`,
-    t3.`is_nice` AS `is_nice_2`,
-    t3.`biography` AS `biography_2`
-  FROM `project.dataset`.table AS t3
-), t1 AS (
-  SELECT
-    t3.`id` AS `id_1`,
-    t3.`athlete` AS `athlete_1`,
-    t3.`birthday` AS `birthday_1`,
-    t3.`when` AS `when_1`,
-    t3.`lunch` AS `lunch_1`,
-    t3.`medals` AS `medals_1`,
-    t3.`stars` AS `stars_1`,
-    t3.`is_nice` AS `is_nice_1`,
-    t3.`biography` AS `biography_1`
-  FROM `project.dataset`.table AS t3
-)
-SELECT
-  t2.`id_1` AS `id`,
-  t2.`athlete_1`,
-  t2.`birthday_1`,
-  t2.`when_1`,
-  t2.`lunch_1`,
-  t2.`medals_1`,
-  t2.`stars_1`,
-  t2.`is_nice_1`,
-  t2.`biography_1`,
-  t2.`athlete_2`,
-  t2.`birthday_2`,
-  t2.`when_2`,
-  t2.`lunch_2`,
-  t2.`medals_2`,
-  t2.`stars_2`,
-  t2.`is_nice_2`,
-  t2.`biography_2`
-FROM (
-  SELECT
-    `id_1`,
-    `athlete_1`,
-    `birthday_1`,
-    `when_1`,
-    `lunch_1`,
-    `medals_1`,
-    `stars_1`,
-    `is_nice_1`,
-    `biography_1`,
-    `athlete_2`,
-    `birthday_2`,
-    `when_2`,
-    `lunch_2`,
-    `medals_2`,
-    `stars_2`,
-    `is_nice_2`,
-    `biography_2`
-  FROM t1
-  INNER JOIN t0
-    ON t1.`id_1` = t0.`id_2`
-) AS t2\
-"""
-
-
-def test_join_node(setup):
+def test_join_node(setup, engine):
     input_node, workflow = setup
     second_input_node = input_node.make_clone()
     join_node = Node.objects.create(
@@ -159,18 +87,26 @@ def test_join_node(setup):
     )
     join_node.parents.add(input_node)
     join_node.parents.add(second_input_node, through_defaults={"position": 1})
-    join_node.join_columns.create(left_column="id", right_column="id")
+    join_column = join_node.join_columns.create(left_column="id", right_column="id")
 
     query = get_query_from_node(join_node)
     # Mocking the table conditionally requires a little bit more work
     # So we simply join the table with itself which leads to duplicate columns that
     # Are aliased
-    assert query.compile() == JOIN_QUERY
+    left = engine.data.rename(lambda x: f"{x}_1")
+    right = engine.data.rename(lambda x: f"{x}_2")
+    expected = (
+        left.join(right, left.id_1 == right.id_2, how="inner")
+        .drop(["id_2"])
+        .rename(id="id_1")
+    )
+    assert query.equals(expected)
 
-    join_node.join_how = "outer"
+    join_column.how = "outer"
+    join_column.save()
     query = get_query_from_node(join_node)
-    # TODO: Weird that this doesnt need any change?
-    assert query.compile() == JOIN_QUERY
+    expected = left.join(right, left.id_1 == right.id_2, how="outer").relabel({})
+    assert query.equals(expected)
 
 
 def test_aggregation_node(setup, engine):
@@ -203,66 +139,7 @@ def test_aggregation_node(setup, engine):
     )
 
 
-UNION_QUERY = """\
-SELECT
-  t0.`id`,
-  t0.`athlete`,
-  t0.`birthday`,
-  t0.`when`,
-  t0.`lunch`,
-  t0.`medals`,
-  t0.`stars`,
-  t0.`is_nice`,
-  t0.`biography`
-FROM (
-  WITH t1 AS (
-    SELECT
-      t2.`id`,
-      t2.`athlete`,
-      t2.`birthday`,
-      t2.`when`,
-      t2.`lunch`,
-      t2.`medals`,
-      t2.`stars`,
-      t2.`is_nice`,
-      t2.`biography`
-    FROM `project.dataset`.table AS t2
-  )
-  SELECT
-    t2.*
-  FROM `project.dataset`.table AS t2
-  UNION ALL
-  SELECT
-    *
-  FROM t1
-) AS t0\
-"""
-
-
-EXCEPT_QUERY = """\
-SELECT
-  t0.`id`,
-  t0.`athlete`,
-  t0.`birthday`,
-  t0.`when`,
-  t0.`lunch`,
-  t0.`medals`,
-  t0.`stars`,
-  t0.`is_nice`,
-  t0.`biography`
-FROM (
-  SELECT
-    t1.*
-  FROM `project.dataset`.table AS t1
-  EXCEPT DISTINCT
-  SELECT
-    t1.*
-  FROM `project.dataset`.table AS t1
-) AS t0\
-"""
-
-
-def test_union_node(setup):
+def test_union_node(setup, engine):
     input_node, workflow = setup
     second_input_node = input_node.make_clone()
 
@@ -273,77 +150,16 @@ def test_union_node(setup):
     )
     union_node.parents.add(input_node)
     union_node.parents.add(second_input_node, through_defaults={"position": 1})
-
-    assert get_query_from_node(union_node).compile() == UNION_QUERY
+    columns = engine.data.columns
+    expected = engine.data.union(engine.data.projection(columns))
+    assert get_query_from_node(union_node).equals(expected)
 
     union_node.union_distinct = True
-    assert get_query_from_node(union_node).compile() == UNION_QUERY.replace(
-        "UNION ALL", "UNION DISTINCT"
-    )
+    expected = engine.data.union(engine.data.projection(columns), distinct=True)
+    assert get_query_from_node(union_node).equals(expected)
 
 
-UNION_CAST_QUERY = """\
-WITH t0 AS (
-  SELECT
-    CAST(t2.`id` AS FLOAT64) AS `id`,
-    t2.`athlete`,
-    t2.`birthday`,
-    t2.`when`,
-    t2.`lunch`,
-    t2.`medals`,
-    t2.`stars`,
-    t2.`is_nice`,
-    t2.`biography`
-  FROM `project.dataset`.table AS t2
-)
-SELECT
-  t1.`id`,
-  t1.`athlete`,
-  t1.`birthday`,
-  t1.`when`,
-  t1.`lunch`,
-  t1.`medals`,
-  t1.`stars`,
-  t1.`is_nice`,
-  t1.`biography`
-FROM (
-  WITH t0 AS (
-    SELECT
-      CAST(t2.`id` AS FLOAT64) AS `id`,
-      t2.`athlete`,
-      t2.`birthday`,
-      t2.`when`,
-      t2.`lunch`,
-      t2.`medals`,
-      t2.`stars`,
-      t2.`is_nice`,
-      t2.`biography`
-    FROM `project.dataset`.table AS t2
-  ), t2 AS (
-    SELECT
-      t0.`id`,
-      t0.`athlete`,
-      t0.`birthday`,
-      t0.`when`,
-      t0.`lunch`,
-      t0.`medals`,
-      t0.`stars`,
-      t0.`is_nice`,
-      t0.`biography`
-    FROM t0
-  )
-  SELECT
-    *
-  FROM t0
-  UNION ALL
-  SELECT
-    *
-  FROM t2
-) AS t1\
-"""
-
-
-def test_union_node_casts_int_to_float(setup):
+def test_union_node_casts_int_to_float(setup, engine):
     input_node, workflow = setup
 
     union_node = Node.objects.create(
@@ -359,11 +175,15 @@ def test_union_node_casts_int_to_float(setup):
 
     union_node.parents.add(input_node)
     union_node.parents.add(convert_node, through_defaults={"position": 1})
+    columns = engine.data.columns
+    converted = engine.data.mutate(id=engine.data.id.cast("float"))
+    expected = engine.data.mutate(id=engine.data.id.cast("float")).union(
+        converted.projection(columns)
+    )
+    assert get_query_from_node(union_node).equals(expected)
 
-    assert get_query_from_node(union_node).compile() == UNION_CAST_QUERY
 
-
-def test_except_node(setup):
+def test_except_node(setup, engine):
     input_node, workflow = setup
     second_input_node = input_node.make_clone()
 
@@ -375,10 +195,10 @@ def test_except_node(setup):
     except_node.parents.add(input_node)
     except_node.parents.add(second_input_node, through_defaults={"position": 1})
 
-    assert get_query_from_node(except_node).compile() == EXCEPT_QUERY
+    assert get_query_from_node(except_node).equals(engine.data.difference(engine.data))
 
 
-def test_intersect_node(setup):
+def test_intersect_node(setup, engine):
     input_node, workflow = setup
     second_input_node = input_node.make_clone()
 
@@ -390,12 +210,12 @@ def test_intersect_node(setup):
     intersect_node.parents.add(input_node)
     intersect_node.parents.add(second_input_node, through_defaults={"position": 1})
 
-    assert get_query_from_node(intersect_node).compile() == EXCEPT_QUERY.replace(
-        "EXCEPT DISTINCT", "INTERSECT DISTINCT"
+    assert get_query_from_node(intersect_node).equals(
+        engine.data.intersect(engine.data)
     )
 
 
-def test_sort_node(setup):
+def test_sort_node(setup, engine):
     input_node, workflow = setup
 
     sort_node = Node.objects.create(
@@ -406,17 +226,16 @@ def test_sort_node(setup):
     sort_node.parents.add(input_node)
 
     sort_node.sort_columns.create(column="id")
-    sort_query = f"{INPUT_QUERY}\nORDER BY\n  t0.`id` ASC"
-    assert get_query_from_node(sort_node).compile() == sort_query
+
+    assert get_query_from_node(sort_node).equals(engine.data.order_by("id"))
 
     sort_node.sort_columns.create(column="birthday", ascending=False)
-    assert (
-        get_query_from_node(sort_node).compile()
-        == sort_query + ",\n  t0.`birthday` DESC"
+    assert get_query_from_node(sort_node).equals(
+        engine.data.order_by(["id", ibis.desc("birthday")])
     )
 
 
-def test_limit_node(setup):
+def test_limit_node(setup, engine):
     input_node, workflow = setup
 
     limit_node = Node.objects.create(
@@ -425,23 +244,16 @@ def test_limit_node(setup):
         **DEFAULT_X_Y,
     )
     limit_node.parents.add(input_node)
-
-    limit_query = (
-        f"SELECT\n  t0.*"
-        f"\nFROM (\n{textwrap.indent(INPUT_QUERY.replace('t0', 't1'), '  ')}"
-        f"\n  LIMIT 100\n) AS t0"
-    )
-    assert get_query_from_node(limit_node).compile() == limit_query
+    limited = engine.data.limit(100)
+    assert get_query_from_node(limit_node).equals(limited[limited])
 
     limit_node.limit_offset = 50
     limit_node.limit_limit = 250
-
-    assert get_query_from_node(limit_node).compile() == limit_query.replace(
-        "LIMIT 100", "LIMIT 250\n  OFFSET 50"
-    )
+    limited = engine.data.limit(250, offset=50)
+    assert get_query_from_node(limit_node).equals(limited[limited])
 
 
-def test_filter_node(setup):
+def test_filter_node(setup, engine):
     input_node, workflow = setup
 
     filter_node = Node.objects.create(
@@ -456,23 +268,20 @@ def test_filter_node(setup):
         type=Filter.Type.STRING,
     )
 
-    assert (
-        get_query_from_node(filter_node).compile()
-        == f"{INPUT_QUERY}\nWHERE\n  NOT t0.`athlete` IS NULL"
-    )
+    expected = engine.data[engine.data.athlete.notnull()]
+    assert get_query_from_node(filter_node).equals(expected)
 
     filter_node.filters.create(
         column="birthday",
         datetime_predicate=DateRange.TODAY,
         type=Filter.Type.DATE,
     )
-    assert get_query_from_node(filter_node).compile() == (
-        f"{INPUT_QUERY}\nWHERE\n  (\n    NOT t0.`athlete` IS NULL\n  ) AND (\n    "
-        f"t0.`birthday` = CAST('{datetime.now().strftime('%Y-%m-%d')}' AS DATE)\n  )"
+    assert get_query_from_node(filter_node).equals(
+        expected[expected.birthday == date.today()]
     )
 
 
-def test_edit_node(setup):
+def test_edit_node(setup, engine):
     input_node, workflow = setup
 
     edit_node = Node.objects.create(
@@ -483,20 +292,20 @@ def test_edit_node(setup):
     edit_node.parents.add(input_node)
 
     edit_node.edit_columns.create(column="id", integer_function="isnull")
-    limit_query = INPUT_QUERY.replace(
-        "t0.*",
-        "t0.`id` IS NULL AS `id`,\n  t0.`athlete`,\n  t0.`birthday`,\n  t0.`when`,\n  t0.`lunch`,\n  t0.`medals`,\n  t0.`stars`,\n  t0.`is_nice`,\n  t0.`biography`",
+
+    assert get_query_from_node(edit_node).equals(
+        engine.data.mutate(id=engine.data.id.isnull())
     )
-    assert get_query_from_node(edit_node).compile() == limit_query
 
     edit_node.edit_columns.create(column="athlete", string_function="upper")
-    assert get_query_from_node(edit_node).compile() == limit_query.replace(
-        "t0.`athlete`",
-        "upper(t0.`athlete`) AS `athlete`",
+    assert get_query_from_node(edit_node).equals(
+        engine.data.mutate(
+            id=engine.data.id.isnull(), athlete=engine.data.athlete.upper()
+        )
     )
 
 
-def test_add_node(setup):
+def test_add_node(setup, engine):
     input_node, workflow = setup
 
     add_node = Node.objects.create(
@@ -507,20 +316,20 @@ def test_add_node(setup):
     add_node.parents.add(input_node)
 
     add_node.add_columns.create(column="id", integer_function="isnull", label="booly")
-    assert get_query_from_node(add_node).compile() == INPUT_QUERY.replace(
-        "t0.*", "t0.*,\n  t0.`id` IS NULL AS `booly`"
+    assert get_query_from_node(add_node).equals(
+        engine.data.mutate(booly=engine.data.id.isnull())
     )
-
     add_node.add_columns.create(
         column="athlete", string_function="upper", label="grand_athlete"
     )
-    assert get_query_from_node(add_node).compile() == INPUT_QUERY.replace(
-        "t0.*",
-        "t0.*,\n  t0.`id` IS NULL AS `booly`,\n  upper(t0.`athlete`) AS `grand_athlete`",
+    assert get_query_from_node(add_node).equals(
+        engine.data.mutate(
+            booly=engine.data.id.isnull(), grand_athlete=engine.data.athlete.upper()
+        )
     )
 
 
-def test_rename_node(setup):
+def test_rename_node(setup, engine):
     input_node, workflow = setup
 
     rename_node = Node.objects.create(
@@ -531,19 +340,17 @@ def test_rename_node(setup):
     rename_node.parents.add(input_node)
 
     rename_node.rename_columns.create(column="birthday", new_name="bd")
-    rename_query = INPUT_QUERY.replace(
-        "t0.*",
-        "t0.`id`,\n  t0.`athlete`,\n  t0.`birthday` AS `bd`,\n  t0.`when`,\n  t0.`lunch`,\n  t0.`medals`,\n  t0.`stars`,\n  t0.`is_nice`,\n  t0.`biography`",
+    assert get_query_from_node(rename_node).equals(
+        engine.data.relabel(dict(birthday="bd"))
     )
-    assert get_query_from_node(rename_node).compile() == rename_query
 
     rename_node.rename_columns.create(column="id", new_name="identity")
-    assert get_query_from_node(rename_node).compile() == rename_query.replace(
-        "t0.`id`", "t0.`id` AS `identity`"
+    assert get_query_from_node(rename_node).equals(
+        engine.data.relabel(dict(birthday="bd", id="identity"))
     )
 
 
-def test_formula_node(setup):
+def test_formula_node(setup, engine):
     input_node, workflow = setup
 
     formula_node = Node.objects.create(
@@ -554,31 +361,21 @@ def test_formula_node(setup):
     formula_node.parents.add(input_node)
 
     formula_node.formula_columns.create(formula="upper(athlete)", label="grand_athlete")
-    formula_query = INPUT_QUERY.replace(
-        "t0.*", "t0.*,\n  upper(t0.`athlete`) AS `grand_athlete`"
+
+    assert get_query_from_node(formula_node).equals(
+        engine.data.mutate(grand_athlete=engine.data.athlete.upper())
     )
-    assert get_query_from_node(formula_node).compile() == formula_query
 
     formula_node.formula_columns.create(formula="lower(athlete)", label="low_athlete")
-    assert get_query_from_node(formula_node).compile() == INPUT_QUERY.replace(
-        "t0.*",
-        "t0.*,\n  upper(t0.`athlete`) AS `grand_athlete`,\n  lower(t0.`athlete`) AS `low_athlete`",
+    assert get_query_from_node(formula_node).equals(
+        engine.data.mutate(
+            grand_athlete=engine.data.athlete.upper(),
+            low_athlete=engine.data.athlete.lower(),
+        )
     )
 
 
-DISTINCT_COLUMNS = """t0.`athlete`,
-  ANY_VALUE(t0.`id`) AS `id`,
-  ANY_VALUE(t0.`birthday`) AS `birthday`,
-  ANY_VALUE(t0.`when`) AS `when`,
-  ANY_VALUE(t0.`lunch`) AS `lunch`,
-  ANY_VALUE(t0.`medals`) AS `medals`,
-  ANY_VALUE(t0.`stars`) AS `stars`,
-  ANY_VALUE(t0.`is_nice`) AS `is_nice`,
-  ANY_VALUE(t0.`biography`) AS `biography`\
-"""
-
-
-def test_distinct_node(setup):
+def test_distinct_node(setup, engine):
     input_node, workflow = setup
     distinct_node = Node.objects.create(
         kind=Node.Kind.DISTINCT,
@@ -588,24 +385,27 @@ def test_distinct_node(setup):
     distinct_node.parents.add(input_node)
 
     distinct_node.columns.create(column="athlete")
-
-    assert get_query_from_node(distinct_node).compile() == (
-        INPUT_QUERY.replace("t0.*", DISTINCT_COLUMNS) + "\nGROUP BY\n  1"
+    columns = [
+        engine.data[column].any_value().name(column)
+        for column in engine.data.columns
+        if column != "athlete"
+    ]
+    assert get_query_from_node(distinct_node).equals(
+        engine.data.group_by(["athlete"]).aggregate(columns)
     )
 
     distinct_node.columns.create(column="birthday")
-    assert get_query_from_node(distinct_node).compile() == (
-        INPUT_QUERY.replace(
-            "t0.*",
-            DISTINCT_COLUMNS.replace(
-                "t0.`athlete`,", "t0.`athlete`,\n  t0.`birthday`,"
-            ).replace("  ANY_VALUE(t0.`birthday`) AS `birthday`,\n", ""),
-        )
-        + "\nGROUP BY\n  1,\n  2"
+    columns = [
+        engine.data[column].any_value().name(column)
+        for column in engine.data.columns
+        if column not in ["athlete", "birthday"]
+    ]
+    assert get_query_from_node(distinct_node).equals(
+        engine.data.group_by(["athlete", "birthday"]).aggregate(columns)
     )
 
 
-def test_window_node(setup):
+def test_window_node(setup, engine):
     input_node, workflow = setup
     window_node = Node.objects.create(
         kind=Node.Kind.WINDOW,
@@ -618,33 +418,35 @@ def test_window_node(setup):
         column="athlete", function="count", label="window"
     )
 
-    assert get_query_from_node(window_node).compile() == INPUT_QUERY.replace(
-        "t0.*", "t0.*,\n  count(t0.`athlete`) OVER () AS `window`"
+    assert get_query_from_node(window_node).equals(
+        engine.data.mutate(window=engine.data.athlete.count().over())
     )
 
     window.group_by = "birthday"
     window.save()
-    assert get_query_from_node(window_node).compile() == INPUT_QUERY.replace(
-        "t0.*",
-        "t0.*,\n  count(t0.`athlete`) OVER (PARTITION BY t0.`birthday`) AS `window`",
+    assert get_query_from_node(window_node).equals(
+        engine.data.mutate(
+            window=engine.data.athlete.count().over(ibis.window(group_by="birthday"))
+        )
     )
 
     window.order_by = "id"
     window.ascending = False
     window.save()
-    assert get_query_from_node(window_node).compile() == INPUT_QUERY.replace(
-        "t0.*",
-        "t0.*,\n  count(t0.`athlete`) OVER (PARTITION BY t0.`birthday` ORDER BY t0.`id` DESC) AS `window`",
+    birthday_window = engine.data.athlete.count().over(
+        ibis.window(group_by="birthday", order_by=ibis.desc(engine.data.id))
     )
-
+    assert get_query_from_node(window_node).equals(
+        engine.data.mutate(window=birthday_window)
+    )
     window_node.window_columns.create(
         column="id", function="count", group_by="athlete", label="door"
     )
-    assert get_query_from_node(window_node).compile() == INPUT_QUERY.replace(
-        "t0.*",
-        """t0.*,
-  count(t0.`athlete`) OVER (PARTITION BY t0.`birthday` ORDER BY t0.`id` DESC) AS `window`,
-  count(t0.`id`) OVER (PARTITION BY t0.`athlete`) AS `door`""",
+    assert get_query_from_node(window_node).equals(
+        engine.data.mutate(
+            window=birthday_window,
+            door=engine.data.id.count().over(ibis.window(group_by="athlete")),
+        )
     )
 
 
@@ -702,7 +504,7 @@ def test_unpivot_node(setup):
     )
 
 
-def test_convert_node(setup):
+def test_convert_node(setup, engine):
     input_node, workflow = setup
     convert_node = Node.objects.create(
         kind=Node.Kind.CONVERT,
@@ -718,12 +520,12 @@ def test_convert_node(setup):
     ]:
         convert_node.convert_columns.create(column=column, target_type=target_type)
 
-    assert get_query_from_node(convert_node).compile() == INPUT_QUERY.replace(
-        "  t0.*",
-        """\
-  CAST(t0.`id` AS STRING) AS `id`,
-  CAST(t0.`athlete` AS INT64) AS `athlete`,
-  CAST(t0.`birthday` AS DATETIME) AS `birthday`,
-  t0.`when`,\n  t0.`lunch`,\n  t0.`medals`,\n  t0.`stars`,\n  t0.`is_nice`,\n  t0.`biography`\
-""",
+    assert get_query_from_node(convert_node).equals(
+        engine.data.cast(
+            {
+                "athlete": "int",
+                "id": "string",
+                "birthday": "timestamp",
+            }
+        )
     )

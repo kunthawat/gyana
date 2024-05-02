@@ -137,8 +137,11 @@ def get_join_query(node, left, right, *queries):
         if join.how == "inner":
             drops.add(right_col)
             relabels[left_col] = join.left_column
+    drops = list(drops)
+    if len(drops):
+        query = query.drop(drops)
 
-    return query.drop(list(drops)).relabel(
+    return query.relabel(
         {key: value for key, value in relabels.items() if key not in drops}
     )
 
@@ -179,6 +182,7 @@ def get_union_query(node, query, *queries):
             parent = parent.mutate(**p_castings)
 
         query = query.union(parent, distinct=node.union_distinct)
+    # TODO: Check is still requirerd
     # Need to `select *` so we can operate on the query
     return query[query]
 
@@ -186,6 +190,7 @@ def get_union_query(node, query, *queries):
 def get_except_query(node, query, *queries):
     for parent in queries:
         query = query.difference(parent)
+    # TODO: Check whether this is still necessary
     # Need to `select *` so we can operate on the query
     return query[query]
 
@@ -207,6 +212,7 @@ def get_sort_query(node, query):
 
 
 def get_limit_query(node, query):
+    # TODO: Check projection is still necessary
     # Need to project again to make sure limit isn't overwritten
     query = query.limit(node.limit_limit, offset=node.limit_offset or 0)
     return query[query]

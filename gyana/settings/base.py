@@ -360,7 +360,7 @@ GCP_BQ_SVC_ACCOUNT = os.environ.get("GCP_BQ_SVC_ACCOUNT")
 DJANGO_DRF_FILEPOND_UPLOAD_TMP = os.path.join(BASE_DIR, "filepond-temp-uploads")
 DJANGO_DRF_FILEPOND_STORAGES_BACKEND = DEFAULT_FILE_STORAGE
 
-EXTERNAL_URL = "http://localhost:8000"
+EXTERNAL_URL = "https://gyana.moreminimore.com:8000"
 
 
 BIGQUERY_COLUMN_NAME_LENGTH = 300
